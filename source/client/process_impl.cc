@@ -20,8 +20,8 @@
 
 #include "external/envoy/source/common/api/api_impl.h"
 #include "external/envoy/source/common/common/cleanup.h"
+#include "external/envoy/source/common/common/regex.h"
 #include "external/envoy/source/common/common/statusor.h"
-#include "external/envoy/source/common/config/stats_utility.h"
 #include "external/envoy/source/common/config/utility.h"
 #include "external/envoy/source/common/event/dispatcher_impl.h"
 #include "external/envoy/source/common/event/real_time_system.h"
@@ -32,6 +32,7 @@
 #include "external/envoy/source/common/protobuf/protobuf.h"
 #include "external/envoy/source/common/runtime/runtime_impl.h"
 #include "external/envoy/source/common/singleton/manager_impl.h"
+#include "external/envoy/source/common/stats/tag_producer_impl.h"
 #include "external/envoy/source/common/thread_local/thread_local_impl.h"
 #include "external/envoy/source/server/server.h"
 #include "external/envoy_api/envoy/config/core/v3/resolver.pb.h"
@@ -126,24 +127,38 @@ private:
   const std::chrono::milliseconds flush_interval_;
 };
 
+// A fake ServerLifecycleNotifier. Because it does nothing, it's safe to just create
+// multiple instances of it, rather than manage the lifetime of a single one.
+class NighthawkLifecycleNotifierImpl : public Envoy::Server::ServerLifecycleNotifier {
+public:
+  HandlePtr registerCallback(Stage, StageCallback) override {
+    PANIC(
+        "NighthawkLifecycleNotifierImpl::registerCallbacki(Stage, StageCallback) not implemented");
+  }
+  HandlePtr registerCallback(Stage, StageCallbackWithCompletion) override {
+    PANIC("NighthawkLifecycleNotifierImpl::registerCallback(Stage, StageCallbackWithCompletion) "
+          "not implemented");
+  }
+};
+
 // Implementation of Envoy::Server::Instance. Only methods used by Envoy's code
 // when Nighthawk is running are implemented.
 class NighthawkServerInstance : public Envoy::Server::Instance {
 public:
-  NighthawkServerInstance(Envoy::OptRef<Envoy::Server::Admin> admin, Envoy::Api::Api& api,
-                          Envoy::Event::Dispatcher& dispatcher,
-                          Envoy::AccessLog::AccessLogManager& log_manager,
-                          Envoy::Server::Options& options, Envoy::Runtime::Loader& runtime,
-                          Envoy::Singleton::Manager& singleton_manager,
-                          Envoy::ThreadLocal::Instance& tls,
-                          Envoy::LocalInfo::LocalInfo& local_info,
-                          Envoy::ProtobufMessage::ProdValidationContextImpl& validation_context,
-                          Envoy::Grpc::Context& grpc_context,
-                          Envoy::Router::Context& router_context)
+  NighthawkServerInstance(
+      Envoy::OptRef<Envoy::Server::Admin> admin, Envoy::Api::Api& api,
+      Envoy::Event::Dispatcher& dispatcher, Envoy::AccessLog::AccessLogManager& log_manager,
+      Envoy::Server::Options& options, Envoy::Runtime::Loader& runtime,
+      Envoy::Singleton::Manager& singleton_manager, Envoy::ThreadLocal::Instance& tls,
+      Envoy::LocalInfo::LocalInfo& local_info,
+      Envoy::ProtobufMessage::ProdValidationContextImpl& validation_context,
+      Envoy::Grpc::Context& grpc_context, Envoy::Router::Context& router_context,
+      Envoy::Server::Configuration::ServerFactoryContext& server_factory_context)
       : admin_(admin), api_(api), dispatcher_(dispatcher), log_manager_(log_manager),
         options_(options), runtime_(runtime), singleton_manager_(singleton_manager), tls_(tls),
         local_info_(local_info), validation_context_(validation_context),
-        grpc_context_(grpc_context), router_context_(router_context) {}
+        grpc_context_(grpc_context), router_context_(router_context),
+        server_factory_context_(server_factory_context) {}
 
   void run() override { PANIC("NighthawkServerInstance::run not implemented"); }
   Envoy::OptRef<Envoy::Server::Admin> admin() override { return admin_; }
@@ -195,7 +210,7 @@ public:
   const Envoy::Server::Options& options() override { return options_; }
   Envoy::Runtime::Loader& runtime() override { return runtime_; }
   Envoy::Server::ServerLifecycleNotifier& lifecycleNotifier() override {
-    PANIC("NighthawkServerInstance::lifecycleNotifier not implemented");
+    return lifecycle_notifier_;
   }
   void shutdown() override { PANIC("NighthawkServerInstance::shutdown not implemented"); }
   bool isShutdown() override { PANIC("NighthawkServerInstance::isShutdown not implemented"); }
@@ -223,12 +238,14 @@ public:
   Envoy::ProtobufMessage::ValidationContext& messageValidationContext() override {
     return validation_context_;
   }
-  Envoy::Server::Configuration::StatsConfig& statsConfig() override { return stats_config_; }
+  Envoy::Server::Configuration::StatsConfig& statsConfig() override {
+    PANIC("NighthawkServerInstance::statsConfig not implemented");
+  }
   envoy::config::bootstrap::v3::Bootstrap& bootstrap() override {
     PANIC("NighthawkServerInstance::bootstrap not implemented");
   }
   Envoy::Server::Configuration::ServerFactoryContext& serverFactoryContext() override {
-    PANIC("NighthawkServerInstance::serverFactoryContext not implemented");
+    return server_factory_context_;
   }
   Envoy::Server::Configuration::TransportSocketFactoryContext&
   transportSocketFactoryContext() override {
@@ -243,6 +260,9 @@ public:
   void setSinkPredicates(std::unique_ptr<Envoy::Stats::SinkPredicates>&&) override {
     PANIC("NighthawkServerInstance::setSinkPredicates not implemented");
   }
+  Envoy::Regex::Engine& regexEngine() override {
+    PANIC("NighthawkServerInstance::regexEngine not implemented");
+  };
 
 private:
   Envoy::OptRef<Envoy::Server::Admin> admin_;
@@ -257,28 +277,40 @@ private:
   Envoy::ProtobufMessage::ProdValidationContextImpl& validation_context_;
   Envoy::Grpc::Context& grpc_context_;
   Envoy::Router::Context& router_context_;
-  StatsConfigImpl stats_config_;
+  Envoy::Server::Configuration::ServerFactoryContext& server_factory_context_;
+  NighthawkLifecycleNotifierImpl lifecycle_notifier_; // A no-op object that lives here.
 };
 
 // Implementation of Envoy::Server::Configuration::ServerFactoryContext.
 class NighthawkServerFactoryContext : public Envoy::Server::Configuration::ServerFactoryContext {
 public:
-  NighthawkServerFactoryContext(Envoy::Server::Instance& server, Envoy::Stats::Scope& server_scope)
-      : server_(server), server_scope_(server_scope) {}
+  NighthawkServerFactoryContext(
+      Envoy::OptRef<Envoy::Server::Admin> admin, Envoy::Api::Api& api,
+      Envoy::Event::Dispatcher& dispatcher, Envoy::AccessLog::AccessLogManager& log_manager,
+      Envoy::Server::Options& options, Envoy::Runtime::Loader& runtime,
+      Envoy::Singleton::Manager& singleton_manager, Envoy::ThreadLocal::Instance& tls,
+      Envoy::LocalInfo::LocalInfo& local_info,
+      Envoy::ProtobufMessage::ProdValidationContextImpl& validation_context,
+      Envoy::Grpc::Context& grpc_context, Envoy::Router::Context& router_context,
+      Envoy::Stats::Scope& server_scope)
+      : admin_(admin), api_(api), dispatcher_(dispatcher), log_manager_(log_manager),
+        options_(options), runtime_(runtime), singleton_manager_(singleton_manager), tls_(tls),
+        local_info_(local_info), validation_context_(validation_context),
+        grpc_context_(grpc_context), router_context_(router_context), server_scope_(server_scope) {}
 
-  const Envoy::Server::Options& options() override { return server_.options(); };
+  const Envoy::Server::Options& options() override { return options_; };
 
-  Envoy::Event::Dispatcher& mainThreadDispatcher() override { return server_.dispatcher(); }
+  Envoy::Event::Dispatcher& mainThreadDispatcher() override { return dispatcher_; }
 
-  Envoy::Api::Api& api() override { return server_.api(); }
+  Envoy::Api::Api& api() override { return api_; }
 
-  Envoy::LocalInfo::LocalInfo& localInfo() const override { return server_.localInfo(); }
+  Envoy::LocalInfo::LocalInfo& localInfo() const override { return local_info_; }
 
-  Envoy::OptRef<Envoy::Server::Admin> admin() override { return server_.admin(); }
+  Envoy::OptRef<Envoy::Server::Admin> admin() override { return admin_; }
 
-  Envoy::Runtime::Loader& runtime() override { return server_.runtime(); }
+  Envoy::Runtime::Loader& runtime() override { return runtime_; }
 
-  Envoy::Singleton::Manager& singletonManager() override { return server_.singletonManager(); }
+  Envoy::Singleton::Manager& singletonManager() override { return singleton_manager_; }
 
   Envoy::ProtobufMessage::ValidationVisitor& messageValidationVisitor() override {
     return Envoy::ProtobufMessage::getStrictValidationVisitor();
@@ -290,33 +322,33 @@ public:
 
   Envoy::Stats::Scope& serverScope() override { return server_scope_; };
 
-  Envoy::ThreadLocal::SlotAllocator& threadLocal() override { return server_.threadLocal(); }
+  Envoy::ThreadLocal::SlotAllocator& threadLocal() override { return tls_; }
 
   Envoy::Upstream::ClusterManager& clusterManager() override {
     PANIC("NighthawkServerFactoryContext::clusterManager not implemented");
   };
 
   Envoy::ProtobufMessage::ValidationContext& messageValidationContext() override {
-    return server_.messageValidationContext();
+    return validation_context_;
   };
 
-  Envoy::TimeSource& timeSource() override { return server_.timeSource(); };
+  Envoy::TimeSource& timeSource() override { return api_.timeSource(); };
 
-  Envoy::AccessLog::AccessLogManager& accessLogManager() override {
-    return server_.accessLogManager();
-  }
+  Envoy::AccessLog::AccessLogManager& accessLogManager() override { return log_manager_; }
 
   Envoy::Server::ServerLifecycleNotifier& lifecycleNotifier() override {
-    PANIC("NighthawkServerFactoryContext::lifecycleNotifier not implemented");
-  };
+    return lifecycle_notifier_;
+  }
+
+  Envoy::Regex::Engine& regexEngine() override { return regex_engine_; }
 
   Envoy::Init::Manager& initManager() override {
     PANIC("NighthawkServerFactoryContext::initManager not implemented");
   };
 
-  Envoy::Grpc::Context& grpcContext() override { return server_.grpcContext(); };
+  Envoy::Grpc::Context& grpcContext() override { return grpc_context_; };
 
-  Envoy::Router::Context& routerContext() override { return server_.routerContext(); };
+  Envoy::Router::Context& routerContext() override { return router_context_; };
 
   Envoy::ProcessContextOptRef processContext() override {
     PANIC("NighthawkServerFactoryContext::processContext not implemented");
@@ -326,9 +358,7 @@ public:
     PANIC("NighthawkServerFactoryContext::drainManager not implemented");
   };
 
-  Envoy::Server::Configuration::StatsConfig& statsConfig() override {
-    return server_.statsConfig();
-  }
+  Envoy::Server::Configuration::StatsConfig& statsConfig() override { return stats_config_; }
 
   envoy::config::bootstrap::v3::Bootstrap& bootstrap() override {
     PANIC("NighthawkServerFactoryContext::bootstrap not implemented");
@@ -347,8 +377,22 @@ public:
   }
 
 private:
-  Envoy::Server::Instance& server_;
+  Envoy::OptRef<Envoy::Server::Admin> admin_;
+  Envoy::Api::Api& api_;
+  Envoy::Event::Dispatcher& dispatcher_;
+  Envoy::AccessLog::AccessLogManager& log_manager_;
+  Envoy::Server::Options& options_;
+  Envoy::Runtime::Loader& runtime_;
+  Envoy::Singleton::Manager& singleton_manager_;
+  Envoy::ThreadLocal::Instance& tls_;
+  Envoy::LocalInfo::LocalInfo& local_info_;
+  Envoy::ProtobufMessage::ProdValidationContextImpl& validation_context_;
+  Envoy::Grpc::Context& grpc_context_;
+  Envoy::Router::Context& router_context_;
+  StatsConfigImpl stats_config_; // Using the object created here.
   Envoy::Stats::Scope& server_scope_;
+  NighthawkLifecycleNotifierImpl lifecycle_notifier_; // A no-op object that lives here.
+  Envoy::Regex::GoogleReEngine regex_engine_;         // Using the object created here.
 };
 
 /**
@@ -804,8 +848,15 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     // Needs to happen as early as possible (before createWorkers()) in the instantiation to preempt
     // the objects that require stats.
     if (!options_.statsSinks().empty()) {
-      store_root_.setTagProducer(
-          Envoy::Config::StatsUtility::createTagProducer(bootstrap_, envoy_options_.statsTags()));
+      absl::StatusOr<Envoy::Stats::TagProducerPtr> producer_or_error =
+          Envoy::Stats::TagProducerImpl::createTagProducer(bootstrap_.stats_config(),
+                                                           envoy_options_.statsTags());
+      if (!producer_or_error.ok()) {
+        ENVOY_LOG(error, "createTagProducer failed. Received bad status: {}",
+                  producer_or_error.status());
+        return false;
+      }
+      store_root_.setTagProducer(std::move(producer_or_error.value()));
     }
 
     absl::Status workers_status = createWorkers(number_of_workers_, scheduled_start);
@@ -815,19 +866,29 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     }
     tls_.registerThread(*dispatcher_, true);
     store_root_.initializeThreading(*dispatcher_, tls_);
-    runtime_loader_ = Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(
-        *dispatcher_, tls_, {}, *local_info_, store_root_, generator_,
-        Envoy::ProtobufMessage::getStrictValidationVisitor(), *api_)};
-    ssl_context_manager_ =
-        std::make_unique<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>(
-            time_system_);
 
+    absl::StatusOr<Envoy::Runtime::LoaderPtr> loader = Envoy::Runtime::LoaderImpl::create(
+        *dispatcher_, tls_, {}, *local_info_, store_root_, generator_,
+        Envoy::ProtobufMessage::getStrictValidationVisitor(), *api_);
+
+    if (!loader.ok()) {
+      ENVOY_LOG(error, "create runtime loader failed. Received bad status: {}", loader.status());
+      return false;
+    }
+
+    runtime_loader_ = *std::move(loader);
+
+    server_factory_context_ = std::make_unique<NighthawkServerFactoryContext>(
+        admin_, *api_, *dispatcher_, access_log_manager_, envoy_options_, *runtime_loader_.get(),
+        *singleton_manager_, tls_, *local_info_, validation_context_, grpc_context_,
+        router_context_, scope_root_);
     server_ = std::make_unique<NighthawkServerInstance>(
         admin_, *api_, *dispatcher_, access_log_manager_, envoy_options_, *runtime_loader_.get(),
         *singleton_manager_, tls_, *local_info_, validation_context_, grpc_context_,
-        router_context_);
-    server_factory_context_ =
-        std::make_unique<NighthawkServerFactoryContext>(*server_, scope_root_);
+        router_context_, *server_factory_context_);
+    ssl_context_manager_ =
+        std::make_unique<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>(
+            *server_factory_context_);
     cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
         *server_factory_context_, store_root_, tls_, http_context_,
         [dns_resolver]() -> Envoy::Network::DnsResolverSharedPtr { return dns_resolver; },
@@ -843,6 +904,12 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     }
     ENVOY_LOG(debug, "Computed configuration: {}", absl::StrCat(bootstrap_));
     cluster_manager_ = cluster_manager_factory_->clusterManagerFromProto(bootstrap_);
+    absl::Status status = cluster_manager_->initialize(bootstrap_);
+    if (!status.ok()) {
+      ENVOY_LOG(error, "cluster_manager initialize failed. Received bad status: {}",
+                status.message());
+      return false;
+    }
     maybeCreateTracingDriver(bootstrap_.tracing());
     cluster_manager_->setInitializedCb(
         [this]() -> void { init_manager_.initialize(init_watcher_); });

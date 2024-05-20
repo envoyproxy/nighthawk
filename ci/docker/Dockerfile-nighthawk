@@ -4,6 +4,7 @@ ADD nighthawk_client /usr/local/bin/nighthawk_client
 ADD nighthawk_test_server /usr/local/bin/nighthawk_test_server
 ADD nighthawk_output_transform /usr/local/bin/nighthawk_output_transform
 ADD nighthawk_service /usr/local/bin/nighthawk_service
+ADD nighthawk_adaptive_load_client /usr/local/bin/nighthawk_adaptive_load_client
 ADD default-config.yaml /etc/envoy/envoy.yaml
 
 # Ports for nighthawk_test_server, see default-config.yaml

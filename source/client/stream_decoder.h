@@ -61,8 +61,10 @@ public:
         downstream_address_setter_(std::make_shared<Envoy::Network::ConnectionInfoSetterImpl>(
             // The two addresses aren't used in an execution of Nighthawk.
             /* downstream_local_address = */ nullptr, /* downstream_remote_address = */ nullptr)),
-        stream_info_(time_source_, downstream_address_setter_), random_generator_(random_generator),
-        tracer_(tracer), latency_response_header_name_(latency_response_header_name) {
+        stream_info_(time_source_, downstream_address_setter_,
+                     Envoy::StreamInfo::FilterState::LifeSpan::FilterChain),
+        random_generator_(random_generator), tracer_(tracer),
+        latency_response_header_name_(latency_response_header_name) {
     if (measure_latencies_ && tracer_ != nullptr) {
       setupForTracing();
     }

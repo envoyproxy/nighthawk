@@ -19,7 +19,7 @@ BinaryScoringFunctionConfigFactory::createScoringFunction(const Envoy::Protobuf:
   const auto* any =
       Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
   nighthawk::adaptive_load::BinaryScoringFunctionConfig config;
-  Envoy::MessageUtil::unpackTo(*any, config);
+  Envoy::MessageUtil::unpackToOrThrow(*any, config);
   return std::make_unique<BinaryScoringFunction>(config);
 }
 
@@ -52,7 +52,7 @@ LinearScoringFunctionConfigFactory::createScoringFunction(const Envoy::Protobuf:
   const auto* any =
       Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
   nighthawk::adaptive_load::LinearScoringFunctionConfig config;
-  Envoy::MessageUtil::unpackTo(*any, config);
+  Envoy::MessageUtil::unpackToOrThrow(*any, config);
   return std::make_unique<LinearScoringFunction>(config);
 }
 

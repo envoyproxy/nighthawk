@@ -160,7 +160,8 @@ TEST_P(SinkServiceTest, LoadTwoResultsWithExecutionResponseWhereOneHasErrorDetai
   ASSERT_EQ(response_.execution_response().error_detail().details_size(), 1);
   ASSERT_TRUE(response_.execution_response().error_detail().details(0).Is<::google::rpc::Status>());
   ::google::rpc::Status status;
-  Envoy::MessageUtil::unpackTo(response_.execution_response().error_detail().details(0), status);
+  Envoy::MessageUtil::unpackToOrThrow(response_.execution_response().error_detail().details(0),
+                                      status);
   // TODO(XXX): proper equivalence test.
   EXPECT_THAT(status, EqualsProto(*error_detail));
   EXPECT_TRUE(reader_writer->Finish().ok());

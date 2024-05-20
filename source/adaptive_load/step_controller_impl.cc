@@ -53,7 +53,7 @@ absl::Status ExponentialSearchStepControllerConfigFactory::ValidateConfig(
   const auto* any =
       Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
   ExponentialSearchStepControllerConfig config;
-  Envoy::MessageUtil::unpackTo(*any, config);
+  Envoy::MessageUtil::unpackToOrThrow(*any, config);
   if (config.has_input_variable_setter()) {
     return LoadInputVariableSetterPlugin(config.input_variable_setter()).status();
   }
@@ -66,7 +66,7 @@ StepControllerPtr ExponentialSearchStepControllerConfigFactory::createStepContro
   const auto* any =
       Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
   ExponentialSearchStepControllerConfig config;
-  Envoy::MessageUtil::unpackTo(*any, config);
+  Envoy::MessageUtil::unpackToOrThrow(*any, config);
   return std::make_unique<ExponentialSearchStepController>(config, command_line_options_template);
 }
 
