@@ -173,8 +173,8 @@ bazel-bin/nighthawk_client  [--user-defined-plugin-config <string>] ...
 [--jitter-uniform <duration>] [--open-loop]
 [--experimental-h1-connection-reuse-strategy
 <mru|lru>] [--no-default-failure-predicates]
-[--failure-predicate <string, uint64_t>] ...
-[--termination-predicate <string, uint64_t>]
+[--failure-predicate <string:uint64_t>] ...
+[--termination-predicate <string:uint64_t>]
 ... [--trace <uri format>]
 [--sequencer-idle-strategy <spin|poll
 |sleep>] [--max-concurrent-streams
