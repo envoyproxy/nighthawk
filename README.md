@@ -305,12 +305,12 @@ Disables the default failure predicates, indicating that Nighthawk
 should continue sending load after observing error status codes and
 connection errors.
 
---failure-predicate <string, uint64_t>  (accepted multiple times)
+--failure-predicate <string:uint64_t>  (accepted multiple times)
 Failure predicate. Allows specifying a counter name plus threshold
 value for failing execution. Defaults to not tolerating error status
 codes and connection errors. Example: benchmark.http_5xx:4294967295.
 
---termination-predicate <string, uint64_t>  (accepted multiple times)
+--termination-predicate <string:uint64_t>  (accepted multiple times)
 Termination predicate. Allows specifying a counter name plus threshold
 value for terminating execution.
 
