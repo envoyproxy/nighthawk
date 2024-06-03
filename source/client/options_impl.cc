@@ -229,13 +229,13 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "", "termination-predicate",
       "Termination predicate. Allows specifying a counter name plus threshold value for "
       "terminating execution.",
-      false, "string, uint64_t", cmd);
+      false, "string:uint64_t", cmd);
   TCLAP::MultiArg<std::string> failure_predicates(
       "", "failure-predicate",
       "Failure predicate. Allows specifying a counter name plus threshold value for "
       "failing execution. Defaults to not tolerating error status codes and connection errors. "
       "Example: benchmark.http_5xx:4294967295.",
-      false, "string, uint64_t", cmd);
+      false, "string:uint64_t", cmd);
   TCLAP::SwitchArg no_default_failure_predicates(
       "", "no-default-failure-predicates",
       "Disables the default failure predicates, indicating that Nighthawk should continue sending "
