@@ -227,12 +227,15 @@ absl::StatusOr<Bootstrap> createBootstrapConfiguration(
     Envoy::Network::DnsResolverFactory& dns_resolver_factory,
     const envoy::config::core::v3::TypedExtensionConfig& typed_dns_resolver_config,
     int number_of_workers) {
-  Envoy::Network::DnsResolverSharedPtr dns_resolver =
+  absl::StatusOr<Envoy::Network::DnsResolverSharedPtr> dns_resolver =
       dns_resolver_factory.createDnsResolver(dispatcher, api, typed_dns_resolver_config);
+  if (!dns_resolver.ok()) {
+    return dns_resolver.status();
+  }
   std::vector<UriPtr> uris;
   UriPtr request_source_uri;
-  absl::Status uri_status = extractAndResolveUrisFromOptions(dispatcher, options, *dns_resolver,
-                                                             &uris, &request_source_uri);
+  absl::Status uri_status = extractAndResolveUrisFromOptions(
+      dispatcher, options, *dns_resolver.value(), &uris, &request_source_uri);
   if (!uri_status.ok()) {
     return uri_status;
   }

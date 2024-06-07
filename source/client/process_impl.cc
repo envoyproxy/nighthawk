@@ -204,6 +204,9 @@ public:
   Envoy::Server::OverloadManager& overloadManager() override {
     PANIC("NighthawkServerInstance::overloadManager not implemented");
   }
+  Envoy::Server::OverloadManager& nullOverloadManager() override {
+    PANIC("NighthawkServerInstance::nullOverloadManager not implemented");
+  }
   Envoy::Secret::SecretManager& secretManager() override {
     PANIC("NighthawkServerInstance::secretManager not implemented");
   }
@@ -370,6 +373,10 @@ public:
 
   Envoy::Server::OverloadManager& overloadManager() override {
     PANIC("NighthawkServerFactoryContext::overloadManager not implemented");
+  }
+
+  Envoy::Server::OverloadManager& nullOverloadManager() override {
+    PANIC("NighthawkServerFactoryContext::nullOverloadManager not implemented");
   }
 
   bool healthCheckFailed() const override {
@@ -914,7 +921,12 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     cluster_manager_->setInitializedCb(
         [this]() -> void { init_manager_.initialize(init_watcher_); });
 
-    runtime_loader_->initialize(*cluster_manager_);
+    absl::Status initialize_status = runtime_loader_->initialize(*cluster_manager_);
+    if (!initialize_status.ok()) {
+      ENVOY_LOG(error, "runtime_loader initialize failed. Received bad status: {}",
+                initialize_status.message());
+      return false;
+    }
 
     std::list<std::unique_ptr<Envoy::Stats::Sink>> stats_sinks;
     setupStatsSinks(bootstrap_, stats_sinks);
@@ -1012,12 +1024,16 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
 bool ProcessImpl::run(OutputCollector& collector) {
   UriPtr tracing_uri;
 
-  Envoy::Network::DnsResolverSharedPtr dns_resolver =
+  absl::StatusOr<Envoy::Network::DnsResolverSharedPtr> dns_resolver =
       dns_resolver_factory_.createDnsResolver(*dispatcher_, *api_, typed_dns_resolver_config_);
+  if (!dns_resolver.ok()) {
+    ENVOY_LOG(error, "Failed to create DNS resolver: {}", dns_resolver.status());
+    return false;
+  }
   try {
     if (options_.trace() != "") {
       tracing_uri = std::make_unique<UriImpl>(options_.trace());
-      tracing_uri->resolve(*dispatcher_, *dns_resolver,
+      tracing_uri->resolve(*dispatcher_, *dns_resolver.value(),
                            Utility::translateFamilyOptionString(options_.addressFamily()));
     }
   } catch (const UriException& ex) {
@@ -1029,7 +1045,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
   }
 
   try {
-    return runInternal(collector, tracing_uri, dns_resolver, options_.scheduled_start());
+    return runInternal(collector, tracing_uri, dns_resolver.value(), options_.scheduled_start());
   } catch (Envoy::EnvoyException& ex) {
     ENVOY_LOG(error, "Fatal EnvoyException exception: {}", ex.what());
     throw;

@@ -98,10 +98,14 @@ public:
     envoy::config::core::v3::TypedExtensionConfig typed_dns_resolver_config;
     Envoy::Network::DnsResolverFactory& dns_resolver_factory =
         Envoy::Network::createDefaultDnsResolverFactory(typed_dns_resolver_config);
-    Envoy::Network::DnsResolverSharedPtr dns_resolver =
+    absl::StatusOr<Envoy::Network::DnsResolverSharedPtr> dns_resolver =
         dns_resolver_factory.createDnsResolver(*dispatcher, *api, typed_dns_resolver_config);
+    if (!dns_resolver.ok()) {
+      throw Envoy::EnvoyException(
+          absl::StrCat("DNS resolution failed: ", dns_resolver.status().message()));
+    }
     auto u = UriImpl(uri);
-    return u.resolve(*dispatcher, *dns_resolver, address_family);
+    return u.resolve(*dispatcher, *dns_resolver.value(), address_family);
   }
 };
 
@@ -152,12 +156,16 @@ TEST_P(UtilityAddressResolutionTest, ResolveTwiceReturnsCached) {
   envoy::config::core::v3::TypedExtensionConfig typed_dns_resolver_config;
   Envoy::Network::DnsResolverFactory& dns_resolver_factory =
       Envoy::Network::createDefaultDnsResolverFactory(typed_dns_resolver_config);
-  Envoy::Network::DnsResolverSharedPtr dns_resolver =
+  absl::StatusOr<Envoy::Network::DnsResolverSharedPtr> dns_resolver =
       dns_resolver_factory.createDnsResolver(*dispatcher, *api, typed_dns_resolver_config);
+  if (!dns_resolver.ok()) {
+    throw Envoy::EnvoyException(
+        absl::StrCat("DNS resolution failed: ", dns_resolver.status().message()));
+  }
   auto u = UriImpl("localhost");
 
-  EXPECT_EQ(u.resolve(*dispatcher, *dns_resolver, address_family).get(),
-            u.resolve(*dispatcher, *dns_resolver, address_family).get());
+  EXPECT_EQ(u.resolve(*dispatcher, *dns_resolver.value(), address_family).get(),
+            u.resolve(*dispatcher, *dns_resolver.value(), address_family).get());
 }
 
 TEST_F(UtilityTest, TranslateAddressFamilyGoodValues) {
