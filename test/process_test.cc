@@ -5,6 +5,7 @@
 #include "nighthawk/common/exception.h"
 
 #include "external/envoy/source/common/common/statusor.h"
+#include "external/envoy/test/mocks/network/mocks.h"
 #include "external/envoy/test/test_common/environment.h"
 #include "external/envoy/test/test_common/network_utility.h"
 #include "external/envoy/test/test_common/registry.h"
@@ -83,12 +84,27 @@ public:
             fmt::format("foo --duration 1 -v error --rps 10 https://{}/", loopback_address_))){};
 
   absl::Status runProcess(RunExpectation expectation, bool do_cancel = false,
-                          bool terminate_right_away = false) {
+                          bool terminate_right_away = false,
+                          bool bad_dns_resolver_factory = false) {
     TypedExtensionConfig typed_dns_resolver_config;
     Envoy::Network::DnsResolverFactory& dns_resolver_factory =
         Envoy::Network::createDefaultDnsResolverFactory(typed_dns_resolver_config);
+    Envoy::Network::DnsResolverFactory* dns_resolver_factory_ptr = &dns_resolver_factory;
+    NiceMock<Envoy::Network::MockDnsResolverFactory> mock_dns_resolver_factory;
+    if (bad_dns_resolver_factory) {
+      EXPECT_CALL(mock_dns_resolver_factory, createDnsResolver(_, _, _))
+          .WillOnce(Invoke(
+              [&dns_resolver_factory](
+                  Envoy::Event::Dispatcher& dispatcher, Envoy::Api::Api& api,
+                  const envoy::config::core::v3::TypedExtensionConfig& typed_dns_resolver_config) {
+                return dns_resolver_factory.createDnsResolver(dispatcher, api,
+                                                              typed_dns_resolver_config);
+              }))
+          .WillOnce(testing::Return(absl::InternalError("Test DnsResolverFactory error")));
+      dns_resolver_factory_ptr = &mock_dns_resolver_factory;
+    }
     absl::StatusOr<ProcessPtr> process_or_status = ProcessImpl::CreateProcessImpl(
-        *options_, dns_resolver_factory, std::move(typed_dns_resolver_config), time_system_);
+        *options_, *dns_resolver_factory_ptr, std::move(typed_dns_resolver_config), time_system_);
     if (!process_or_status.ok()) {
       return process_or_status.status();
     }
@@ -334,6 +350,13 @@ TEST_P(ProcessTest, CreatesNoUserDefinedOutputPluginsIfNoConfigs) {
 
   EXPECT_TRUE(runProcess(RunExpectation::EXPECT_FAILURE).ok());
   EXPECT_EQ(output_proto_.results(0).user_defined_outputs_size(), 0);
+}
+
+TEST_P(ProcessTest, FailsWhenDnsResolverFactoryFails) {
+  options_ = TestUtility::createOptionsImpl(
+      fmt::format("foo --duration 300 --failure-predicate foo:0 --concurrency 2 https://{}/",
+                  loopback_address_));
+  EXPECT_TRUE(runProcess(RunExpectation::EXPECT_FAILURE, false, false, true).ok());
 }
 
 /**
