@@ -158,10 +158,7 @@ TEST_P(UtilityAddressResolutionTest, ResolveTwiceReturnsCached) {
       Envoy::Network::createDefaultDnsResolverFactory(typed_dns_resolver_config);
   absl::StatusOr<Envoy::Network::DnsResolverSharedPtr> dns_resolver =
       dns_resolver_factory.createDnsResolver(*dispatcher, *api, typed_dns_resolver_config);
-  if (!dns_resolver.ok()) {
-    throw Envoy::EnvoyException(
-        absl::StrCat("DNS resolution failed: ", dns_resolver.status().message()));
-  }
+  ASSERT_TRUE(dns_resolver.ok());
   auto u = UriImpl("localhost");
 
   EXPECT_EQ(u.resolve(*dispatcher, *dns_resolver.value(), address_family).get(),
