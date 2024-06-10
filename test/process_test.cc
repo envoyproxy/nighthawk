@@ -189,14 +189,16 @@ TEST_P(ProcessTest, CancelDuringLoadTest) {
   options_ = TestUtility::createOptionsImpl(
       fmt::format("foo --duration 300 --failure-predicate foo:0 --concurrency 2 https://{}/",
                   loopback_address_));
-  EXPECT_TRUE(runProcess(RunExpectation::EXPECT_SUCCESS, true).ok());
+  EXPECT_TRUE(runProcess(RunExpectation::EXPECT_SUCCESS, /*do_cancel=*/true).ok());
 }
 
 TEST_P(ProcessTest, CancelExecutionBeforeBeginLoadTest) {
   options_ = TestUtility::createOptionsImpl(
       fmt::format("foo --duration 300 --failure-predicate foo:0 --concurrency 2 https://{}/",
                   loopback_address_));
-  EXPECT_TRUE(runProcess(RunExpectation::EXPECT_SUCCESS, true, true).ok());
+  EXPECT_TRUE(
+      runProcess(RunExpectation::EXPECT_SUCCESS, /*do_cancel=*/true, /*terminate_right_away=*/true)
+          .ok());
 }
 
 TEST_P(ProcessTest, RunProcessWithStatsSinkConfigured) {
@@ -219,7 +221,9 @@ TEST_P(ProcessTest, NoFlushWhenCancelExecutionBeforeLoadTestBegin) {
                   "2 --stats-flush-interval 1 --stats-sinks {} https://{}/",
                   kSinkConfig, loopback_address_));
   numFlushes = 0;
-  ASSERT_TRUE(runProcess(RunExpectation::EXPECT_SUCCESS, true, true).ok());
+  ASSERT_TRUE(
+      runProcess(RunExpectation::EXPECT_SUCCESS, /*do_cancel=*/true, /*terminate_right_away=*/true)
+          .ok());
   EXPECT_EQ(numFlushes, 0);
 }
 
@@ -356,7 +360,9 @@ TEST_P(ProcessTest, FailsWhenDnsResolverFactoryFails) {
   options_ = TestUtility::createOptionsImpl(
       fmt::format("foo --duration 300 --failure-predicate foo:0 --concurrency 2 https://{}/",
                   loopback_address_));
-  EXPECT_TRUE(runProcess(RunExpectation::EXPECT_FAILURE, false, false, true).ok());
+  EXPECT_TRUE(runProcess(RunExpectation::EXPECT_FAILURE, /*do_cancel=*/false,
+                         /*terminate_right_away=*/false, /*bad_dns_resolver_factory=*/true)
+                  .ok());
 }
 
 /**

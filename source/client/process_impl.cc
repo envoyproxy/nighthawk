@@ -1045,7 +1045,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
   }
 
   try {
-    return runInternal(collector, tracing_uri, dns_resolver.value(), options_.scheduled_start());
+    return runInternal(collector, tracing_uri, *dns_resolver, options_.scheduled_start());
   } catch (Envoy::EnvoyException& ex) {
     ENVOY_LOG(error, "Fatal EnvoyException exception: {}", ex.what());
     throw;
