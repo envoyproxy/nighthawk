@@ -1939,5 +1939,18 @@ TEST_F(CreateBootstrapConfigurationTest, DeterminesSniFromRequestHeader) {
   Envoy::MessageUtil::validate(*bootstrap, Envoy::ProtobufMessage::getStrictValidationVisitor());
 }
 
+TEST_F(CreateBootstrapConfigurationTest, DnsResolverFactoryError) {
+  ON_CALL(mock_dns_resolver_factory_, createDnsResolver(_, _, _))
+      .WillByDefault(Return(absl::InternalError("Test DnsResolverFactory error")));
+
+  std::unique_ptr<Client::OptionsImpl> options =
+      Client::TestUtility::createOptionsImpl("nighthawk_client http://www.example.org");
+  NiceMock<Envoy::Api::MockApi> api;
+  absl::StatusOr<Bootstrap> bootstrap =
+      createBootstrapConfiguration(mock_dispatcher_, api, *options, mock_dns_resolver_factory_,
+                                   typed_dns_resolver_config_, number_of_workers_);
+  ASSERT_THAT(bootstrap, StatusIs(absl::StatusCode::kInternal));
+}
+
 } // namespace
 } // namespace Nighthawk
