@@ -202,6 +202,7 @@ bazel-bin/nighthawk_test_server  [--stats-tag <string>] ...
 [--allow-unknown-fields] [--config-yaml
 <string>] [-c <string>] [--concurrency
 <uint32_t>] [--base-id-path <string>]
+[--skip-hot-restart-parent-stats]
 [--skip-hot-restart-on-no-parent]
 [--use-dynamic-base-id] [--base-id
 <uint32_t>] [--] [--version] [-h]
@@ -324,6 +325,12 @@ Path to configuration file
 
 --base-id-path <string>
 Path to which the base ID is written
+
+--skip-hot-restart-parent-stats
+When hot restarting, by default the child instance copies stats from
+the parent instance periodically during the draining period. This can
+potentially be an expensive operation; set this to true to reset all
+stats in child process.
 
 --skip-hot-restart-on-no-parent
 When hot restarting with epoch>0, the default behavior is for the
