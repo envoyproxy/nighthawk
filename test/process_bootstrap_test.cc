@@ -60,7 +60,7 @@ protected:
                                   // change the function declaration here.
                                   // NOLINTNEXTLINE(performance-unnecessary-value-param)
                                   Envoy::Network::DnsResolver::ResolveCb callback) {
-          callback(Envoy::Network::DnsResolver::ResolutionStatus::Success,
+          callback(Envoy::Network::DnsResolver::ResolutionStatus::Success, "",
                    Envoy::TestUtility::makeDnsResponse({"127.0.0.1"}));
           return nullptr;
         }));
