@@ -101,7 +101,7 @@ bool Main::run() {
   }
   process->shutdown();
   if (!result) {
-    ENVOY_LOG(error, "An error ocurred.");
+    ENVOY_LOG(error, "An error occurred.");
   } else {
     ENVOY_LOG(info, "Done.");
   }
