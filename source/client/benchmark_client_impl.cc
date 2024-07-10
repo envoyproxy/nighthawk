@@ -127,7 +127,7 @@ void BenchmarkClientHttpImpl::terminate() {
       ENVOY_LOG(info, "Wait for the connection pool drain timed out, proceeding to hard shutdown.");
       dispatcher_.exit();
     });
-    drain_timer_->enableTimer(5s);
+    drain_timer_->enableTimer(30s);
     dispatcher_.run(Envoy::Event::Dispatcher::RunType::RunUntilExit);
   }
 }
