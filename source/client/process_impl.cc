@@ -26,6 +26,7 @@
 #include "external/envoy/source/common/config/utility.h"
 #include "external/envoy/source/common/event/dispatcher_impl.h"
 #include "external/envoy/source/common/event/real_time_system.h"
+#include "external/envoy/source/common/http/http_server_properties_cache_manager_impl.h"
 #include "external/envoy/source/common/init/manager_impl.h"
 #include "external/envoy/source/common/local_info/local_info_impl.h"
 #include "external/envoy/source/common/network/dns_resolver/dns_factory_util.h"
