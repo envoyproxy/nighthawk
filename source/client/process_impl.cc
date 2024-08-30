@@ -9,6 +9,7 @@
 #include <random>
 
 #include "envoy/common/optref.h"
+#include "envoy/http/http_server_properties_cache.h"
 #include "envoy/network/address.h"
 #include "envoy/server/filter_config.h"
 #include "envoy/stats/sink.h"
@@ -25,6 +26,7 @@
 #include "external/envoy/source/common/config/utility.h"
 #include "external/envoy/source/common/event/dispatcher_impl.h"
 #include "external/envoy/source/common/event/real_time_system.h"
+#include "external/envoy/source/common/http/http_server_properties_cache_manager_impl.h"
 #include "external/envoy/source/common/init/manager_impl.h"
 #include "external/envoy/source/common/local_info/local_info_impl.h"
 #include "external/envoy/source/common/network/dns_resolver/dns_factory_util.h"
@@ -166,6 +168,9 @@ public:
   Envoy::Upstream::ClusterManager& clusterManager() override {
     PANIC("NighthawkServerInstance::clusterManager not implemented");
   }
+  Envoy::Http::HttpServerPropertiesCacheManager& httpServerPropertiesCacheManager() override {
+    PANIC("NighthawkServerInstance::httpServerPropertiesCacheManager not implemented");
+  }
   const Envoy::Upstream::ClusterManager& clusterManager() const override {
     PANIC("NighthawkServerInstance::clusterManager not implemented");
   }
@@ -299,7 +304,9 @@ public:
       : admin_(admin), api_(api), dispatcher_(dispatcher), log_manager_(log_manager),
         options_(options), runtime_(runtime), singleton_manager_(singleton_manager), tls_(tls),
         local_info_(local_info), validation_context_(validation_context),
-        grpc_context_(grpc_context), router_context_(router_context), server_scope_(server_scope) {}
+        grpc_context_(grpc_context), router_context_(router_context), server_scope_(server_scope),
+        http_server_properties_cache_manager_(
+            *this, Envoy::ProtobufMessage::getStrictValidationVisitor(), tls) {}
 
   const Envoy::Server::Options& options() override { return options_; };
 
@@ -330,6 +337,9 @@ public:
   Envoy::Upstream::ClusterManager& clusterManager() override {
     PANIC("NighthawkServerFactoryContext::clusterManager not implemented");
   };
+  Envoy::Http::HttpServerPropertiesCacheManager& httpServerPropertiesCacheManager() override {
+    return http_server_properties_cache_manager_;
+  }
 
   Envoy::ProtobufMessage::ValidationContext& messageValidationContext() override {
     return validation_context_;
@@ -400,6 +410,7 @@ private:
   Envoy::Stats::Scope& server_scope_;
   NighthawkLifecycleNotifierImpl lifecycle_notifier_; // A no-op object that lives here.
   Envoy::Regex::GoogleReEngine regex_engine_;         // Using the object created here.
+  Envoy::Http::HttpServerPropertiesCacheManagerImpl http_server_properties_cache_manager_;
 };
 
 /**
