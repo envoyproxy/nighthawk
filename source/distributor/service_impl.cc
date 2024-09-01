@@ -104,11 +104,11 @@ grpc::Status NighthawkDistributorServiceImpl::DistributedRequestStream(
         ENVOY_LOG(trace, "Wrote DistributedResponse {}", absl::StrCat(response));
       }
     } else {
-      ENVOY_LOG(error, "DistributedRequest invalid: ({}) '{}'", status.error_code(),
+      ENVOY_LOG(error, "DistributedRequest invalid: ({}) '{}'", static_cast<int>(status.error_code()),
                 status.error_message());
     }
   }
-  ENVOY_LOG(trace, "Finishing stream with status {}:{}", status.error_code(),
+  ENVOY_LOG(trace, "Finishing stream with status {}:{}", static_cast<int>(status.error_code()),
             status.error_message());
   return status;
 }
