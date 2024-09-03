@@ -161,6 +161,7 @@ StreamDecoder::streamResetReasonToResponseFlag(Envoy::Http::StreamResetReason re
     return Envoy::StreamInfo::CoreResponseFlag::UpstreamConnectionTermination;
   case Envoy::Http::StreamResetReason::LocalReset:
   case Envoy::Http::StreamResetReason::LocalRefusedStreamReset:
+  case Envoy::Http::StreamResetReason::Http1PrematureUpstreamHalfClose:
     return Envoy::StreamInfo::CoreResponseFlag::LocalReset;
   case Envoy::Http::StreamResetReason::Overflow:
     return Envoy::StreamInfo::CoreResponseFlag::UpstreamOverflow;
