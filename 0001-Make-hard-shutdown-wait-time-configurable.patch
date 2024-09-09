@@ -1,0 +1,434 @@
+From 3ef1cd771cd55741f04a96d03528afde6873e55c Mon Sep 17 00:00:00 2001
+From: Tom Zhang <4367421+tomjzzhang@users.noreply.github.com>
+Date: Tue, 2 Apr 2024 17:31:01 +0000
+Subject: [PATCH] Make hard shutdown wait time configurable
+
+Signed-off-by: Tom Zhang <4367421+tomjzzhang@users.noreply.github.com>
+---
+ README.md                              | 34 ++++++++++++++++++++------
+ api/client/options.proto               |  8 +++++-
+ include/nighthawk/client/options.h     |  1 +
+ source/client/benchmark_client_impl.cc |  2 +-
+ source/client/benchmark_client_impl.h  |  6 +++++
+ source/client/factories_impl.cc        |  1 +
+ source/client/options_impl.cc          | 16 +++++++++++-
+ source/client/options_impl.h           |  5 ++++
+ test/factories_test.cc                 |  1 +
+ test/mocks/client/mock_options.h       |  1 +
+ test/options_test.cc                   | 14 ++++++++++-
+ 11 files changed, 78 insertions(+), 11 deletions(-)
+
+diff --git a/README.md b/README.md
+index 089f172..9bc701d 100644
+--- a/README.md
++++ b/README.md
+@@ -1,6 +1,6 @@
+ # Nighthawk
+ 
+-*A L7 (HTTP/HTTPS/HTTP2) performance characterization tool*
++_A L7 (HTTP/HTTPS/HTTP2) performance characterization tool_
+ 
+ [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/envoyproxy/nighthawk/badge)](https://securityscorecards.dev/viewer/?uri=github.com/envoyproxy/nighthawk)
+ 
+@@ -9,7 +9,7 @@
+ Nighthawk currently offers:
+ 
+ - A load testing client which supports HTTP/1.1 and HTTP/2 over HTTP and HTTPS.
+-(HTTPS certificates are not yet validated).
++  (HTTPS certificates are not yet validated).
+ - A simple [test server](source/server/README.md) which is capable of generating dynamic response sizes, as well as inject delays.
+ - A binary to transform nighthawk output to well-known formats, allowing integration with other systems and dashboards.
+ 
+@@ -48,6 +48,7 @@ include commands that are documented in the prerequisites section above.
+ #### Install required packages
+ 
+ Run the following command to install the required packages.
++
+ ```
+ sudo apt-get install \
+    autoconf \
+@@ -68,6 +69,7 @@ sudo apt-get install \
+ Note that depending on the chosen Ubuntu version, you may need to manually
+ install a never version of Clang/LLVM. The installed version of Clang can be
+ verified by running:
++
+ ```
+ clang -v
+ ```
+@@ -78,6 +80,7 @@ Clang/LLVM. See [issue#832](https://github.com/envoyproxy/nighthawk/issues/832)
+ for one possible approach.
+ 
+ Run the following commands to install Clang/LLVM.
++
+ ```
+ sudo apt install -y lld clang llvm lld lldb
+ sudo apt install -y clang-{format,tidy,tools} clang-doc clang-examples
+@@ -90,11 +93,13 @@ automatically chooses and downloads the appropriate Bazel version. If you
+ already have Bazel installed, it is strongly recommended to remove it.
+ 
+ Run the following to remove bazel.
++
+ ```
+ sudo apt-get remove bazel
+ ```
+ 
+ Run the following to install Bazelisk.
++
+ ```
+ sudo wget -O /usr/local/bin/bazel https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-$([ $(uname -m) = "aarch64" ] && echo "arm64" || echo "amd64")
+ sudo chmod +x /usr/local/bin/bazel
+@@ -104,6 +109,7 @@ sudo chmod +x /usr/local/bin/bazel
+ 
+ Run the following to clone the Nighthawk repository and instruct Bazel to use
+ Clang.
++
+ ```
+ git clone https://github.com/envoyproxy/nighthawk
+ cd nighthawk/
+@@ -115,6 +121,7 @@ echo "build --config=clang" >> user.bazelrc
+ It is advisable to use the same version of Python as the one listed at the top of `tools/base/requirements.txt`. While other versions may also work, the chances of success are greatest if using the same one.
+ 
+ Recommended: Use `virtualenv` to avoid conflicts between Nighthawk's Python package version requirements and other versions already on your system:
++
+ ```
+ python3 -m venv ~/my_nh_venv
+ source ~/my_nh_venv/bin/activate
+@@ -123,20 +130,23 @@ source ~/my_nh_venv/bin/activate
+ Note: Avoid creating the environment under the Nighthawk project directory.
+ 
+ Install Python packages required for Nighthawk (whether using `virtualenv` or not):
++
+ ```
+ pip3 install --user -r tools/base/requirements.txt
+ ```
+ 
+ If `pip3 install` fails, you will need to troubleshoot the Python environment before attempting to build and test Nighthawk.
+ 
+-#### Build and testing  Nighthawk
++#### Build and testing Nighthawk
+ 
+ You can now use the CI script to build Nighthawk.
++
+ ```
+ ci/do_ci.sh build
+ ```
+ 
+ Or to execute its tests.
++
+ ```
+ ci/do_ci.sh test
+ ```
+@@ -153,11 +163,13 @@ For using the Nighthawk test server, see [here](source/server/README.md).
+ ```
+ 
+ <!-- BEGIN USAGE -->
++
+ ```
+ 
+ USAGE:
+ 
+-bazel-bin/nighthawk_client  [--user-defined-plugin-config <string>] ...
++bazel-bin/nighthawk_client [--hard-shutdown-wait-time <uint32_t>]
++[--user-defined-plugin-config <string>] ...
+ [--latency-response-header-name <string>]
+ [--stats-flush-interval-duration <duration>]
+ [--stats-flush-interval <uint32_t>]
+@@ -204,6 +216,11 @@ format>
+ 
+ Where:
+ 
++--hard-shutdown-wait-time <uint32_t>
++The amount of time in milliseconds after sending all load test traffic
++that nighthawk will wait before initiating hard shutdown (i.e. destroy
++connection pool objects).
++
+ --user-defined-plugin-config <string>  (accepted multiple times)
+ WIP - will throw unimplemented error. Optional configurations for
+ plugins that collect data about responses received by NH and attach a
+@@ -448,18 +465,19 @@ benchmark a single endpoint. For multiple endpoints, set
+ L7 (HTTP/HTTPS/HTTP2) performance characterization tool.
+ 
+ ```
++
+ <!-- END USAGE -->
+ 
+ ### Nighthawk gRPC service
+ 
+ The gRPC service can be used to start a server which is able to perform back-to-back benchmark runs upon request. The service interface definition [can be found here.](https://github.com/envoyproxy/nighthawk/blob/59a37568783272a6438b5697277d4e56aa16ebbe/api/client/service.proto)
+ 
+-
+ ```bash
+ ➜ bazel-bin/nighthawk_service --help
+ ```
+ 
+ <!-- BEGIN USAGE -->
++
+ ```
+ 
+ USAGE:
+@@ -496,18 +514,19 @@ Displays usage information and exits.
+ L7 (HTTP/HTTPS/HTTP2) performance characterization tool.
+ 
+ ```
++
+ <!-- END USAGE -->
+ 
+ ### Nighthawk output transformation utility
+ 
+ Nighthawk comes with a tool to transform its json output to its other supported output formats.
+ 
+-
+ ```bash
+ ➜ bazel-bin/nighthawk_output_transform --help
+ ```
+ 
+ <!-- BEGIN USAGE -->
++
+ ```
+ 
+ USAGE:
+@@ -538,6 +557,7 @@ Displays usage information and exits.
+ L7 (HTTP/HTTPS/HTTP2) performance characterization transformation tool.
+ 
+ ```
++
+ <!-- END USAGE -->
+ 
+ **Example:** transform json output to fortio compatible format
+@@ -652,7 +672,7 @@ fortio report --data-dir ./samples/fortio_data
+ - Consider tuning the benchmarking system for low (network) latency. You can do that manually, or install [tuned](http://manpages.ubuntu.com/manpages/bionic/man8/tuned-adm.8.html) and run:
+ 
+ | As this may change boot flags, take precautions, and familiarize yourself with the tool on systems that you don't mind breaking. For example, running this has been observed to mess up dual-boot systems! |
+-| --- |
++| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+ 
+ ```bash
+ sudo tuned-adm profile network-latency
+diff --git a/api/client/options.proto b/api/client/options.proto
+index de97d06..7517871 100644
+--- a/api/client/options.proto
++++ b/api/client/options.proto
+@@ -129,7 +129,7 @@ message Protocol {
+ 
+ // TODO(oschaaf): Ultimately this will be a load test specification. The fact that it
+ // can arrive via CLI is just a concrete detail. Change this to reflect that.
+-// Next unused number is 114.
++// Next unused number is 115.
+ message CommandLineOptions {
+   // The target requests-per-second rate. Default: 5.
+   google.protobuf.UInt32Value requests_per_second = 1
+@@ -311,4 +311,10 @@ message CommandLineOptions {
+   // Nighthawk will abort an execution attempt if a user_defined_plugin_config is provided but the
+   // associated plugin factory is not registered through Envoy's plugin system.
+   repeated envoy.config.core.v3.TypedExtensionConfig user_defined_plugin_configs = 112;
++
++  // The amount of time after sending all load test traffic that nighthawk will
++  // wait before initiating hard shutdown (i.e. destroy connection pool
++  // objects). Defaults to 5 seconds.
++  google.protobuf.Duration hard_shutdown_wait_time = 114
++      [(validate.rules).duration.gte.seconds = 0];
+ }
+diff --git a/include/nighthawk/client/options.h b/include/nighthawk/client/options.h
+index 6fb7146..cfe59c2 100644
+--- a/include/nighthawk/client/options.h
++++ b/include/nighthawk/client/options.h
+@@ -101,6 +101,7 @@ public:
+   virtual absl::optional<std::string> executionId() const PURE;
+   virtual const std::vector<envoy::config::core::v3::TypedExtensionConfig>&
+   userDefinedOutputPluginConfigs() const PURE;
++  virtual std::chrono::milliseconds hardShutdownWaitTime() const PURE;
+ 
+   /**
+    * Converts an Options instance to an equivalent CommandLineOptions instance in terms of option
+diff --git a/source/client/benchmark_client_impl.cc b/source/client/benchmark_client_impl.cc
+index 1a9d8de..287d335 100644
+--- a/source/client/benchmark_client_impl.cc
++++ b/source/client/benchmark_client_impl.cc
+@@ -127,7 +127,7 @@ void BenchmarkClientHttpImpl::terminate() {
+       ENVOY_LOG(info, "Wait for the connection pool drain timed out, proceeding to hard shutdown.");
+       dispatcher_.exit();
+     });
+-    drain_timer_->enableTimer(5s);
++    drain_timer_->enableTimer(hard_shutdown_wait_time_);
+     dispatcher_.run(Envoy::Event::Dispatcher::RunType::RunUntilExit);
+   }
+ }
+diff --git a/source/client/benchmark_client_impl.h b/source/client/benchmark_client_impl.h
+index ad870e6..3c7d3db 100644
+--- a/source/client/benchmark_client_impl.h
++++ b/source/client/benchmark_client_impl.h
+@@ -113,6 +113,11 @@ public:
+                           const bool provide_resource_backpressure,
+                           absl::string_view latency_response_header_name,
+                           std::vector<UserDefinedOutputNamePluginPair> user_defined_output_plugins);
++
++  void setHardShutdownWaitTime(std::chrono::milliseconds hard_shutdown_wait_time) {
++    hard_shutdown_wait_time_ = hard_shutdown_wait_time;
++  }
++
+   void setConnectionLimit(uint32_t connection_limit) { connection_limit_ = connection_limit; }
+   void setMaxPendingRequests(uint32_t max_pending_requests) {
+     max_pending_requests_ = max_pending_requests;
+@@ -177,6 +182,7 @@ private:
+   const std::string latency_response_header_name_;
+   Envoy::Event::TimerPtr drain_timer_;
+   std::vector<UserDefinedOutputNamePluginPair> user_defined_output_plugins_;
++  std::chrono::milliseconds hard_shutdown_wait_time_{5s};
+ };
+ 
+ } // namespace Client
+diff --git a/source/client/factories_impl.cc b/source/client/factories_impl.cc
+index 81b59ff..61aa174 100644
+--- a/source/client/factories_impl.cc
++++ b/source/client/factories_impl.cc
+@@ -56,6 +56,7 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
+       request_generator.get(), !options_.openLoop(), options_.responseHeaderWithLatencyInput(),
+       std::move(user_defined_output_plugins));
+   auto request_options = options_.toCommandLineOptions()->request_options();
++  benchmark_client->setHardShutdownWaitTime(options_.hardShutdownWaitTime());
+   benchmark_client->setConnectionLimit(options_.connections());
+   benchmark_client->setMaxPendingRequests(options_.maxPendingRequests());
+   benchmark_client->setMaxActiveRequests(options_.maxActiveRequests());
+diff --git a/source/client/options_impl.cc b/source/client/options_impl.cc
+index 6afc0eb..2fb8b58 100644
+--- a/source/client/options_impl.cc
++++ b/source/client/options_impl.cc
+@@ -378,6 +378,14 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
+       "fail_data:\"false\"}}",
+       false, "string", cmd);
+ 
++  TCLAP::ValueArg<uint32_t> hard_shutdown_wait_time(
++      "", "hard-shutdown-wait-time",
++      fmt::format("The amount of time in milliseconds after sending all load test traffic "
++                  "that nighthawk will wait before initiating hard shutdown (i.e. destroy "
++                  "connection pool objects).",
++                  hard_shutdown_wait_time_),
++      false, 0, "uint32_t", cmd);
++
+   Utility::parseCommand(cmd, argc, argv);
+ 
+   if (h2_use_multiple_connections.isSet()) {
+@@ -676,7 +684,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
+       }
+     }
+   }
+-
++  TCLAP_SET_IF_SPECIFIED(hard_shutdown_wait_time, hard_shutdown_wait_time_);
+   validate();
+ }
+ 
+@@ -851,6 +859,10 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
+        options.user_defined_plugin_configs()) {
+     user_defined_output_plugin_configs_.push_back(typed_config);
+   }
++  if (options.has_hard_shutdown_wait_time()) {
++    hard_shutdown_wait_time_ =
++        Envoy::Protobuf::util::TimeUtil::DurationToMilliseconds(options.hard_shutdown_wait_time());
++  }
+   validate();
+ }
+ 
+@@ -1063,6 +1075,8 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
+        user_defined_output_plugin_configs_) {
+     *command_line_options->add_user_defined_plugin_configs() = config;
+   }
++  *command_line_options->mutable_hard_shutdown_wait_time() =
++      Envoy::Protobuf::util::TimeUtil::MillisecondsToDuration(hard_shutdown_wait_time_);
+   return command_line_options;
+ }
+ 
+diff --git a/source/client/options_impl.h b/source/client/options_impl.h
+index 4c8455e..10d67b2 100644
+--- a/source/client/options_impl.h
++++ b/source/client/options_impl.h
+@@ -120,6 +120,10 @@ public:
+     return user_defined_output_plugin_configs_;
+   }
+ 
++  std::chrono::milliseconds hardShutdownWaitTime() const override {
++    return std::chrono::milliseconds(hard_shutdown_wait_time_);
++  }
++
+ private:
+   void parsePredicates(const TCLAP::MultiArg<std::string>& arg,
+                        TerminationPredicateMap& predicates);
+@@ -186,6 +190,7 @@ private:
+   absl::optional<Envoy::SystemTime> scheduled_start_;
+   absl::optional<std::string> execution_id_;
+   std::vector<envoy::config::core::v3::TypedExtensionConfig> user_defined_output_plugin_configs_;
++  uint32_t hard_shutdown_wait_time_{5000};
+ };
+ 
+ } // namespace Client
+diff --git a/test/factories_test.cc b/test/factories_test.cc
+index da88a61..e745bf2 100644
+--- a/test/factories_test.cc
++++ b/test/factories_test.cc
+@@ -43,6 +43,7 @@ TEST_F(FactoriesTest, CreateBenchmarkClient) {
+   EXPECT_CALL(options_, maxRequestsPerConnection());
+   EXPECT_CALL(options_, openLoop());
+   EXPECT_CALL(options_, responseHeaderWithLatencyInput());
++  EXPECT_CALL(options_, hardShutdownWaitTime());
+   auto cmd = std::make_unique<nighthawk::client::CommandLineOptions>();
+   EXPECT_CALL(options_, toCommandLineOptions()).WillOnce(Return(ByMove(std::move(cmd))));
+   StaticRequestSourceImpl request_generator(
+diff --git a/test/mocks/client/mock_options.h b/test/mocks/client/mock_options.h
+index 88c4072..b1d262d 100644
+--- a/test/mocks/client/mock_options.h
++++ b/test/mocks/client/mock_options.h
+@@ -74,6 +74,7 @@ public:
+   MOCK_METHOD(absl::optional<std::string>, executionId, (), (const, override));
+   MOCK_METHOD(const std::vector<envoy::config::core::v3::TypedExtensionConfig>&,
+               userDefinedOutputPluginConfigs, (), (const, override));
++  MOCK_METHOD(std::chrono::milliseconds, hardShutdownWaitTime, (), (const override));
+ };
+ 
+ } // namespace Client
+diff --git a/test/options_test.cc b/test/options_test.cc
+index 27cf18b..2310ad8 100644
+--- a/test/options_test.cc
++++ b/test/options_test.cc
+@@ -209,7 +209,8 @@ TEST_F(OptionsImplTest, AlmostAll) {
+       "--max-concurrent-streams 42 "
+       "--experimental-h1-connection-reuse-strategy lru --label label1 --label label2 {} "
+       "--simple-warmup --stats-sinks {} --stats-sinks {} --stats-flush-interval 10 "
+-      "--latency-response-header-name zz --user-defined-plugin-config {}",
++      "--latency-response-header-name zz --user-defined-plugin-config {} "
++      "--hard-shutdown-wait-time 5000",
+       client_name_, "{source_address:{address:\"127.0.0.1\",port_value:0}}",
+       "{name:\"envoy.transport_sockets.tls\","
+       "typed_config:{\"@type\":\"type.googleapis.com/"
+@@ -302,6 +303,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
+                                            actual_user_defined_output_config)
+                   .ok());
+   EXPECT_THAT(actual_user_defined_output_config, EqualsProto(expected_user_defined_output_config));
++  EXPECT_EQ(5000, options->hardShutdownWaitTime().count());
+ 
+   // Check that our conversion to CommandLineOptionsPtr makes sense.
+   CommandLineOptionsPtr cmd = options->toCommandLineOptions();
+@@ -339,6 +341,8 @@ TEST_F(OptionsImplTest, AlmostAll) {
+   EXPECT_EQ(cmd->failure_predicates().at("f1"), 1);
+   EXPECT_EQ(cmd->failure_predicates().at("f2"), 2);
+   EXPECT_TRUE(cmd->no_default_failure_predicates().value());
++  EXPECT_EQ(Envoy::Protobuf::util::TimeUtil::DurationToMilliseconds(cmd->hard_shutdown_wait_time()),
++            options->hardShutdownWaitTime().count());
+ 
+   // Now we construct a new options from the proto we created above. This should result in an
+   // OptionsImpl instance equivalent to options. We test that by converting both to yaml strings,
+@@ -1203,5 +1207,13 @@ TEST_F(OptionsImplTest, ThrowsMalformedArgvExceptionForInvalidTypedExtensionConf
+       MalformedArgvException, "UserDefinedPluginConfigs");
+ }
+ 
++TEST_F(OptionsImplTest, HardShutdownWaitTimeRangeTest) {
++  // Durations >= 0s are accepted
++  EXPECT_NO_THROW(TestUtility::createOptionsImpl(
++      fmt::format("{} --hard-shutdown-wait-time 0 {}", client_name_, good_test_uri_)));
++  EXPECT_NO_THROW(TestUtility::createOptionsImpl(
++      fmt::format("{} --hard-shutdown-wait-time -50 {}", client_name_, good_test_uri_)));
++}
++
+ } // namespace Client
+ } // namespace Nighthawk
+-- 
+2.45.2.803.g4e1b14247a-goog
+
