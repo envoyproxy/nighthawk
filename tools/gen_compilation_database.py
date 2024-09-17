@@ -130,7 +130,6 @@ if __name__ == "__main__":
         help=
         'Use `clang++` instead of the bazel wrapper for commands. This may help if `clangd` cannot find/run the tools.'
     )
-    parser.add_argument('--bazel', default='bazel')
     parser.add_argument(
         'bazel_targets',
         nargs='*',

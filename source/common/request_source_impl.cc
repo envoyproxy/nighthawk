@@ -52,7 +52,7 @@ void RemoteRequestSourceImpl::connectToRequestStreamGrpcService() {
   absl::StatusOr<Envoy::Grpc::AsyncClientFactoryPtr> cluster_manager =
       cluster_manager_->grpcAsyncClientManager().factoryForGrpcService(grpc_service, scope_,
                                                                        /*skip_cluster_check=*/true);
-  THROW_IF_STATUS_NOT_OK(cluster_manager, throw);
+  THROW_IF_NOT_OK_REF(cluster_manager.status());
   grpc_client_ = std::make_unique<RequestStreamGrpcClientImpl>(
       (*cluster_manager)->createUncachedRawAsyncClient(), dispatcher_, *base_header_,
       header_buffer_length_);
