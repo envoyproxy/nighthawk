@@ -78,6 +78,7 @@ _TEST_SERVER_WARN_ERROR_IGNORE_LIST = frozenset([
 
             # Logged for normal termination, not really a warning.
             "caught ENVOY_SIGTERM",
+            "internal_address_config is not configured. The existing default behaviour will trust RFC1918 IP addresses, but this will be changed in next release. Please explictily config internal address config as the migration step.",
         ),
     ),
 ])
