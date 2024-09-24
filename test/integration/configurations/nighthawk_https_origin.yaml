@@ -21,6 +21,10 @@ static_resources:
                 generate_request_id: false
                 codec_type: AUTO
                 stat_prefix: ingress_http
+                internal_address_config:
+                  cidr_ranges:
+                  - address_prefix: $server_ip
+                    prefix_len: 32
                 route_config:
                   name: local_route
                   virtual_hosts:
