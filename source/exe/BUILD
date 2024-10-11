@@ -11,15 +11,13 @@ envoy_package()
 envoy_cc_library(
     name = "adaptive_load_client_entry_lib",
     srcs = ["adaptive_load_client_main_entry.cc"],
-    external_deps = [
-        "abseil_symbolize",
-    ],
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         "//source/adaptive_load:adaptive_load_client_main",
         "//source/common:nighthawk_service_client_impl",
         "//source/common:version_linkstamp",
+        "@com_google_absl//absl/debugging:symbolize",
         "@envoy//source/exe:platform_header_lib_with_external_headers",
         "@envoy//source/exe:platform_impl_lib",
     ],
@@ -28,28 +26,24 @@ envoy_cc_library(
 envoy_cc_library(
     name = "nighthawk_client_entry_lib",
     srcs = ["client_main_entry.cc"],
-    external_deps = [
-        "abseil_symbolize",
-    ],
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         "//source/client:nighthawk_client_lib",
         "//source/common:version_linkstamp",
+        "@com_google_absl//absl/debugging:symbolize",
     ],
 )
 
 envoy_cc_library(
     name = "nighthawk_service_entry_lib",
     srcs = ["service_main_entry.cc"],
-    external_deps = [
-        "abseil_symbolize",
-    ],
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         "//source/client:nighthawk_service_lib",
         "//source/common:version_linkstamp",
+        "@com_google_absl//absl/debugging:symbolize",
     ],
 )
 

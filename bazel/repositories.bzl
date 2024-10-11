@@ -1,7 +1,7 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-ENVOY_COMMIT = "3f36f1466de11624958614a3fd46d9ce208ed5b5"
-ENVOY_SHA = "2f571eaf477a28205352b6aa84da9055c90a6f3a81816a32f01cd96027b95de4"
+ENVOY_COMMIT = "33679e411dbb4698eae07f7926e595fc13e2805d"
+ENVOY_SHA = "774a89c6f194fab6a3ed8e488a194f621ba540860fbb36afbc61a736f937773e"
 
 HDR_HISTOGRAM_C_VERSION = "0.11.2"  # October 12th, 2020
 HDR_HISTOGRAM_C_SHA = "637f28b5f64de2e268131e4e34e6eef0b91cf5ff99167db447d9b2825eae6bad"
@@ -46,7 +46,7 @@ cc_library(
         "-Wno-implicit-function-declaration",
         "-Wno-error",
     ],
-    deps = ["//external:zlib"],
+    deps = ["@envoy//bazel/foreign_cc:zlib",],
     visibility = ["//visibility:public"],
 )
   """,
