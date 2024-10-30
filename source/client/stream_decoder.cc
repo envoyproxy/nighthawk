@@ -192,7 +192,7 @@ void StreamDecoder::setupForTracing() {
   envoy::extensions::request_id::uuid::v3::UuidRequestIdConfig uuid_request_id_config;
   Envoy::Extensions::RequestId::UUIDRequestIDExtension uuid_generator(uuid_request_id_config,
                                                                       random_generator_);
-  uuid_generator.set(*headers_copy, /*edge_request=*/true, /* keep_external_id=*/false);
+  uuid_generator.set(*headers_copy, /* edge_request= */true, /* keep_external_id= */false);
   uuid_generator.setTraceReason(*headers_copy, Envoy::Tracing::Reason::ClientForced);
   Envoy::Tracing::HttpTraceContext trace_context(*headers_copy);
   active_span_ = tracer_->startSpan(config_, trace_context, stream_info_, tracing_decision);
