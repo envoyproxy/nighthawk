@@ -522,7 +522,8 @@ public:
     // https://github.com/envoyproxy/envoy/commit/93ee668a690d297ab5e8bd2cbf03771d852ebbda ALPN may
     // be set up to negotiate a protocol, in which case we'd need a HttpConnPoolImplMixed. However,
     // our integration tests pass, and for now this might suffice. In case we do run into the need
-    // for supporting multiple protocols in a single pool, ensure we hear about it soon, by asserting.
+    // for supporting multiple protocols in a single pool, ensure we hear about it soon, by
+    // asserting.
     RELEASE_ASSERT(protocols.size() == 1, "Expected a single protocol in protocols vector.");
     const Envoy::Http::Protocol& protocol = protocols[0];
     if (protocol == Envoy::Http::Protocol::Http11 || protocol == Envoy::Http::Protocol::Http10) {
