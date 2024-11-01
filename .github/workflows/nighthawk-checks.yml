@@ -1,4 +1,4 @@
-name: Nighthawk Envoy CI/CD
+name: Nighthawk CI/CD
 
 permissions:
   contents: read
