@@ -2,6 +2,7 @@ name: Nighthawk CI/CD
 
 permissions:
   contents: read
+  packages: read
 
 on:
   pull_request:
@@ -19,6 +20,7 @@ jobs:
       run: |
         ci/run_envoy_docker.sh 'ci/do_ci.sh ${{ matrix.target }}'
       env:
+        GITHUB_TOKEN: ${{ github.token }}
         AZP_BRANCH: ${{ github.ref }}
         AZP_SHA1: ${{ github.sha }}
         ENVOY_DOCKER_IN_DOCKER: 1
