@@ -1,0 +1,80 @@
+name: Nighthawk/Test CI/CD
+
+permissions:
+  contents: read
+on:
+  pull_request:
+  push:
+    branches:
+    - main
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+
+jobs:
+  check:
+    permissions:
+      contents: read
+      packages: read
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+        - build
+        - check_format
+    uses: ./.github/workflows/_ci.yml
+    with:
+      task: ${{ matrix.target }}
+
+  test:
+    permissions:
+      contents: read
+      packages: read
+    needs: check
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+        - benchmark_with_own_binaries
+        - test
+        - test_gcc
+    uses: ./.github/workflows/_ci.yml
+    with:
+      task: ${{ matrix.target }}
+
+  sanitizers:
+    permissions:
+      contents: read
+      packages: read
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+        - asan
+        - tsan
+    uses: ./.github/workflows/_ci.yml
+    with:
+      task: ${{ matrix.target }}
+
+  release:
+    secrets:
+      dockerhub-username: >-
+        ${{ (github.event_name == 'push'
+             && github.ref == 'refs/heads/main')
+            && secrets.DOCKERHUB_USERNAME
+            || '' }}
+      dockerhub-password: >-
+        ${{ (github.event_name == 'push'
+             && github.ref == 'refs/heads/main')
+            && secrets.DOCKERHUB_PASSWORD
+            || '' }}
+    permissions:
+      contents: read
+      packages: read
+    needs: sanitizers
+    uses: ./.github/workflows/_ci.yml
+    with:
+      task: docker
+      docker-in-docker: true

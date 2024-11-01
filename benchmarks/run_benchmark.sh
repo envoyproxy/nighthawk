@@ -25,6 +25,5 @@ export NH_DOCKER_IMAGE="envoyproxy/nighthawk-dev:latest"
 export ENVOY_DOCKER_IMAGE_TO_TEST="envoyproxy/envoy-dev:latest"
 
 # run all tests
-bazel-bin/benchmarks/benchmarks --log-cli-level=info -vvvv benchmarks/test/
-bazel-bin/benchmarks/dynamic_benchmarks --log-cli-level=info -vvvv benchmarks/dynamic_test/
-
+bazel-bin/benchmarks/benchmarks --log-cli-level=info benchmarks/test/
+bazel-bin/benchmarks/dynamic_benchmarks --log-cli-level=info benchmarks/dynamic_test/

@@ -1,0 +1,49 @@
+name: Reusable CI Workflow
+
+permissions:
+  contents: read
+on:
+  workflow_call:
+    inputs:
+      task:
+        description: 'CI task to run'
+        required: true
+        type: string
+      docker-in-docker:
+        description: 'Enable Docker in Docker'
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      dockerhub-username:
+        description: 'DockerHub username'
+        required: false
+      dockerhub-password:
+        description: 'DockerHub password'
+        required: false
+
+jobs:
+  ci:
+    name: "./ci/do_ci.sh ${{ inputs.task }}"
+    permissions:
+      contents: read
+      packages: read
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v4
+    - name: Configure repo Bazel settings
+      run: |
+        echo "build:remote-envoy-engflow --config=bes-envoy-engflow" > repo.bazelrc
+    - name: Run CI script
+      run: |
+        ./ci/run_envoy_docker.sh './ci/do_ci.sh ${{ inputs.task }}'
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+        BAZEL_BUILD_EXTRA_OPTIONS: >-
+          --config=remote-ci
+          --config=remote-envoy-engflow
+        GH_BRANCH: ${{ github.ref }}
+        GH_SHA1: ${{ github.sha }}
+        ENVOY_DOCKER-IN-DOCKER: ${{ inputs.docker-in-docker && '1' || '' }}
+        DOCKERHUB_USERNAME: ${{ secrets.dockerhub-username }}
+        DOCKERHUB_PASSWORD: ${{ secrets.dockerhub-password }}

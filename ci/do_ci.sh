@@ -110,15 +110,19 @@ function do_opt_build () {
 }
 
 function do_test() {
-    # The environment variable AZP_BRANCH is used to determine if some expensive
-    # tests that cannot run locally should be executed.
+    # Determine if we should run stress tests based on the branch
     # E.g. test_http_h1_mini_stress_test_open_loop.
-    run_on_build_parts "bazel build -c dbg $BAZEL_BUILD_OPTIONS --action_env=AZP_BRANCH"
-    bazel test -c dbg $BAZEL_TEST_OPTIONS --test_output=all --action_env=AZP_BRANCH //test/...
+    if [[ -n "${GH_BRANCH:-}" ]]; then
+        STRESS_TEST_FLAG="--//test/config:run_stress_tests=True"
+    else
+        STRESS_TEST_FLAG="--//test/config:run_stress_tests=False"
+    fi
+    run_on_build_parts "bazel build -c dbg $BAZEL_BUILD_OPTIONS $STRESS_TEST_FLAG"
+    bazel test -c dbg $BAZEL_TEST_OPTIONS $STRESS_TEST_FLAG //test/...
 }
 
 function do_clang_tidy() {
-    # clang-tidy will warn on standard library issues with libc++    
+    # clang-tidy will warn on standard library issues with libc++
     BAZEL_BUILD_OPTIONS=("--config=clang" "${BAZEL_BUILD_OPTIONS[@]}")
     BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS[*]}" ci/run_clang_tidy.sh
 }
@@ -263,14 +267,6 @@ function do_fix_format() {
 }
 
 if grep 'docker\|lxc' /proc/1/cgroup; then
-    # Create a fake home. Python site libs tries to do getpwuid(3) if we don't and the CI
-    # Docker image gets confused as it has no passwd entry when running non-root
-    # unless we do this.
-    FAKE_HOME=/tmp/fake_home
-    mkdir -p "${FAKE_HOME}"
-    export HOME="${FAKE_HOME}"
-    export PYTHONUSERBASE="${FAKE_HOME}"
-
     export BUILD_DIR=/build
     echo "Running in Docker, built binaries will be copied into ${BUILD_DIR}."
     if [[ ! -d "${BUILD_DIR}" ]]
@@ -280,26 +276,19 @@ if grep 'docker\|lxc' /proc/1/cgroup; then
     fi
 
     # Environment setup.
-    export USER=bazel
-    export TEST_TMPDIR=/build/tmp
     export BAZEL="bazel"
-fi
-
-if [ -n "${BAZEL_REMOTE_CACHE}" ]; then
-  export BAZEL_BUILD_EXTRA_OPTIONS="${BAZEL_BUILD_EXTRA_OPTIONS} --remote_cache=${BAZEL_REMOTE_CACHE}"
 fi
 
 export BAZEL_EXTRA_TEST_OPTIONS="--test_env=ENVOY_IP_TEST_VERSIONS=v4only ${BAZEL_EXTRA_TEST_OPTIONS}"
 export BAZEL_BUILD_OPTIONS=" \
---verbose_failures ${BAZEL_OPTIONS} --action_env=HOME --action_env=PYTHONUSERBASE \
---noincompatible_sandbox_hermetic_tmp \
+--verbose_failures ${BAZEL_OPTIONS} \
 --experimental_generate_json_trace_profile ${BAZEL_BUILD_EXTRA_OPTIONS}"
 
 echo "Running with ${NUM_CPUS} cpus and BAZEL_BUILD_OPTIONS: ${BAZEL_BUILD_OPTIONS}"
 
-export BAZEL_TEST_OPTIONS="${BAZEL_BUILD_OPTIONS} --test_env=HOME --test_env=PYTHONUSERBASE \
+export BAZEL_TEST_OPTIONS="${BAZEL_BUILD_OPTIONS} \
 --test_env=UBSAN_OPTIONS=print_stacktrace=1 \
---cache_test_results=no --test_output=all ${BAZEL_EXTRA_TEST_OPTIONS}"
+--cache_test_results=no --test_output=errors ${BAZEL_EXTRA_TEST_OPTIONS}"
 
 case "$1" in
     build)
