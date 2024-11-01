@@ -57,7 +57,7 @@ TEST(FakeMetricsPluginConfigFactory, ValidateConfigWithBadConfigProtoReturnsErro
       Envoy::Config::Utility::getAndCheckFactoryByName<MetricsPluginConfigFactory>(
           "nighthawk.fake_metrics_plugin");
   absl::Status status = config_factory.ValidateConfig(empty_any);
-  EXPECT_THAT(status.message(), HasSubstr("Failed to parse"));
+  EXPECT_THAT(status.message(), HasSubstr("Unable to unpack"));
 }
 
 TEST(FakeMetricsPluginConfigFactory, ValidateConfigWithWellFormedIllegalConfigReturnsError) {
@@ -129,7 +129,7 @@ TEST(MakeFakeMetricsPluginTypedExtensionConfig, PacksGivenConfigProto) {
   envoy::config::core::v3::TypedExtensionConfig activator =
       MakeFakeMetricsPluginTypedExtensionConfig(expected_config);
   nighthawk::adaptive_load::FakeMetricsPluginConfig actual_config;
-  Envoy::MessageUtil::unpackToOrThrow(activator.typed_config(), actual_config);
+  ASSERT_TRUE(Envoy::MessageUtil::unpackTo(activator.typed_config(), actual_config).ok());
   EXPECT_THAT(expected_config, EqualsProto(actual_config));
 }
 
