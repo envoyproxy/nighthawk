@@ -1,0 +1,21 @@
+name: Nighthawk Envoy CI/CD
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  check:
+    runs-on: ubuntu-latest  # Equivalent to your 'envoy-x64-large' pool
+    strategy:
+      matrix:
+        target: [build, check_format]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run CI script
+        run: |
+          ci/run_envoy_docker.sh 'ci/do_ci.sh ${{ matrix.target }}'
