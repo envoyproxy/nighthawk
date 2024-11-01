@@ -17,4 +17,4 @@ jobs:
     - uses: actions/checkout@v3
     - name: Run CI script
       run: |
-        echo "Hello github"
+        ci/run_envoy_docker.sh 'ci/do_ci.sh ${{ matrix.target }}'
