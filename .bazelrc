@@ -545,9 +545,9 @@ build:rbe-envoy-engflow --remote_executor=grpcs://mordenite.cluster.engflow.com
 build:rbe-envoy-engflow --remote_default_exec_properties=container-image=docker://gcr.io/envoy-ci/envoy-build@sha256:7adc40c09508f957624c4d2e0f5aeecb73a59207ee6ded53b107eac828c091b2
 build:rbe-envoy-engflow --jobs=200
 build:rbe-envoy-engflow --define=engflow_rbe=true
+
 build:remote-envoy-engflow --config=common-envoy-engflow
 build:remote-envoy-engflow --config=cache-envoy-engflow
-build:remote-envoy-engflow --config=bes-envoy-engflow
 build:remote-envoy-engflow --config=rbe-envoy-engflow
 
 #############################################################################
@@ -572,6 +572,7 @@ common:debug --config=debug-sandbox
 common:debug --config=debug-coverage
 common:debug --config=debug-tests
 
+try-import %workspace%/repo.bazelrc
 try-import %workspace%/clang.bazelrc
 try-import %workspace%/user.bazelrc
 try-import %workspace%/local_tsan.bazelrc

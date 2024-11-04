@@ -61,7 +61,7 @@ TEST(FakeStepControllerConfigFactory, ValidateConfigWithBadConfigProtoReturnsErr
       Envoy::Config::Utility::getAndCheckFactoryByName<StepControllerConfigFactory>(
           "nighthawk.fake_step_controller");
   absl::Status status = config_factory.ValidateConfig(empty_any);
-  EXPECT_THAT(status.message(), HasSubstr("Failed to parse"));
+  EXPECT_THAT(status.message(), HasSubstr("Unable to unpack"));
 }
 
 TEST(FakeStepControllerConfigFactory, ValidateConfigWithAritificialValidationErrorReturnsError) {

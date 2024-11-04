@@ -62,7 +62,7 @@ FakeMetricsPluginConfigFactory::createMetricsPlugin(const Envoy::Protobuf::Messa
   const auto* any =
       Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
   nighthawk::adaptive_load::FakeMetricsPluginConfig config;
-  Envoy::MessageUtil::unpackToOrThrow(*any, config);
+  THROW_IF_NOT_OK(Envoy::MessageUtil::unpackTo(*any, config));
   return std::make_unique<FakeMetricsPlugin>(config);
 }
 
@@ -72,7 +72,7 @@ FakeMetricsPluginConfigFactory::ValidateConfig(const Envoy::Protobuf::Message& m
     const auto* any =
         Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
     nighthawk::adaptive_load::FakeMetricsPluginConfig config;
-    Envoy::MessageUtil::unpackToOrThrow(*any, config);
+    RETURN_IF_NOT_OK(Envoy::MessageUtil::unpackTo(*any, config));
     if (config.has_artificial_validation_failure()) {
       return GetStatusFromProtoRpcStatus(config.artificial_validation_failure());
     }
