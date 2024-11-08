@@ -25,7 +25,7 @@ RequestSourcePtr StubRequestSourcePluginConfigFactory::createRequestSourcePlugin
   const auto* any =
       Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
   nighthawk::request_source::StubPluginConfig config;
-  Envoy::MessageUtil::unpackToOrThrow(*any, config);
+  THROW_IF_NOT_OK(Envoy::MessageUtil::unpackTo(*any, config));
   return std::make_unique<StubRequestSource>(config);
 }
 

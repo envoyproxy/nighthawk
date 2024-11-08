@@ -55,7 +55,7 @@ TEST(FakeInputVariableSetterConfigFactory, ValidateConfigWithBadConfigProtoRetur
       Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(
           "nighthawk.fake_input_variable_setter");
   absl::Status status = config_factory.ValidateConfig(empty_any);
-  EXPECT_THAT(status.message(), HasSubstr("Failed to parse"));
+  EXPECT_THAT(status.message(), HasSubstr("Unable to unpack"));
 }
 
 TEST(FakeInputVariableSetterConfigFactory,
