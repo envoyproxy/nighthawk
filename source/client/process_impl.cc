@@ -268,6 +268,9 @@ public:
   void setSinkPredicates(std::unique_ptr<Envoy::Stats::SinkPredicates>&&) override {
     PANIC("NighthawkServerInstance::setSinkPredicates not implemented");
   }
+  Envoy::Config::XdsManager& xdsManager() override {
+    PANIC("NighthawkServerInstance::xdsManager not implemented");
+  }
   Envoy::Regex::Engine& regexEngine() override {
     PANIC("NighthawkServerInstance::regexEngine not implemented");
   };
