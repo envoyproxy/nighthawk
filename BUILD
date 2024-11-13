@@ -75,3 +75,11 @@ envoy_cc_binary(
         "//source/exe:output_transform_main_entry_lib",
     ],
 )
+
+genrule(
+    name = "hello",
+    outs = ["world.txt"],
+    cmd = """
+    echo HELLO > $@
+    """,
+)
