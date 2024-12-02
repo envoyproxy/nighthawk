@@ -164,7 +164,6 @@ build:clang-asan-common --linkopt --rtlib=compiler-rt
 build:clang-asan-common --linkopt --unwindlib=libgcc
 
 build:clang-asan --config=clang-asan-common
-build:clang-asan --linkopt='-L/opt/llvm/lib/clang/14.0.0/lib/x86_64-unknown-linux-gnu'      # unique
 build:clang-asan --linkopt=-l:libclang_rt.ubsan_standalone.a
 build:clang-asan --linkopt=-l:libclang_rt.ubsan_standalone_cxx.a
 build:clang-asan --action_env=ENVOY_UBSAN_VPTR=1
@@ -566,6 +565,9 @@ common:rbe-envoy-engflow --define=engflow_rbe=true
 common:remote-envoy-engflow --config=common-envoy-engflow
 common:remote-envoy-engflow --config=cache-envoy-engflow
 common:remote-envoy-engflow --config=rbe-envoy-engflow
+
+common:remote-cache-envoy-engflow --config=common-envoy-engflow
+common:remote-cache-envoy-engflow --config=cache-envoy-engflow
 
 # Specifies the rustfmt.toml for all rustfmt_test targets.
 build --@rules_rust//rust/settings:rustfmt.toml=//:rustfmt.toml
