@@ -927,7 +927,14 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
       addTracingCluster(bootstrap_, *tracing_uri);
     }
     ENVOY_LOG(debug, "Computed configuration: {}", absl::StrCat(bootstrap_));
-    cluster_manager_ = cluster_manager_factory_->clusterManagerFromProto(bootstrap_);
+    absl::StatusOr<Envoy::Upstream::ClusterManagerPtr> cluster_manager =
+        cluster_manager_factory_->clusterManagerFromProto(bootstrap_);
+    if (!cluster_manager.ok()) {
+      ENVOY_LOG(error, "clusterManagerFromProto failed. Received bad status: {}",
+                cluster_manager.status().message());
+      return false;
+    }
+    cluster_manager_ = std::move(*cluster_manager);
     absl::Status status = cluster_manager_->initialize(bootstrap_);
     if (!status.ok()) {
       ENVOY_LOG(error, "cluster_manager initialize failed. Received bad status: {}",
