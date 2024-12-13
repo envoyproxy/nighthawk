@@ -110,7 +110,8 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
 }
 
 void BenchmarkClientHttpImpl::terminate() {
-  absl::optional<Envoy::Upstream::HttpPoolData> pool_data = pool();
+  Envoy::Upstream::HostConstSharedPtr host;
+  absl::optional<Envoy::Upstream::HttpPoolData> pool_data = pool(host);
   if (pool_data.has_value() && pool_data.value().hasActiveConnections()) {
     // We don't report what happens after this call in the output, but latencies may still be
     // reported via callbacks. This may happen after a long time (60s), which HdrHistogram can't
@@ -151,7 +152,8 @@ StatisticPtrMap BenchmarkClientHttpImpl::statistics() const {
 };
 
 bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completion_callback) {
-  absl::optional<Envoy::Upstream::HttpPoolData> pool_data = pool();
+  Envoy::Upstream::HostConstSharedPtr host;
+  absl::optional<Envoy::Upstream::HttpPoolData> pool_data = pool(host);
   if (!pool_data.has_value()) {
     return false;
   }
