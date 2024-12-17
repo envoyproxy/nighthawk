@@ -79,6 +79,7 @@ public:
     EXPECT_CALL(cluster_manager(), getThreadLocalCluster(_))
         .WillRepeatedly(Return(&thread_local_cluster_));
     EXPECT_CALL(thread_local_cluster_, info()).WillRepeatedly(Return(cluster_info_));
+    EXPECT_CALL(thread_local_cluster_, chooseHost(_)).WillRepeatedly(Return(nullptr));
     EXPECT_CALL(thread_local_cluster_, httpConnPool(_, _, _, _))
         .WillRepeatedly(Return(Envoy::Upstream::HttpPoolData([]() {}, &pool_)));
 
