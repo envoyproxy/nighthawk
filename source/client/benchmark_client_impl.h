@@ -148,8 +148,9 @@ public:
   // Helpers
   absl::optional<::Envoy::Upstream::HttpPoolData> pool() {
     const auto thread_local_cluster = cluster_manager_->getThreadLocalCluster(cluster_name_);
-    return thread_local_cluster->httpConnPool(Envoy::Upstream::ResourcePriority::Default, protocol_,
-                                              nullptr);
+    Envoy::Upstream::HostConstSharedPtr host = thread_local_cluster->chooseHost(nullptr);
+    return thread_local_cluster->httpConnPool(host, Envoy::Upstream::ResourcePriority::Default,
+                                              protocol_, nullptr);
   }
 
 private:
