@@ -212,6 +212,7 @@ function do_benchmark_with_own_binaries() {
         --test_arg=--log-cli-level=info \
         --test_env=HEAPPROFILE= \
         --test_env=HEAPCHECK= \
+        --test_output=all \
         --compilation_mode=opt \
         --cxxopt=-g \
         --cxxopt=-ggdb3 \
