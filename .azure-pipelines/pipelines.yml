@@ -50,6 +50,7 @@ stages:
         ls -l generated
         echo "File ls testlogs:"
         ls -l bazel-testlogs
+        echo "$ENVOY_FAILED_TEST_LOGS"
         BAZEL_OUT=$(readlink bazel-testlogs)
         echo "Listing docker cotnainers"
         docker ps
