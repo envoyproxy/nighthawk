@@ -51,7 +51,7 @@ stages:
       condition: always()
       displayName: 'Publish Benchmark Test Log'
       inputs:
-        targetPath: bazel-testlogs
+        targetPath: bazel-testlogs/**/test.log
         artifactName: BenchmarkTestLog-$(System.JobAttempt)
 
 - stage: test_gcc
