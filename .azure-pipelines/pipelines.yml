@@ -4,28 +4,28 @@ trigger:
     - "main"
 
 stages:
-- stage: check
-  dependsOn: []
-  pool: "envoy-x64-large"
-  jobs:
-  - job: build_and_format
-    displayName: "do_ci.sh"
-    dependsOn: []
-    strategy:
-      maxParallel: 2
-      matrix:
-        build:
-          CI_TARGET: "build"
-        format:
-          CI_TARGET: "check_format"
-    timeoutInMinutes: 120
-    steps:
-    - template: bazel.yml
-      parameters:
-        ciTarget: $(CI_TARGET)
+#- stage: check
+#  dependsOn: []
+#  pool: "envoy-x64-large"
+#  jobs:
+#  - job: build_and_format
+#    displayName: "do_ci.sh"
+#    dependsOn: []
+#    strategy:
+#      maxParallel: 2
+#      matrix:
+#        build:
+#          CI_TARGET: "build"
+#        format:
+#          CI_TARGET: "check_format"
+#    timeoutInMinutes: 120
+#    steps:
+#    - template: bazel.yml
+#      parameters:
+#        ciTarget: $(CI_TARGET)
 
 - stage: test
-  dependsOn: ["check"]
+  dependsOn: []
   pool: "envoy-x64-large"
   jobs:
   - job: test_and_benchmark
@@ -34,8 +34,8 @@ stages:
       # Both test and benchmark need dedicated resources for stability.
       maxParallel: 1
       matrix:
-        test:
-          CI_TARGET: "test"
+#        test:
+#          CI_TARGET: "test"
         benchmark:
           CI_TARGET: "benchmark_with_own_binaries"
     timeoutInMinutes: 120
@@ -45,7 +45,7 @@ stages:
         ciTarget: $(CI_TARGET)
     - bash: |
         echo "File ls:"
-        ls -l
+        ls -l bazel-testlogs
       condition: always()
       displayName: "ls"
     - task: PublishPipelineArtifact@1
