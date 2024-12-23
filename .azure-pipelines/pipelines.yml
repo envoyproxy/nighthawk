@@ -47,7 +47,7 @@ stages:
         echo "File ls:"
         ls -l
         echo "File ls generated"
-        ls -l generated
+        ls -l generated/failed-testlogs
         echo "File ls testlogs:"
         ls -l bazel-testlogs
         echo "$ENVOY_FAILED_TEST_LOGS"
@@ -65,7 +65,7 @@ stages:
       condition: always()
       displayName: 'Publish Benchmark Test Log'
       inputs:
-        targetPath: $(ENVOY_FAILED_TEST_LOGS)
+        targetPath: $(Build.SourcesDirectory)/generated/failed-testlogs
         artifactName: BenchmarkTestLog-$(System.JobAttempt)
 
 - stage: test_gcc
