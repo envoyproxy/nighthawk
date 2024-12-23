@@ -45,6 +45,7 @@ stages:
         ciTarget: $(CI_TARGET)
     - bash: |
         echo "File ls:"
+        ls -l
         ls -l bazel-testlogs
       condition: always()
       displayName: "ls"
