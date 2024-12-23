@@ -20,6 +20,9 @@ export NIGHTHAWK_BUILD_ARCH=$(uname -m)
 export BAZEL_REMOTE_CACHE=${BAZEL_REMOTE_CACHE:=""}
 # The directory to copy built binaries to.
 export BUILD_DIR=""
+# This is where we dump failed test logs for CI collection.
+export ENVOY_FAILED_TEST_LOGS="${SRCDIR}"/generated/failed-testlogs
+mkdir -p "${ENVOY_FAILED_TEST_LOGS}"
 
 # We build in steps to avoid running out of memory in CI.
 # This list doesn't have to be complete, execution of bazel test will build any
