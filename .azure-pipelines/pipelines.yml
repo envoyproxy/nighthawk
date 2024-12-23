@@ -43,6 +43,16 @@ stages:
     - template: bazel.yml
       parameters:
         ciTarget: $(CI_TARGET)
+    - bash: |
+        echo "File ls:"
+        ls -l
+      displayName: "ls"
+    - task: PublishPipelineArtifact@1
+      condition: always()
+      displayName: 'Publish Benchmark Test Log'
+      inputs:
+        targetPath: $(ENVOY_FAILED_TEST_LOGS)/**/test.log 
+        artifactName: BenchmarkTestLog-$(System.JobAttempt)
 
 - stage: test_gcc
   dependsOn: ["check"]
