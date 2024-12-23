@@ -50,13 +50,17 @@ stages:
         ls -l bazel-out
         echo "File ls testlogs:"
         ls -l bazel-testlogs
+        BAZEL_OUT=$(readlink bazel-testlogs)
+        echo "readlink"
+        ls -l $BAZEL_OUT
+        echo "##vso[task.setvariable variable=TARGET_LOG_PATH]$BAZEL_OUT" 
       condition: always()
       displayName: "ls"
     - task: PublishPipelineArtifact@1
       condition: always()
       displayName: 'Publish Benchmark Test Log'
       inputs:
-        targetPath: bazel-testlogs/benchmarks/test_dynamic_benchmarks/test.log
+        targetPath: $(TARGET_LOG_PATH)/benchmarks/test_dynamic_benchmarks/test.log
         artifactName: BenchmarkTestLog-$(System.JobAttempt)
 
 - stage: test_gcc
