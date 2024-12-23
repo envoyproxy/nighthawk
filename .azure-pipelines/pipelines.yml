@@ -46,6 +46,9 @@ stages:
     - bash: |
         echo "File ls:"
         ls -l
+        echo "File ls bazel out"
+        ls -l bazel-out
+        echo "File ls testlogs:"
         ls -l bazel-testlogs
       condition: always()
       displayName: "ls"
