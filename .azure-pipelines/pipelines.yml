@@ -48,8 +48,7 @@ stages:
         ls -l
         echo "File ls generated"
         ls -l generated/failed-testlogs
-        echo "File ls testlogs:"
-        ls -l bazel-testlogs
+        cat bazel.output.txt
         echo "$ENVOY_FAILED_TEST_LOGS"
         BAZEL_OUT=$(readlink bazel-testlogs)
         echo "Listing docker cotnainers"
