@@ -46,8 +46,8 @@ stages:
     - bash: |
         echo "File ls:"
         ls -l
-        echo "File ls bechmarks"
-        ls -l benchmarks
+        echo "File ls generated"
+        ls -l generated
         echo "File ls testlogs:"
         ls -l bazel-testlogs
         BAZEL_OUT=$(readlink bazel-testlogs)
