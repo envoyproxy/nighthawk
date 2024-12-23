@@ -46,12 +46,13 @@ stages:
     - bash: |
         echo "File ls:"
         ls -l
+      condition: always()
       displayName: "ls"
     - task: PublishPipelineArtifact@1
       condition: always()
       displayName: 'Publish Benchmark Test Log'
       inputs:
-        targetPath: bazel-testlogs/**/test.log
+        targetPath: bazel-testlogs/benchmarks/test_dynamic_benchmarks/test.log
         artifactName: BenchmarkTestLog-$(System.JobAttempt)
 
 - stage: test_gcc
