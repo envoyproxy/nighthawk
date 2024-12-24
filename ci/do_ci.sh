@@ -216,6 +216,8 @@ function do_benchmark_with_own_binaries() {
         --test_env=HEAPPROFILE= \
         --test_env=HEAPCHECK= \
         --test_output=all \
+        --verbose_failures \
+        --verbose_explanations \
         --compilation_mode=opt \
         --cxxopt=-g \
         --cxxopt=-ggdb3 \
