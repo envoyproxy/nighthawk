@@ -48,16 +48,10 @@ stages:
         ls -l
         echo "File ls generated"
         ls -l generated/failed-testlogs
+        echo "env vars"
+        env
+        echo "bazel output"
         cat bazel.output.txt
-        echo "$ENVOY_FAILED_TEST_LOGS"
-        BAZEL_OUT=$(readlink bazel-testlogs)
-        echo "Listing docker cotnainers"
-        docker ps
-        CONTAINER_ID=$(docker ps -aqf "name=envoy_ci")
-        # Copy the testlogs directory to the host
-        docker cp $CONTAINER_ID:$BAZEL_OUT $(Build.SourcesDirectory)
-        echo "readlink"
-        ls -l
       condition: always()
       displayName: "ls"
     - task: PublishPipelineArtifact@1
