@@ -8,10 +8,13 @@ import pytest
 import sys
 
 # Workaround for https://github.com/bazelbuild/rules_python/issues/1221
-# sys.path += [os.path.dirname(__file__)]
+sys.path += [os.path.dirname(__file__)]
 
 if __name__ == '__main__':
   path = os.path.dirname(os.path.realpath(__file__))
+  print("printing sys.path")
+  for p in sys.path:
+    print(p)
   r = pytest.main([
       "--rootdir=" + path, "-x", (path + '/dynamic_test/'), "-p", "no:cacheprovider", "--log-level",
       "INFO", "--log-cli-level", "INFO", *sys.argv
