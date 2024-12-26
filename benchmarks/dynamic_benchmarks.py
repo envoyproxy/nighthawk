@@ -11,10 +11,6 @@ import sys
 sys.path += [os.path.dirname(__file__)]
 
 if __name__ == '__main__':
-  print(os.path.dirname(os.path.realpath(__file__)))
-  print("printing sys.path")
-  for p in sys.path:
-    print(p)
   path = os.path.dirname(__file__)
   r = pytest.main([
       "--rootdir=" + path, "-x", (path + '/dynamic_test/'), "-p", "no:cacheprovider", "--log-level",
