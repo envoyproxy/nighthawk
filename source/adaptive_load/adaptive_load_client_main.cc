@@ -104,14 +104,16 @@ uint32_t AdaptiveLoadClientMain::Run() {
   ENVOY_LOG(info, "Attempting adaptive load session: {}", DescribeInputs());
   absl::StatusOr<std::string> spec_textproto = filesystem_.fileReadToEnd(spec_filename_);
   if (!spec_textproto.ok()) {
-    throw Nighthawk::NighthawkException(absl::StrCat("Failed to read spec textproto file \"", spec_filename_,
-                                        "\": ", spec_textproto.status().message()));
+    throw Nighthawk::NighthawkException(absl::StrCat("Failed to read spec textproto file \"",
+                                                     spec_filename_,
+                                                     "\": ", spec_textproto.status().message()));
   }
 
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   if (!Envoy::Protobuf::TextFormat::ParseFromString(*spec_textproto, &spec)) {
     throw Nighthawk::NighthawkException(absl::StrCat("Unable to parse file \"", spec_filename_,
-                                        "\" as a text protobuf (type ", spec.GetTypeName(), ")"));
+                                                     "\" as a text protobuf (type ",
+                                                     spec.GetTypeName(), ")"));
   }
   std::shared_ptr<grpc::Channel> channel = grpc::CreateChannel(
       nighthawk_service_address_, use_tls_ ? grpc::SslCredentials(grpc::SslCredentialsOptions())
