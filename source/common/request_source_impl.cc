@@ -53,9 +53,13 @@ void RemoteRequestSourceImpl::connectToRequestStreamGrpcService() {
       cluster_manager_->grpcAsyncClientManager().factoryForGrpcService(grpc_service, scope_,
                                                                        /*skip_cluster_check=*/true);
   THROW_IF_NOT_OK_REF(cluster_manager.status());
+
+  absl::StatusOr<Envoy::Grpc::RawAsyncClientPtr> raw_async_client =
+      (*cluster_manager)->createUncachedRawAsyncClient();
+  THROW_IF_NOT_OK_REF(raw_async_client.status());
+
   grpc_client_ = std::make_unique<RequestStreamGrpcClientImpl>(
-      (*cluster_manager)->createUncachedRawAsyncClient(), dispatcher_, *base_header_,
-      header_buffer_length_);
+      *std::move(raw_async_client), dispatcher_, *base_header_, header_buffer_length_);
   grpc_client_->start();
   const Envoy::MonotonicTime start = time_source.monotonicTime();
   bool timeout = false;
