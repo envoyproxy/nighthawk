@@ -56,6 +56,8 @@ struct ClientSetupParameters {
   const uint64_t amount_of_requests;
   const RequestGenerator& request_generator;
 };
+
+ACTION(ReturnNewHostSelectionResponse) { return Envoy::Upstream::HostSelectionResponse(nullptr); }
 } // namespace
 
 class BenchmarkClientHttpTest : public Test {
@@ -79,7 +81,8 @@ public:
     EXPECT_CALL(cluster_manager(), getThreadLocalCluster(_))
         .WillRepeatedly(Return(&thread_local_cluster_));
     EXPECT_CALL(thread_local_cluster_, info()).WillRepeatedly(Return(cluster_info_));
-    EXPECT_CALL(thread_local_cluster_, chooseHost(_)).WillRepeatedly(Return(nullptr));
+    EXPECT_CALL(thread_local_cluster_, chooseHost(_))
+        .WillRepeatedly(ReturnNewHostSelectionResponse());
     EXPECT_CALL(thread_local_cluster_, httpConnPool(_, _, _, _))
         .WillRepeatedly(Return(Envoy::Upstream::HttpPoolData([]() {}, &pool_)));
 

@@ -595,7 +595,7 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
       typed_dns_resolver_config_(std::move(typed_dns_resolver_config)),
       init_watcher_("Nighthawk", []() {}),
       admin_(Envoy::Network::Address::InstanceConstSharedPtr()),
-      validation_context_(false, false, false), router_context_(store_root_.symbolTable()),
+      validation_context_(false, false, false, false), router_context_(store_root_.symbolTable()),
       envoy_options_(/* args = */ {"process_impl"}, HotRestartDisabled, spdlog::level::info) {
   // Any dispatchers created after the following call will use hr timers.
   setupForHRTimers();
