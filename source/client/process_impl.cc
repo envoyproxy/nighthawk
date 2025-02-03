@@ -343,9 +343,7 @@ public:
   Envoy::Upstream::ClusterManager& clusterManager() override {
     PANIC("NighthawkServerFactoryContext::clusterManager not implemented");
   };
-  Envoy::Config::XdsManager& xdsManager() override {
-    return xds_manager_;
-  };
+  Envoy::Config::XdsManager& xdsManager() override { return xds_manager_; };
   Envoy::Http::HttpServerPropertiesCacheManager& httpServerPropertiesCacheManager() override {
     return http_server_properties_cache_manager_;
   }
