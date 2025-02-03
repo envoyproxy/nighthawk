@@ -20,6 +20,8 @@ message RequestOptions {
   // Our StreamDecoder depends on bounding the size here, so if this changes, an amendment
   // to that is needed as well.
   google.protobuf.UInt32Value request_body_size = 3 [(validate.rules).uint32 = {lte: 4194304}];
+  // New field for customizable JSON request body
+  string json_body = 4;
 }
 
 // Used for providing multiple request options, especially for RequestSourcePlugins.
