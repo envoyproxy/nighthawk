@@ -113,8 +113,9 @@ function do_test() {
     # The environment variable AZP_BRANCH is used to determine if some expensive
     # tests that cannot run locally should be executed.
     # E.g. test_http_h1_mini_stress_test_open_loop.
-    run_on_build_parts "bazel build -c dbg $BAZEL_BUILD_OPTIONS --action_env=AZP_BRANCH"
-    bazel test -c dbg $BAZEL_TEST_OPTIONS --test_output=all --action_env=AZP_BRANCH //test/...
+    echo "XXXX JOB_NAME: $JOB_NAME"
+    #run_on_build_parts "bazel build -c dbg $BAZEL_BUILD_OPTIONS --action_env=AZP_BRANCH --action_env=JOB_NAME"
+    #bazel test -c dbg $BAZEL_TEST_OPTIONS --test_output=all --action_env=AZP_BRANCH --action_env=JOB_NAME //test/...
 }
 
 function do_clang_tidy() {

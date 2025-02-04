@@ -113,6 +113,18 @@ def isRunningInAzpCi():
   return True if os.environ.get("AZP_BRANCH", "") else False
 
 
+def isTestGccJob():
+  """Determine if the current execution is running as part of test_gcc.
+
+  Depends on the environment variable JOB_NAME which is set in
+  .azure-pipelines/bazel.yml.
+
+  Returns:
+      bool: True iff the current execution is part of the test_gcc job.
+  """
+  return os.environ.get("JOB_NAME", "") == "test_gcc"
+
+
 def substitute_yaml_values(runfiles_instance, obj: Union[dict, list, str], params: dict) -> str:
   """Substitute params into the given template.
 
