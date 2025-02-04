@@ -5,7 +5,7 @@ parameters:
   default: build
 
 variables:
-  ciTarget: $[parameters.ciTarget]
+- ciTarget: $[parameters.ciTarget]
 
 steps:
 - bash: |
