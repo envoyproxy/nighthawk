@@ -56,8 +56,6 @@ stages:
         test_gcc:
           CI_TARGET: "test_gcc"
     timeoutInMinutes: 120
-    variables:
-      TEST_GCC: "true"
     steps:
     - template: bazel.yml
       parameters:
