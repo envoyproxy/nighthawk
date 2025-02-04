@@ -45,7 +45,7 @@ stages:
         ciTarget: $(CI_TARGET)
 
 - stage: test_gcc
-  #dependsOn: ["check"]
+  dependsOn: ["check"]
   pool: "envoy-x64-large"
   jobs:
   - job: test_gcc
