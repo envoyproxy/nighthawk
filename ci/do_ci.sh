@@ -18,6 +18,7 @@ export SRCDIR=${SRCDIR:="${PWD}"}
 export CLANG_FORMAT=clang-format
 export NIGHTHAWK_BUILD_ARCH=$(uname -m)
 export BAZEL_REMOTE_CACHE=${BAZEL_REMOTE_CACHE:=""}
+export JOB_NAME=${JOB_NAME:=""}
 # The directory to copy built binaries to.
 export BUILD_DIR=""
 
