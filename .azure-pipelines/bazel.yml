@@ -17,7 +17,7 @@ steps:
     BAZEL_REMOTE_CACHE: $(LocalBuildCache)
     AZP_BRANCH: $(Build.SourceBranch)
     AZP_SHA1: $(Build.SourceVersion)
-    JOB_NAME: $(System.JobName)
+    CI_TARGET: ${{ parameters.ciTarget }}
     DOCKERHUB_USERNAME: $(DockerUsername)
     DOCKERHUB_PASSWORD: $(DockerPassword)
     # Ideally this is only enabled when actually required.
