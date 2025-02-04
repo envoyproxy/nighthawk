@@ -18,7 +18,7 @@ export SRCDIR=${SRCDIR:="${PWD}"}
 export CLANG_FORMAT=clang-format
 export NIGHTHAWK_BUILD_ARCH=$(uname -m)
 export BAZEL_REMOTE_CACHE=${BAZEL_REMOTE_CACHE:=""}
-export CI_TARGET=${CI_TARGET:=""}
+export TEST_GCC=${TEST_GCC:=""}
 export AZP_BRANCH=${AZP_BRANCH:=""}
 # The directory to copy built binaries to.
 export BUILD_DIR=""
@@ -115,10 +115,10 @@ function do_test() {
     # The environment variable AZP_BRANCH is used to determine if some expensive
     # tests that cannot run locally should be executed.
     # E.g. test_http_h1_mini_stress_test_open_loop.
-    echo "XXXX CI_TARGET: ${CI_TARGET}"
+    echo "XXXX TEST_GCC: ${TEST_GCC}"
     echo "XXXX AZP_BRANCH: ${AZP_BRANCH}"
-    #run_on_build_parts "bazel build -c dbg $BAZEL_BUILD_OPTIONS --action_env=AZP_BRANCH --action_env=CI_TARGET"
-    #bazel test -c dbg $BAZEL_TEST_OPTIONS --test_output=all --action_env=AZP_BRANCH --action_env=CI_TARGET //test/...
+    #run_on_build_parts "bazel build -c dbg $BAZEL_BUILD_OPTIONS --action_env=AZP_BRANCH --action_env=TEST_GCC"
+    #bazel test -c dbg $BAZEL_TEST_OPTIONS --test_output=all --action_env=AZP_BRANCH --action_env=TEST_GCC //test/...
 }
 
 function do_clang_tidy() {

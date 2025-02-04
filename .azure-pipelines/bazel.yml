@@ -4,9 +4,6 @@ parameters:
   type: string
   default: build
 
-variables:
-- ciTarget: $[parameters.ciTarget]
-
 steps:
 - bash: |
     echo "disk space at beginning of build:"
@@ -20,7 +17,6 @@ steps:
     BAZEL_REMOTE_CACHE: $(LocalBuildCache)
     AZP_BRANCH: $(Build.SourceBranch)
     AZP_SHA1: $(Build.SourceVersion)
-    CI_TARGET: $(ciTarget)
     DOCKERHUB_USERNAME: $(DockerUsername)
     DOCKERHUB_PASSWORD: $(DockerPassword)
     # Ideally this is only enabled when actually required.

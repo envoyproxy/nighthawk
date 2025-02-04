@@ -116,13 +116,13 @@ def isRunningInAzpCi():
 def isTestGccJob():
   """Determine if the current execution is running as part of test_gcc.
 
-  Depends on the environment variable CI_TARGET which is set in
-  .azure-pipelines/bazel.yml.
+  Depends on the environment variable TEST_GCC which is set in
+  .azure-pipelines/pipelines.yml.
 
   Returns:
       bool: True iff the current execution is part of the test_gcc job.
   """
-  return os.environ.get("CI_TARGET", "") == "test_gcc"
+  return True if os.environ.get("TEST_GCC", "") else False
 
 
 def substitute_yaml_values(runfiles_instance, obj: Union[dict, list, str], params: dict) -> str:
