@@ -20,7 +20,11 @@ message RequestOptions {
   // Our StreamDecoder depends on bounding the size here, so if this changes, an amendment
   // to that is needed as well.
   google.protobuf.UInt32Value request_body_size = 3 [(validate.rules).uint32 = {lte: 4194304}];
-  // Customizable JSON request body
+  // Optional body of the HTTP request.
+  // If this is provided, Nighthawk sets the "Content-Type" header to "application/json"
+  // and issues the request with the body provided here.
+  // If this isn't provided, Nighthawk sends its built-in request body (the character 'a'
+  // repeated n times to the specified request size).
   string json_body = 4;
 }
 
