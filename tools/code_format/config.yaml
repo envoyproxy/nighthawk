@@ -245,7 +245,6 @@ paths:
   namespace_check:
     exclude:
     - tools/api_boost/testdata/
-    - tools/clang_tools/
 
   # Files that should not raise an error for using memcpy
   memcpy:
