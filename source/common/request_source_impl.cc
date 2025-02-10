@@ -1,11 +1,13 @@
 #include "source/common/request_source_impl.h"
 
 #include <chrono>
+#include <memory>
 
 #include "envoy/common/exception.h"
 
 #include "external/envoy/source/common/common/assert.h"
 
+#include "source/common/request.h"
 #include "source/common/request_impl.h"
 
 namespace Nighthawk {
@@ -80,7 +82,17 @@ void RemoteRequestSourceImpl::destroyOnThread() {
 }
 
 RequestGenerator RemoteRequestSourceImpl::get() {
-  return [this]() -> RequestPtr { return grpc_client_->maybeDequeue(); };
+  return [this]() -> RequestPtr {
+    // Retrieve the request from grpc_client_
+    std::unique_ptr<Nighthawk::Request> request = grpc_client_->maybeDequeue();
+
+    // Ensure request is valid before processing
+    if (request) {
+      return std::make_unique<RequestImpl>(request->header(), request->body());
+    }
+
+    return nullptr;
+  };
 }
 
 } // namespace Nighthawk
