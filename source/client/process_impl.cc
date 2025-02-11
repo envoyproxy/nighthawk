@@ -19,11 +19,13 @@
 #include "nighthawk/common/factories.h"
 #include "nighthawk/user_defined_output/user_defined_output_plugin.h"
 
+#include "external/envoy/envoy/config/xds_manager.h"
 #include "external/envoy/source/common/api/api_impl.h"
 #include "external/envoy/source/common/common/cleanup.h"
 #include "external/envoy/source/common/common/regex.h"
 #include "external/envoy/source/common/common/statusor.h"
 #include "external/envoy/source/common/config/utility.h"
+#include "external/envoy/source/common/config/xds_manager_impl.h"
 #include "external/envoy/source/common/event/dispatcher_impl.h"
 #include "external/envoy/source/common/event/real_time_system.h"
 #include "external/envoy/source/common/http/http_server_properties_cache_manager_impl.h"
@@ -309,7 +311,8 @@ public:
         local_info_(local_info), validation_context_(validation_context),
         grpc_context_(grpc_context), router_context_(router_context), server_scope_(server_scope),
         http_server_properties_cache_manager_(
-            *this, Envoy::ProtobufMessage::getStrictValidationVisitor(), tls) {}
+            *this, Envoy::ProtobufMessage::getStrictValidationVisitor(), tls),
+        xds_manager_(validation_context_) {}
 
   const Envoy::Server::Options& options() override { return options_; };
 
@@ -340,6 +343,7 @@ public:
   Envoy::Upstream::ClusterManager& clusterManager() override {
     PANIC("NighthawkServerFactoryContext::clusterManager not implemented");
   };
+  Envoy::Config::XdsManager& xdsManager() override { return xds_manager_; };
   Envoy::Http::HttpServerPropertiesCacheManager& httpServerPropertiesCacheManager() override {
     return http_server_properties_cache_manager_;
   }
@@ -414,6 +418,7 @@ private:
   NighthawkLifecycleNotifierImpl lifecycle_notifier_; // A no-op object that lives here.
   Envoy::Regex::GoogleReEngine regex_engine_;         // Using the object created here.
   Envoy::Http::HttpServerPropertiesCacheManagerImpl http_server_properties_cache_manager_;
+  Envoy::Config::XdsManagerImpl xds_manager_;
 };
 
 /**
