@@ -10,7 +10,7 @@ namespace Nighthawk {
 class RequestImpl : public Request {
 public:
   RequestImpl(HeaderMapPtr header, std::string json_body = "")
-      : header_(std::move(header)), json_body_(std::move(json_body)) {}
+      : header_(std::move(header)), json_body_(json_body) {}
 
   HeaderMapPtr header() const override { return header_; }
   const std::string& body() const override { return json_body_; }
