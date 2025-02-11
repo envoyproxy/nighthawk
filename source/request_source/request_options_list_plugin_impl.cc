@@ -1,5 +1,5 @@
 #include "source/request_source/request_options_list_plugin_impl.h"
-
+#include <memory>
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"
 #include "external/envoy/source/common/protobuf/utility.h"
@@ -109,7 +109,8 @@ RequestGenerator OptionsListRequestSource::get() {
       auto lower_case_key = Envoy::Http::LowerCaseString(std::string(option_header.header().key()));
       header->setCopy(lower_case_key, std::string(option_header.header().value()));
     }
-    return std::make_unique<RequestImpl>(std::move(header));
+    return std::make_unique<RequestImpl>(std::move(header), request_option.json_body());
+
   };
   return request_generator;
 }
