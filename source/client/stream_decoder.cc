@@ -74,7 +74,6 @@ void StreamDecoder::onComplete(bool success) {
   ASSERT(!success || complete_);
   if (success && measure_latencies_) {
     latency_statistic_.addValue((time_source_.monotonicTime() - request_start_).count());
-    // At this point StreamDecoder::decodeHeaders() should have been called.
     if (stream_info_.responseCode().has_value()) {
       decoder_completion_callback_.exportLatency(
           stream_info_.responseCode().value(),
@@ -86,6 +85,7 @@ void StreamDecoder::onComplete(bool success) {
   stream_info_.upstreamInfo()->upstreamTiming().onLastUpstreamRxByteReceived(time_source_);
   response_body_sizes_statistic_.addValue(stream_info_.bytesSent());
   stream_info_.onRequestComplete();
+  // WARN: response_headers_ can be invalid here (https://github.com/envoyproxy/nighthawk/issues/1291).
   decoder_completion_callback_.onComplete(success, *response_headers_);
   finalizeActiveSpan();
   caller_completion_callback_(complete_, success);
