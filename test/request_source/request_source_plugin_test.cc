@@ -3,19 +3,18 @@
 #include <utility>
 
 #include "envoy/common/exception.h"
-
+#include "envoy/api/api.h"
+#include "envoy/http/header_map.h"
+#include "envoy/src/source/common/http/header_map_impl.h"
+#include "envoy/src/source/common/protobuf/message_validator_impl.h"
+#include "envoy/src/source/common/protobuf/protobuf.h"
+#include "envoy/src/source/common/protobuf/utility.h"
 
 #include "external/envoy/source/common/config/utility.h"
 #include "external/envoy/test/mocks/api/mocks.h"
 #include "external/envoy/test/mocks/stats/mocks.h"
 #include "external/envoy/test/test_common/file_system_for_test.h"
 #include "external/envoy/test/test_common/utility.h"
-#include "external/envoy/src/envoy/api/api.h"
-#include "external/envoy/http/header_map.h"
-#include "external/envoy/src/source/common/http/header_map_impl.h"
-#include "external/envoy/src/source/common/protobuf/message_validator_impl.h"
-#include "external/envoy/src/source/common/protobuf/protobuf.h"
-#include "external/envoy/src/source/common/protobuf/utility.h"
 
 #include "source/request_source/request_options_list_plugin_impl.h"
 #include "include/nighthawk/common/exception.h"
