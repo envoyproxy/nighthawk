@@ -7,7 +7,7 @@
 
 #include "external/envoy/source/common/common/assert.h"
 
-#include "source/common/request.h"
+#include "include/nighthawk/common/request.h"
 #include "source/common/request_impl.h"
 
 namespace Nighthawk {
