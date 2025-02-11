@@ -223,10 +223,12 @@ void BenchmarkClientHttpImpl::onComplete(bool success,
       benchmark_client_counters_.http_xxx_.inc();
     }
   }
-  for (UserDefinedOutputNamePluginPair& plugin : user_defined_output_plugins_) {
-    absl::Status status = plugin.second->handleResponseHeaders(headers);
-    if (!status.ok()) {
-      benchmark_client_counters_.user_defined_plugin_handle_headers_failure_.inc();
+  if (success) {
+    for (UserDefinedOutputNamePluginPair& plugin : user_defined_output_plugins_) {
+      absl::Status status = plugin.second->handleResponseHeaders(headers);
+      if (!status.ok()) {
+        benchmark_client_counters_.user_defined_plugin_handle_headers_failure_.inc();
+      }
     }
   }
 }
