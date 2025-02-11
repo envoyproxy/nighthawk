@@ -18,10 +18,10 @@
 #include "external/envoy/src/source/common/protobuf/utility.h"
 
 #include "source/request_source/request_options_list_plugin_impl.h"
-#include "source/common/exception.h"
-#include "source/common/request.h"
-#include "source/common/request_source.h"
-#include "request_source/request_source_plugin_config_factory.h"
+#include "include/nighthawk/common/exception.h"
+#include "include/nighthawk/common/request.h"
+#include "include/nighthawk/common/request_source.h"
+#include "include/nighthawk/request_source/request_source_plugin_config_factory.h"
 
 #include "test/request_source/stub_plugin_impl.h"
 #include "test/test_common/environment.h"
