@@ -84,4 +84,3 @@ RequestGenerator RemoteRequestSourceImpl::get() {
 }
 
 } // namespace Nighthawk
-

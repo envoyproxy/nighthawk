@@ -5,6 +5,12 @@
 #include "envoy/api/api.h"
 #include "envoy/common/exception.h"
 #include "envoy/http/header_map.h"
+
+#include "nighthawk/common/exception.h"
+#include "nighthawk/common/request.h"
+#include "nighthawk/common/request_source.h"
+#include "nighthawk/request_source/request_source_plugin_config_factory.h"
+
 #include "external/envoy/source/common/config/utility.h"
 #include "external/envoy/source/common/http/header_map_impl.h"
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
@@ -13,16 +19,15 @@
 #include "external/envoy/test/mocks/stats/mocks.h"
 #include "external/envoy/test/test_common/file_system_for_test.h"
 #include "external/envoy/test/test_common/utility.h"
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
-#include "include/nighthawk/common/exception.h"
-#include "include/nighthawk/common/request.h"
-#include "include/nighthawk/common/request_source.h"
-#include "include/nighthawk/request_source/request_source_plugin_config_factory.h"
+
 #include "source/request_source/request_options_list_plugin_impl.h"
+
 #include "test/request_source/stub_plugin_impl.h"
 #include "test/test_common/environment.h"
 #include "test/test_common/proto_matchers.h"
+
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 namespace Nighthawk {
 
@@ -481,4 +486,3 @@ TEST_F(
 
 } // namespace
 } // namespace Nighthawk
-
