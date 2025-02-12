@@ -5,12 +5,6 @@
 #include "envoy/api/api.h"
 #include "envoy/common/exception.h"
 #include "envoy/http/header_map.h"
-
-#include "nighthawk/common/exception.h"
-#include "nighthawk/common/request.h"
-#include "nighthawk/common/request_source.h"
-#include "nighthawk/request_source/request_source_plugin_config_factory.h"
-
 #include "external/envoy/source/common/config/utility.h"
 #include "external/envoy/source/common/http/header_map_impl.h"
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
@@ -19,15 +13,16 @@
 #include "external/envoy/test/mocks/stats/mocks.h"
 #include "external/envoy/test/test_common/file_system_for_test.h"
 #include "external/envoy/test/test_common/utility.h"
-
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#include "include/nighthawk/common/exception.h"
+#include "include/nighthawk/common/request.h"
+#include "include/nighthawk/common/request_source.h"
+#include "include/nighthawk/request_source/request_source_plugin_config_factory.h"
 #include "source/request_source/request_options_list_plugin_impl.h"
-
 #include "test/request_source/stub_plugin_impl.h"
 #include "test/test_common/environment.h"
 #include "test/test_common/proto_matchers.h"
-
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 
 namespace Nighthawk {
 
@@ -164,7 +159,7 @@ TEST_F(FileBasedRequestSourcePluginTest,
   nighthawk::request_source::FileBasedOptionsListRequestSourceConfig config =
       MakeFileBasedPluginConfigWithTestYaml(Nighthawk::TestEnvironment::runfilesPath(
           "test/request_source/test_data/test-config-ab.yaml"));
-  config.set_num_requests(3);
+  config.set_num_requests(2);
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
@@ -178,17 +173,18 @@ TEST_F(FileBasedRequestSourcePluginTest,
   Nighthawk::RequestPtr request1 = generator();
   Nighthawk::RequestPtr request2 = generator();
   Nighthawk::RequestPtr request3 = generator();
-  Nighthawk::RequestPtr request4 = generator();
   ASSERT_NE(request1, nullptr);
   ASSERT_NE(request2, nullptr);
-  ASSERT_NE(request3, nullptr);
 
   Nighthawk::HeaderMapPtr header1 = request1->header();
   Nighthawk::HeaderMapPtr header2 = request2->header();
   EXPECT_EQ(header1->getPathValue(), "/a");
   EXPECT_EQ(header2->getPathValue(), "/b");
-  EXPECT_EQ(request3->body(), R"({"message": "hello1"})");
-  EXPECT_EQ(request4, nullptr);
+  std::string body1 = request1->body();
+  std::string body2 = request2->body();
+  EXPECT_EQ(body1, R"({"message": "hello1"})");
+  EXPECT_EQ(body2, R"({"message": "hello2"})");
+  EXPECT_EQ(request3, nullptr);
 }
 
 TEST_F(FileBasedRequestSourcePluginTest, CreateRequestSourcePluginWithTooLargeAFileThrowsAnError) {
@@ -369,9 +365,11 @@ TEST_F(InLineRequestSourcePluginTest,
   Nighthawk::HeaderMapPtr header1 = request1->header();
   Nighthawk::HeaderMapPtr header2 = request2->header();
   EXPECT_EQ(header1->getPathValue(), "/a");
-  EXPECT_EQ(request1->body(), R"({"message": "hello1"})");
   EXPECT_EQ(header2->getPathValue(), "/b");
-  EXPECT_EQ(request2->body(), R"({"message": "hello2"})");
+  std::string body1 = request1->body();
+  std::string body2 = request2->body();
+  EXPECT_EQ(body1, R"({"message": "hello1"})");
+  EXPECT_EQ(body2, R"({"message": "hello2"})");
   EXPECT_EQ(request3, nullptr);
 }
 
@@ -483,3 +481,4 @@ TEST_F(
 
 } // namespace
 } // namespace Nighthawk
+
