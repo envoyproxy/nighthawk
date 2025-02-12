@@ -186,7 +186,6 @@ TEST_F(FileBasedRequestSourcePluginTest,
   Nighthawk::HeaderMapPtr header2 = request2->header();
   EXPECT_EQ(header1->getPathValue(), "/a");
   EXPECT_EQ(header2->getPathValue(), "/b");
-  EXPECT_EQ(request3, nullptr);
   EXPECT_EQ(request3->body(), R"({"message": "hello"})");
   EXPECT_EQ(request4, nullptr);
 }
