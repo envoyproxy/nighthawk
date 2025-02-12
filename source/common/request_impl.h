@@ -2,7 +2,9 @@
 
 #include <string>
 #include <utility>
+
 #include "envoy/http/header_map.h"
+
 #include "nighthawk/common/request.h"
 
 namespace Nighthawk {
