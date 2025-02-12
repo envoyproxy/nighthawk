@@ -163,7 +163,7 @@ TEST_F(FileBasedRequestSourcePluginTest,
   nighthawk::request_source::FileBasedOptionsListRequestSourceConfig config =
       MakeFileBasedPluginConfigWithTestYaml(Nighthawk::TestEnvironment::runfilesPath(
           "test/request_source/test_data/test-config-ab.yaml"));
-  config.set_num_requests(3)
+  config.set_num_requests(3);
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
