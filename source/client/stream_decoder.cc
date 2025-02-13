@@ -118,20 +118,26 @@ void StreamDecoder::onPoolReady(Envoy::Http::RequestEncoder& encoder,
   stream_info_.upstreamInfo()->upstreamTiming().onFirstUpstreamTxByteSent(
       time_source_); // XXX(oschaaf): is this correct?
   const Envoy::Http::Status status =
-      encoder.encodeHeaders(*request_headers_, request_body_size_ == 0);
+      encoder.encodeHeaders(*request_headers_, false);
   if (!status.ok()) {
     ENVOY_LOG_EVERY_POW_2(error,
                           "Request header encoding failure. Might be missing one or more required "
                           "HTTP headers in {}.",
                           *request_headers_);
   }
-  if (request_body_size_ > 0) {
+  std::string json_body = "";
+  auto json_body_header = request_headers_->get(Envoy::Http::LowerCaseString("x-json-body"));
+  if (json_body_header.has_value()) {
+    json_body = std::string(json_body_header->value().getStringView());
+  }
+  
+  if (json_body.empty()) {
     // TODO(https://github.com/envoyproxy/nighthawk/issues/138): This will show up in the zipkin UI
     // as 'response_size'. We add it here, optimistically assuming it will all be send. Ideally,
     // we'd track the encoder events of the stream to dig up and forward more information. For now,
     // we take the risk of erroneously reporting that we did send all the bytes, instead of always
     // reporting 0 bytes.
-    stream_info_.addBytesReceived(request_body_size_);
+    stream_info_.addBytesReceived(json_body.size());
     // Revisit this when we have non-uniform request distributions and on-the-fly reconfiguration in
     // place. The string size below MUST match the cap we put on RequestOptions::request_body_size
     // in api/client/options.proto!
