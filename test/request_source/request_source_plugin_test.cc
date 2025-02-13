@@ -1,6 +1,20 @@
+#include <cstdint>
+#include <string>
+#include <utility>
+
+#include "envoy/api/api.h"
 #include "envoy/common/exception.h"
+#include "envoy/http/header_map.h"
+
+#include "nighthawk/common/exception.h"
+#include "nighthawk/common/request.h"
+#include "nighthawk/common/request_source.h"
+#include "nighthawk/request_source/request_source_plugin_config_factory.h"
 
 #include "external/envoy/source/common/config/utility.h"
+#include "external/envoy/source/common/http/header_map_impl.h"
+#include "external/envoy/source/common/protobuf/message_validator_impl.h"
+#include "external/envoy/source/common/protobuf/protobuf.h"
 #include "external/envoy/test/mocks/api/mocks.h"
 #include "external/envoy/test/mocks/stats/mocks.h"
 #include "external/envoy/test/test_common/file_system_for_test.h"
@@ -171,6 +185,10 @@ TEST_F(FileBasedRequestSourcePluginTest,
   Nighthawk::HeaderMapPtr header2 = request2->header();
   EXPECT_EQ(header1->getPathValue(), "/a");
   EXPECT_EQ(header2->getPathValue(), "/b");
+  std::string body1 = request1->body();
+  std::string body2 = request2->body();
+  EXPECT_EQ(body1, R"({"message": "hello1"})");
+  EXPECT_EQ(body2, R"({"message": "hello2"})");
   EXPECT_EQ(request3, nullptr);
 }
 
@@ -353,6 +371,10 @@ TEST_F(InLineRequestSourcePluginTest,
   Nighthawk::HeaderMapPtr header2 = request2->header();
   EXPECT_EQ(header1->getPathValue(), "/a");
   EXPECT_EQ(header2->getPathValue(), "/b");
+  std::string body1 = request1->body();
+  std::string body2 = request2->body();
+  EXPECT_EQ(body1, R"({"message": "hello1"})");
+  EXPECT_EQ(body2, R"({"message": "hello2"})");
   EXPECT_EQ(request3, nullptr);
 }
 
