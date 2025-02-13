@@ -112,19 +112,17 @@ TEST_F(StreamDecoderTest, TrailerTest) {
 
 TEST_F(StreamDecoderTest, LatencyIsNotMeasured) {
     bool is_complete = false;
-    Envoy::Http::TestRequestHeaderMapImpl request_headers{
-        {":method", "POST"},
-        {":path", "/test"},
-        {":authority", "localhost"},
-        {"x-json-body", R"({"message": "hello"})"}  // Ensure json_body is set
-    };
-
     auto decoder = new StreamDecoder(
       *dispatcher_, time_system_, *this, [&is_complete](bool, bool) { is_complete = true; },
       connect_statistic_, latency_statistic_, response_header_size_statistic_,
       response_body_size_statistic_, origin_latency_statistic_, request_headers_, false, 0,
       random_generator_, tracer_, "");
-
+     Envoy::Http::TestRequestHeaderMapImpl request_headers{
+        {":method", "POST"},
+        {":path", "/test"},
+        {":authority", "localhost"},
+        {"x-json-body", R"({"message": "hello"})"}  // Ensure json_body is set
+    };
     Envoy::Http::MockRequestEncoder stream_encoder;
     EXPECT_CALL(stream_encoder, getStream());
 
