@@ -119,11 +119,10 @@ TEST_F(StreamDecoderTest, LatencyIsNotMeasured) {
     };
 
     auto decoder = new StreamDecoder(
-        *dispatcher_, time_system_, *this, [](bool) {}, 
-        connect_statistic_, latency_statistic_,
-        response_header_size_statistic_, response_body_size_statistic_,
-        origin_latency_statistic_, &request_headers, false, 0, 
-        random_generator_, tracer_, "");
+      *dispatcher_, time_system_, *this, [&is_complete](bool, bool) { is_complete = true; },
+      connect_statistic_, latency_statistic_, response_header_size_statistic_,
+      response_body_size_statistic_, origin_latency_statistic_, request_headers_, false, 0,
+      random_generator_, tracer_, "");
 
     Envoy::Http::MockRequestEncoder stream_encoder;
     EXPECT_CALL(stream_encoder, getStream());
