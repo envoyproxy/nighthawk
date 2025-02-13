@@ -127,8 +127,8 @@ void StreamDecoder::onPoolReady(Envoy::Http::RequestEncoder& encoder,
   }
   std::string json_body = "";
   auto json_body_header = request_headers_->get(Envoy::Http::LowerCaseString("x-json-body"));
-  if (json_body_header.has_value()) {
-    json_body = std::string(json_body_header->value().getStringView());
+  if (json_body_header.empty()) {
+    json_body = json_body_header[0]->value().getStringView();
   }
   
   if (json_body.empty()) {
