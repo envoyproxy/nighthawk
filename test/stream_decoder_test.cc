@@ -111,6 +111,7 @@ TEST_F(StreamDecoderTest, TrailerTest) {
 }
 
 TEST_F(StreamDecoderTest, LatencyIsNotMeasured) {
+    bool is_complete = false;
     Envoy::Http::TestRequestHeaderMapImpl request_headers{
         {":method", "POST"},
         {":path", "/test"},
