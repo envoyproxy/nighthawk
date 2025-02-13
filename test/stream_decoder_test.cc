@@ -119,8 +119,8 @@ TEST_F(StreamDecoderTest, LatencyIsNotMeasured) {
   EXPECT_CALL(stream_encoder, getStream());
   Envoy::Upstream::HostDescriptionConstSharedPtr ptr;
   NiceMock<Envoy::StreamInfo::MockStreamInfo> stream_info;
-  EXPECT_CALL(stream_encoder,
-              encodeHeaders(Envoy::HeaderMapEqualRef(request_headers_.get()), true));
+  EXPECT_CALL(stream_encoder, encodeHeaders(Envoy::HeaderMapEqualRef(request_headers_.get()), false)); // Headers should still be encoded, but request continues
+  EXPECT_CALL(stream_encoder, encodeData(_, true)).Times(1);  // Ensure json_body is sent via encodeData()
   decoder->onPoolReady(stream_encoder, ptr, stream_info,
                        {} /*absl::optional<Envoy::Http::Protocol> protocol*/);
   decoder->decodeHeaders(std::move(test_header_), true);
