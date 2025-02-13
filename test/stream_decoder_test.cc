@@ -132,7 +132,8 @@ TEST_F(StreamDecoderTest, LatencyIsNotMeasured) {
     EXPECT_CALL(stream_encoder, encodeHeaders(_, _)).Times(1);
     EXPECT_CALL(stream_encoder, encodeData(_, true)).Times(1);
 
-    decoder->onPoolReady(stream_encoder, ptr, stream_info);
+    decoder->onPoolReady(stream_encoder, ptr, stream_info,
+                       {} /*absl::optional<Envoy::Http::Protocol> protocol*/);
 
     decoder->decodeHeaders(std::move(test_header_), true);
     EXPECT_EQ(0, connect_statistic_.count());
