@@ -112,7 +112,8 @@ void StreamDecoder::onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason
 void StreamDecoder::onPoolReady(Envoy::Http::RequestEncoder& encoder,
                                 Envoy::Upstream::HostDescriptionConstSharedPtr,
                                 Envoy::StreamInfo::StreamInfo&,
-                                absl::optional<Envoy::Http::Protocol>) {
+                                absl::optional<Envoy::Http::Protocol>) 
+  ENVOY_LOG_MISC(debug, "onPoolReady: Called with request headers: {}", *request_headers_);
   // Make sure we hear about stream resets on the encoder.
   encoder.getStream().addCallbacks(*this);
   stream_info_.upstreamInfo()->upstreamTiming().onFirstUpstreamTxByteSent(
@@ -128,9 +129,13 @@ void StreamDecoder::onPoolReady(Envoy::Http::RequestEncoder& encoder,
   std::string json_body = "";
   auto json_body_header = request_headers_->get(Envoy::Http::LowerCaseString("x-json-body"));
   if (json_body_header.empty()) {
+     ENVOY_LOG_MISC(debug, "onPoolReady: Found x-json-body header with value: {}", 
+                       json_body_header->value().getStringView());
     json_body = json_body_header[0]->value().getStringView();
-  }
-  
+  } else {
+        ENVOY_LOG_MISC(debug, "onPoolReady: No x-json-body header found in request_headers_");
+    }
+   ENVOY_LOG_MISC(debug, "onPoolReady: Final json_body content: '{}'", json_body);
   if (json_body.empty()) {
     // TODO(https://github.com/envoyproxy/nighthawk/issues/138): This will show up in the zipkin UI
     // as 'response_size'. We add it here, optimistically assuming it will all be send. Ideally,
