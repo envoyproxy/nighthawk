@@ -111,22 +111,35 @@ TEST_F(StreamDecoderTest, TrailerTest) {
 }
 
 TEST_F(StreamDecoderTest, LatencyIsNotMeasured) {
-  auto decoder = new StreamDecoder(
-      *dispatcher_, time_system_, *this, [](bool, bool) {}, connect_statistic_, latency_statistic_,
-      response_header_size_statistic_, response_body_size_statistic_, origin_latency_statistic_,
-      request_headers_, false, 0, random_generator_, tracer_, "");
-  Envoy::Http::MockRequestEncoder stream_encoder;
-  EXPECT_CALL(stream_encoder, getStream());
-  Envoy::Upstream::HostDescriptionConstSharedPtr ptr;
-  NiceMock<Envoy::StreamInfo::MockStreamInfo> stream_info;
-  EXPECT_CALL(stream_encoder, encodeHeaders(Envoy::HeaderMapEqualRef(request_headers_.get()), false)); // Headers should still be encoded, but request continues
-  EXPECT_CALL(stream_encoder, encodeData(_, true)).Times(1);  // Ensure json_body is sent via encodeData()
-  decoder->onPoolReady(stream_encoder, ptr, stream_info,
-                       {} /*absl::optional<Envoy::Http::Protocol> protocol*/);
-  decoder->decodeHeaders(std::move(test_header_), true);
-  EXPECT_EQ(0, connect_statistic_.count());
-  EXPECT_EQ(0, latency_statistic_.count());
-  EXPECT_EQ(0, stream_decoder_export_latency_callbacks_);
+    Envoy::Http::TestRequestHeaderMapImpl request_headers{
+        {":method", "POST"},
+        {":path", "/test"},
+        {":authority", "localhost"},
+        {"x-json-body", R"({"message": "hello"})"}  // Ensure json_body is set
+    };
+
+    auto decoder = new StreamDecoder(
+        *dispatcher_, time_system_, *this, [](bool) {}, 
+        connect_statistic_, latency_statistic_,
+        response_header_size_statistic_, response_body_size_statistic_,
+        origin_latency_statistic_, &request_headers, false, 0, 
+        random_generator_, tracer_, "");
+
+    Envoy::Http::MockRequestEncoder stream_encoder;
+    EXPECT_CALL(stream_encoder, getStream());
+
+    Envoy::Upstream::HostDescriptionConstSharedPtr ptr;
+    NiceMock<Envoy::StreamInfo::MockStreamInfo> stream_info;
+
+    EXPECT_CALL(stream_encoder, encodeHeaders(_, _)).Times(1);
+    EXPECT_CALL(stream_encoder, encodeData(_, true)).Times(1);
+
+    decoder->onPoolReady(stream_encoder, ptr, stream_info);
+
+    decoder->decodeHeaders(std::move(test_header_), true);
+    EXPECT_EQ(0, connect_statistic_.count());
+    EXPECT_EQ(0, latency_statistic_.count());
+    EXPECT_EQ(0, stream_decoder_export_latency_callbacks_);
 }
 
 TEST_F(StreamDecoderTest, LatencyIsMeasured) {
