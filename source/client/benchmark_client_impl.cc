@@ -187,13 +187,12 @@ bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completi
     }
   }
 
-  std::string request_body_text = request->body();
   auto stream_decoder = new StreamDecoder(
       dispatcher_, api_.timeSource(), *this, std::move(caller_completion_callback),
       *statistic_.connect_statistic, *statistic_.response_statistic,
       *statistic_.response_header_size_statistic, *statistic_.response_body_size_statistic,
       *statistic_.origin_latency_statistic, request->header(), 
-      request_body_text,
+      request->body(),
       shouldMeasureLatencies(),
       content_length, generator_, tracer_, latency_response_header_name_);
   requests_initiated_++;
