@@ -118,7 +118,7 @@ private:
   Statistic& response_body_sizes_statistic_;
   Statistic& origin_latency_statistic_;
   HeaderMapPtr request_headers_;
-  std::string& request_body_;
+  const std::string& request_body_;
   Envoy::Http::ResponseHeaderMapPtr response_headers_;
   Envoy::Http::ResponseTrailerMapPtr trailer_headers_;
   const Envoy::MonotonicTime connect_start_;
