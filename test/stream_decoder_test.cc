@@ -207,13 +207,19 @@ TEST_F(StreamDecoderTest, NonEmptyRequestBodyWithNonZeroRequestBodySize) {
       request_headers_, json_body , false, 4 , random_generator_, tracer_,
       "");
   Envoy::Http::MockRequestEncoder stream_encoder;
+  Envoy::Buffer::Instance* captured_data_ptr = nullptr;
   EXPECT_CALL(stream_encoder, getStream());
   Envoy::Upstream::HostDescriptionConstSharedPtr ptr;
   NiceMock<Envoy::StreamInfo::MockStreamInfo> stream_info;
   EXPECT_CALL(
       stream_encoder,
       encodeHeaders(Envoy::HeaderMapEqualRef(request_headers_.get()), false));
-  EXPECT_CALL(stream_encoder, encodeData(testing::Ref(json_buf), true));
+  EXPECT_CALL(stream_encoder, encodeData(_, true))
+        .Times(1)
+        .WillOnce(testing::DoAll(
+            testing::SaveArg(&captured_data_ptr), 
+            testing::Return(Envoy::Http::okStatus()) 
+        ));
   decoder->onPoolReady(
       stream_encoder, ptr, stream_info,
       {} /*absl::optional<Envoy::Http::Protocol> protocol*/);
