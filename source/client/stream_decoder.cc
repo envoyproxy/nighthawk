@@ -126,12 +126,13 @@ void StreamDecoder::onPoolReady(Envoy::Http::RequestEncoder& encoder,
                           *request_headers_);
   }
   if (request_body_size_ > 0) {
-    if (request_body_.empty()) {
       // TODO(https://github.com/envoyproxy/nighthawk/issues/138): This will show up in the zipkin UI
       // as 'response_size'. We add it here, optimistically assuming it will all be send. Ideally,
       // we'd track the encoder events of the stream to dig up and forward more information. For now,
       // we take the risk of erroneously reporting that we did send all the bytes, instead of always
       // reporting 0 bytes.
+    stream_info_.addBytesReceived(request_body_size_);
+    if (request_body_.empty()) {
       // Revisit this when we have non-uniform request distributions and on-the-fly reconfiguration in
       // place. The string size below MUST match the cap we put on RequestOptions::request_body_size
       // in api/client/options.proto!
