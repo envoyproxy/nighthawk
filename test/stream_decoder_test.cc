@@ -204,10 +204,10 @@ TEST_F(StreamDecoderTest, NonEmptyRequestBodyWithNonZeroRequestBodySize) {
       *dispatcher_, time_system_, *this, [](bool, bool) {},
       connect_statistic_, latency_statistic_, response_header_size_statistic_,
       response_body_size_statistic_, origin_latency_statistic_,
-      request_headers_, json_body , false, 4 , random_generator_, tracer_,
+      request_headers_, json_body , false, 20 , random_generator_, tracer_,
       "");
   Envoy::Http::MockRequestEncoder stream_encoder;
-  Envoy::Buffer::Instance* captured_data_ptr = nullptr;
+  Envoy::Buffer::Instance* captured_encoder_body_input_ptr = nullptr;
   EXPECT_CALL(stream_encoder, getStream());
   Envoy::Upstream::HostDescriptionConstSharedPtr ptr;
   NiceMock<Envoy::StreamInfo::MockStreamInfo> stream_info;
@@ -217,13 +217,15 @@ TEST_F(StreamDecoderTest, NonEmptyRequestBodyWithNonZeroRequestBodySize) {
   EXPECT_CALL(stream_encoder, encodeData(_, true))
         .Times(1)
         .WillOnce(testing::DoAll(
-            testing::SaveArg(&captured_data_ptr), 
+            testing::SaveArg(&captured_encoder_body_input_ptr), 
             testing::Return(Envoy::Http::okStatus()) 
         ));
   decoder->onPoolReady(
       stream_encoder, ptr, stream_info,
       {} /*absl::optional<Envoy::Http::Protocol> protocol*/);
   decoder->decodeHeaders(std::move(test_header_), false);
+   ASSERT_NE(captured_encoder_body_input_ptr, nullptr); 
+   EXPECT_EQ(captured_encoder_body_input_ptr->toString(), json_buf.toString());
 }
 
 TEST_F(StreamDecoderTest, StreamResetTest) {
