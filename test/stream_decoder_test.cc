@@ -15,9 +15,7 @@
 
 using namespace std::chrono_literals;
 using namespace testing;
-using ::testing::Return;
 using ::testing::DoAll;
-using ::testing::Return;
 
 namespace Nighthawk {
 namespace Client {
