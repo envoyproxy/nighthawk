@@ -187,8 +187,8 @@ TEST_F(StreamDecoderTest, EmptyRequestBodyWithNonZeroRequestBodySize) {
    Envoy::Http::MockRequestEncoder stream_encoder;
    EXPECT_CALL(stream_encoder, getStream());
    Envoy::Upstream::HostDescriptionConstSharedPtr ptr;
-   Envoy::Buffer::OwnedImpl captured_encoder_body_input_buf;
    NiceMock<Envoy::StreamInfo::MockStreamInfo> stream_info;
+   Envoy::Buffer::OwnedImpl captured_encoder_body_input_buf;
    EXPECT_CALL(
        stream_encoder,
        encodeHeaders(Envoy::HeaderMapEqualRef(request_headers_.get()), false));
@@ -213,10 +213,10 @@ TEST_F(StreamDecoderTest, NonEmptyRequestBodyWithNonZeroRequestBodySize) {
       request_headers_, json_body , false, 20 , random_generator_, tracer_,
       "");
   Envoy::Http::MockRequestEncoder stream_encoder;
-  Envoy::Buffer::OwnedImpl captured_encoder_body_input_buf;
   EXPECT_CALL(stream_encoder, getStream());
   Envoy::Upstream::HostDescriptionConstSharedPtr ptr;
   NiceMock<Envoy::StreamInfo::MockStreamInfo> stream_info;
+  Envoy::Buffer::OwnedImpl captured_encoder_body_input_buf;
   EXPECT_CALL(
       stream_encoder,
       encodeHeaders(Envoy::HeaderMapEqualRef(request_headers_.get()), false));
