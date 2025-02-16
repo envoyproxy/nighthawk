@@ -132,15 +132,21 @@ void StreamDecoder::onPoolReady(Envoy::Http::RequestEncoder& encoder,
     // we take the risk of erroneously reporting that we did send all the bytes, instead of always
     // reporting 0 bytes.
     stream_info_.addBytesReceived(request_body_size_);
-    // Revisit this when we have non-uniform request distributions and on-the-fly reconfiguration in
-    // place. The string size below MUST match the cap we put on RequestOptions::request_body_size
-    // in api/client/options.proto!
-    auto* fragment = new Envoy::Buffer::BufferFragmentImpl(
-        staticUploadContent().data(), request_body_size_,
-        [](const void*, size_t, const Envoy::Buffer::BufferFragmentImpl* frag) { delete frag; });
-    Envoy::Buffer::OwnedImpl body_buffer;
-    body_buffer.addBufferFragment(*fragment);
-    encoder.encodeData(body_buffer, true);
+    if (request_body_.empty()) {
+      // Revisit this when we have non-uniform request distributions and on-the-fly reconfiguration
+      // in place. The string size below MUST match the cap we put on
+      // RequestOptions::request_body_size in api/client/options.proto!
+      auto* fragment = new Envoy::Buffer::BufferFragmentImpl(
+          staticUploadContent().data(), request_body_size_,
+          [](const void*, size_t, const Envoy::Buffer::BufferFragmentImpl* frag) { delete frag; });
+      Envoy::Buffer::OwnedImpl body_buffer;
+      body_buffer.addBufferFragment(*fragment);
+      encoder.encodeData(body_buffer, true);
+    } else {
+      Envoy::Buffer::OwnedImpl body_buffer;
+      body_buffer.add(absl::string_view(request_body_));
+      encoder.encodeData(body_buffer, true);
+    }
   }
   request_start_ = time_source_.monotonicTime();
   if (measure_latencies_) {
