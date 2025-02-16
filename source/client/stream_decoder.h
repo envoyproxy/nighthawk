@@ -45,7 +45,7 @@ public:
                 OperationCallback caller_completion_callback, Statistic& connect_statistic,
                 Statistic& latency_statistic, Statistic& response_header_sizes_statistic,
                 Statistic& response_body_sizes_statistic, Statistic& origin_latency_statistic,
-                HeaderMapPtr request_headers, const std::string& request_body, 
+                HeaderMapPtr request_headers, const std::string& request_body,
                 bool measure_latencies, uint32_t request_body_size,
                 Envoy::Random::RandomGenerator& random_generator,
                 Envoy::Tracing::TracerSharedPtr& tracer,
@@ -58,8 +58,8 @@ public:
         response_body_sizes_statistic_(response_body_sizes_statistic),
         origin_latency_statistic_(origin_latency_statistic),
         request_headers_(std::move(request_headers)), request_body_(request_body),
-        connect_start_(time_source_.monotonicTime()),
-        measure_latencies_(measure_latencies), request_body_size_(request_body_size),
+        connect_start_(time_source_.monotonicTime()), measure_latencies_(measure_latencies),
+        request_body_size_(request_body_size),
         downstream_address_setter_(std::make_shared<Envoy::Network::ConnectionInfoSetterImpl>(
             // The two addresses aren't used in an execution of Nighthawk.
             /* downstream_local_address = */ nullptr, /* downstream_remote_address = */ nullptr)),
