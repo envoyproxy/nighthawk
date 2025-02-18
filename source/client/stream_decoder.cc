@@ -125,7 +125,7 @@ void StreamDecoder::onPoolReady(Envoy::Http::RequestEncoder& encoder,
                           "HTTP headers in {}.",
                           *request_headers_);
   }
-  if (request_body_size_ > 0) {
+  if (request_body_size_ > 0 || !request_body_.empty()) {
     // TODO(https://github.com/envoyproxy/nighthawk/issues/138): This will show up in the zipkin UI
     // as 'response_size'. We add it here, optimistically assuming it will all be send. Ideally,
     // we'd track the encoder events of the stream to dig up and forward more information. For now,
