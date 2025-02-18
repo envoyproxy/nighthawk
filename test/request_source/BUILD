@@ -45,6 +45,7 @@ envoy_cc_test(
     srcs = ["request_source_plugin_test.cc"],
     data = [
         "test_data/test-config-ab.yaml",
+	"test_data/test-jsonconfig-ab.yaml",
         "test_data/test-config-c.yaml",
     ],
     repository = "@envoy",
