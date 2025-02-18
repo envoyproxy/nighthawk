@@ -13,6 +13,7 @@ filegroup(
     name = "testdata",
     srcs = [
         "test_data/test-config-ab.yaml",
+	"test_data/test-jsonconfig-ab.yaml",
         "test_data/test-config-c.yaml",
     ],
 )
