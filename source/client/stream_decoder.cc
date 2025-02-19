@@ -143,13 +143,7 @@ void StreamDecoder::onPoolReady(Envoy::Http::RequestEncoder& encoder,
       body_buffer.addBufferFragment(*fragment);
       
     } else {
-      // body_buffer.add(absl::string_view(request_body_)); 
-      // the line above causing MALLOC error string_view and std::string both cause MALLOC errors
-      const size_t max_body_size = 15000000000; 
-      // worked at 1000, worked at 20,000,000, 30,000,000, 60,0000,000, 240,000,000 960,000,000, 1,920,000,000
-      // 3,840,000,000, 7680000000 failed no limit.. 15000000000 failed with Malloc error 
-      std::string truncated_body = request_body_.substr(0, max_body_size);
-      body_buffer.add(absl::string_view(truncated_body)); 
+      body_buffer.add(absl::string_view(request_body_)); 
     }
     encoder.encodeData(body_buffer, true);
   }
