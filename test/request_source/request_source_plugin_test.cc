@@ -163,7 +163,7 @@ TEST_F(FileBasedRequestSourcePluginTest,
        CreateRequestSourcePluginGetsWorkingRequestGeneratorThatEndsAtNumRequest) {
   nighthawk::request_source::FileBasedOptionsListRequestSourceConfig config =
       MakeFileBasedPluginConfigWithTestYaml(Nighthawk::TestEnvironment::runfilesPath(
-          "test/request_source/test_data/test-jsonconfig-ab.yaml"));
+          "test/request_source/test_data/test-config-ab.yaml"));
   config.set_num_requests(2);
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
@@ -345,7 +345,7 @@ TEST_F(InLineRequestSourcePluginTest,
   nighthawk::client::RequestOptionsList options_list;
   THROW_IF_NOT_OK(
       util.loadFromFile(/*file to load*/ Nighthawk::TestEnvironment::runfilesPath(
-                            "test/request_source/test_data/test-jsonconfig-ab.yaml"),
+                            "test/request_source/test_data/test-config-ab.yaml"),
                         /*out parameter*/ options_list,
                         /*validation visitor*/ Envoy::ProtobufMessage::getStrictValidationVisitor(),
                         /*Api*/ *api_));
