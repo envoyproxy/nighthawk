@@ -45,7 +45,7 @@ public:
                 OperationCallback caller_completion_callback, Statistic& connect_statistic,
                 Statistic& latency_statistic, Statistic& response_header_sizes_statistic,
                 Statistic& response_body_sizes_statistic, Statistic& origin_latency_statistic,
-                HeaderMapPtr request_headers, const std::string& request_body,
+                HeaderMapPtr request_headers, std::string request_body,
                 bool measure_latencies, uint32_t request_body_size,
                 Envoy::Random::RandomGenerator& random_generator,
                 Envoy::Tracing::TracerSharedPtr& tracer,
@@ -57,7 +57,7 @@ public:
         response_header_sizes_statistic_(response_header_sizes_statistic),
         response_body_sizes_statistic_(response_body_sizes_statistic),
         origin_latency_statistic_(origin_latency_statistic),
-        request_headers_(std::move(request_headers)), request_body_(request_body),
+        request_headers_(std::move(request_headers)), request_body_(std::move(request_body)),
         connect_start_(time_source_.monotonicTime()), measure_latencies_(measure_latencies),
         request_body_size_(request_body_size),
         downstream_address_setter_(std::make_shared<Envoy::Network::ConnectionInfoSetterImpl>(
@@ -118,7 +118,7 @@ private:
   Statistic& response_body_sizes_statistic_;
   Statistic& origin_latency_statistic_;
   HeaderMapPtr request_headers_;
-  const std::string& request_body_;
+  std::string request_body_;
   Envoy::Http::ResponseHeaderMapPtr response_headers_;
   Envoy::Http::ResponseTrailerMapPtr trailer_headers_;
   const Envoy::MonotonicTime connect_start_;

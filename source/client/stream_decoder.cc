@@ -132,6 +132,7 @@ void StreamDecoder::onPoolReady(Envoy::Http::RequestEncoder& encoder,
     // we take the risk of erroneously reporting that we did send all the bytes, instead of always
     // reporting 0 bytes.
     stream_info_.addBytesReceived(request_body_size_);
+    Envoy::Buffer::OwnedImpl body_buffer;
     if (request_body_.empty()) {
       // Revisit this when we have non-uniform request distributions and on-the-fly reconfiguration
       // in place. The string size below MUST match the cap we put on
@@ -139,16 +140,20 @@ void StreamDecoder::onPoolReady(Envoy::Http::RequestEncoder& encoder,
       auto* fragment = new Envoy::Buffer::BufferFragmentImpl(
           staticUploadContent().data(), request_body_size_,
           [](const void*, size_t, const Envoy::Buffer::BufferFragmentImpl* frag) { delete frag; });
-      Envoy::Buffer::OwnedImpl body_buffer;
       body_buffer.addBufferFragment(*fragment);
-      encoder.encodeData(body_buffer, true);
+      
     } else {
-      Envoy::Buffer::OwnedImpl body_buffer;
-      body_buffer.add(absl::string_view(request_body_)); 
+      // body_buffer.add(absl::string_view(request_body_)); 
       // the line above causing MALLOC error string_view and std::string both cause MALLOC errors
-      encoder.encodeData(body_buffer, true);
+      const size_t max_body_size = 15000000000; 
+      // worked at 1000, worked at 20,000,000, 30,000,000, 60,0000,000, 240,000,000 960,000,000, 1,920,000,000
+      // 3,840,000,000, 7680000000 failed no limit.. 15000000000 failed with Malloc error 
+      std::string truncated_body = request_body_.substr(0, max_body_size);
+      body_buffer.add(absl::string_view(truncated_body)); 
     }
+    encoder.encodeData(body_buffer, true);
   }
+  
   request_start_ = time_source_.monotonicTime();
   if (measure_latencies_) {
     connect_statistic_.addValue((request_start_ - connect_start_).count());
