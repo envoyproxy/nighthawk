@@ -191,6 +191,7 @@ TEST_F(StreamDecoderTest, EmptyRequestBodyWithNonZeroRequestBodySize) {
                        {} /*absl::optional<Envoy::Http::Protocol> protocol*/);
   decoder->decodeHeaders(std::move(test_header_), false);
   EXPECT_EQ(captured_encoder_body_input_buf.toString(), expected_body);
+  delete decoder;
 }
 
 TEST_F(StreamDecoderTest, NonEmptyRequestBodyWithNonZeroRequestBodySize) {
@@ -214,6 +215,7 @@ TEST_F(StreamDecoderTest, NonEmptyRequestBodyWithNonZeroRequestBodySize) {
                        {} /*absl::optional<Envoy::Http::Protocol> protocol*/);
   decoder->decodeHeaders(std::move(test_header_), false);
   EXPECT_EQ(captured_encoder_body_input_buf.toString(), json_buf.toString());
+  delete decoder;
 }
 
 TEST_F(StreamDecoderTest, StreamResetTest) {
