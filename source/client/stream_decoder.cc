@@ -144,7 +144,8 @@ void StreamDecoder::onPoolReady(Envoy::Http::RequestEncoder& encoder,
       encoder.encodeData(body_buffer, true);
     } else {
       Envoy::Buffer::OwnedImpl body_buffer;
-      body_buffer.add(absl::string_view(request_body_));
+      body_buffer.add(absl::string_view(request_body_)); 
+      // the line above causing MALLOC error string_view and std::string both cause MALLOC errors
       encoder.encodeData(body_buffer, true);
     }
   }
