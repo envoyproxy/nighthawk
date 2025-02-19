@@ -45,9 +45,8 @@ public:
                 OperationCallback caller_completion_callback, Statistic& connect_statistic,
                 Statistic& latency_statistic, Statistic& response_header_sizes_statistic,
                 Statistic& response_body_sizes_statistic, Statistic& origin_latency_statistic,
-                HeaderMapPtr request_headers, std::string request_body,
-                bool measure_latencies, uint32_t request_body_size,
-                Envoy::Random::RandomGenerator& random_generator,
+                HeaderMapPtr request_headers, std::string request_body, bool measure_latencies,
+                uint32_t request_body_size, Envoy::Random::RandomGenerator& random_generator,
                 Envoy::Tracing::TracerSharedPtr& tracer,
                 absl::string_view latency_response_header_name)
       : dispatcher_(dispatcher), time_source_(time_source),

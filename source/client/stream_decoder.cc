@@ -141,13 +141,13 @@ void StreamDecoder::onPoolReady(Envoy::Http::RequestEncoder& encoder,
           staticUploadContent().data(), request_body_size_,
           [](const void*, size_t, const Envoy::Buffer::BufferFragmentImpl* frag) { delete frag; });
       body_buffer.addBufferFragment(*fragment);
-      
+
     } else {
-      body_buffer.add(absl::string_view(request_body_)); 
+      body_buffer.add(absl::string_view(request_body_));
     }
     encoder.encodeData(body_buffer, true);
   }
-  
+
   request_start_ = time_source_.monotonicTime();
   if (measure_latencies_) {
     connect_statistic_.addValue((request_start_ - connect_start_).count());
