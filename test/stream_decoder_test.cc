@@ -200,7 +200,7 @@ TEST_F(StreamDecoderTest, NonEmptyRequestBodyWithNonZeroRequestBodySize) {
   auto decoder = new StreamDecoder(
       *dispatcher_, time_system_, *this, [](bool, bool) {}, connect_statistic_, latency_statistic_,
       response_header_size_statistic_, response_body_size_statistic_, origin_latency_statistic_,
-      request_headers_, json_body, false, 20, random_generator_, tracer_, "");
+      request_headers_, json_body, false, 0, random_generator_, tracer_, "");
   Envoy::Http::MockRequestEncoder stream_encoder;
   EXPECT_CALL(stream_encoder, getStream());
   Envoy::Upstream::HostDescriptionConstSharedPtr ptr;
