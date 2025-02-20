@@ -188,7 +188,6 @@ TEST_F(FileBasedRequestSourcePluginTest,
   EXPECT_EQ(request3, nullptr);
 }
 
-
 TEST_F(FileBasedRequestSourcePluginTest,
        CreateRequestSourcePluginWithJsonBodyGetsWorkingRequestGeneratorThatEndsAtNumRequest) {
   nighthawk::request_source::FileBasedOptionsListRequestSourceConfig config =
