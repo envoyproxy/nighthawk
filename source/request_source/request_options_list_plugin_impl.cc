@@ -101,7 +101,13 @@ RequestGenerator OptionsListRequestSource::get() {
 
     // Override the default values with the values from the request_option
     header->setMethod(envoy::config::core::v3::RequestMethod_Name(request_option.request_method()));
-    const uint32_t content_length = request_option.request_body_size().value();
+    uint32_t request_body_length = 0;
+    if (!request_option.json_body().empty()) {
+      request_body_length = request_option.json_body().size();
+    } else {
+      request_body_length = request_option.request_body_size().value();
+    }
+    const uint32_t content_length = request_body_length;
     if (content_length > 0) {
       header->setContentLength(
           content_length); // Content length is used later in stream_decoder to populate the body

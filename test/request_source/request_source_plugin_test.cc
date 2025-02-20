@@ -220,6 +220,28 @@ TEST_F(FileBasedRequestSourcePluginTest,
   EXPECT_EQ(request3, nullptr);
 }
 
+TEST_F(FileBasedRequestSourcePluginTest,
+       CreateRequestSourcePluginWithJsonBodyGetsRequestSize) {
+  nighthawk::request_source::FileBasedOptionsListRequestSourceConfig config =
+      MakeFileBasedPluginConfigWithTestYaml(Nighthawk::TestEnvironment::runfilesPath(
+          "test/request_source/test_data/test-jsonconfig-ab.yaml"));
+  config.set_num_requests(1);
+  Envoy::ProtobufWkt::Any config_any;
+  config_any.PackFrom(config);
+  auto& config_factory =
+      Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
+          "nighthawk.file-based-request-source-plugin");
+  Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
+  RequestSourcePtr file_based_request_source =
+      config_factory.createRequestSourcePlugin(config_any, *api_, std::move(header));
+  file_based_request_source->initOnThread();
+  Nighthawk::RequestGenerator generator = file_based_request_source->get();
+  Nighthawk::RequestPtr request1 = generator();
+  ASSERT_NE(request1, nullptr);
+  Nighthawk::HeaderMapPtr header1 = request1->header();
+  EXPECT_EQ(header1->getContentLengthValue(), "21");
+}
+
 TEST_F(FileBasedRequestSourcePluginTest, CreateRequestSourcePluginWithTooLargeAFileThrowsAnError) {
   nighthawk::request_source::FileBasedOptionsListRequestSourceConfig config =
       MakeFileBasedPluginConfigWithTestYaml(Nighthawk::TestEnvironment::runfilesPath(
