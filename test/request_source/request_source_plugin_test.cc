@@ -185,6 +185,34 @@ TEST_F(FileBasedRequestSourcePluginTest,
   Nighthawk::HeaderMapPtr header2 = request2->header();
   EXPECT_EQ(header1->getPathValue(), "/a");
   EXPECT_EQ(header2->getPathValue(), "/b");
+  EXPECT_EQ(request3, nullptr);
+}
+
+TEST_F(FileBasedRequestSourcePluginTest,
+       CreateRequestSourcePluginWithJsonBodyGetsWorkingRequestGeneratorThatEndsAtNumRequest) {
+  nighthawk::request_source::FileBasedOptionsListRequestSourceConfig config =
+      MakeFileBasedPluginConfigWithTestYaml(Nighthawk::TestEnvironment::runfilesPath(
+          "test/request_source/test_data/test-jsonconfig-ab.yaml"));
+  config.set_num_requests(2);
+  Envoy::ProtobufWkt::Any config_any;
+  config_any.PackFrom(config);
+  auto& config_factory =
+      Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
+          "nighthawk.file-based-request-source-plugin");
+  Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
+  RequestSourcePtr file_based_request_source =
+      config_factory.createRequestSourcePlugin(config_any, *api_, std::move(header));
+  file_based_request_source->initOnThread();
+  Nighthawk::RequestGenerator generator = file_based_request_source->get();
+  Nighthawk::RequestPtr request1 = generator();
+  Nighthawk::RequestPtr request2 = generator();
+  Nighthawk::RequestPtr request3 = generator();
+  ASSERT_NE(request1, nullptr);
+  ASSERT_NE(request2, nullptr);
+  Nighthawk::HeaderMapPtr header1 = request1->header();
+  Nighthawk::HeaderMapPtr header2 = request2->header();
+  EXPECT_EQ(header1->getPathValue(), "/a");
+  EXPECT_EQ(header2->getPathValue(), "/b");
   std::string body1 = request1->body();
   std::string body2 = request2->body();
   EXPECT_EQ(body1, R"({"message": "hello1"})");
@@ -367,6 +395,40 @@ TEST_F(InLineRequestSourcePluginTest,
   ASSERT_NE(request1, nullptr);
   ASSERT_NE(request2, nullptr);
 
+  Nighthawk::HeaderMapPtr header1 = request1->header();
+  Nighthawk::HeaderMapPtr header2 = request2->header();
+  EXPECT_EQ(header1->getPathValue(), "/a");
+  EXPECT_EQ(header2->getPathValue(), "/b");
+  EXPECT_EQ(request3, nullptr);
+}
+
+TEST_F(InLineRequestSourcePluginTest,
+       CreateRequestSourcePluginWithJsonBodyGetsWorkingRequestGeneratorThatEndsAtNumRequest) {
+  Envoy::MessageUtil util;
+  nighthawk::client::RequestOptionsList options_list;
+  THROW_IF_NOT_OK(
+      util.loadFromFile(/*file to load*/ Nighthawk::TestEnvironment::runfilesPath(
+                            "test/request_source/test_data/test-jsonconfig-ab.yaml"),
+                        /*out parameter*/ options_list,
+                        /*validation visitor*/ Envoy::ProtobufMessage::getStrictValidationVisitor(),
+                        /*Api*/ *api_));
+  nighthawk::request_source::InLineOptionsListRequestSourceConfig config =
+      MakeInLinePluginConfig(options_list, /*num_requests*/ 2);
+  Envoy::ProtobufWkt::Any config_any;
+  config_any.PackFrom(config);
+  auto& config_factory =
+      Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
+          "nighthawk.in-line-options-list-request-source-plugin");
+  Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
+  RequestSourcePtr plugin =
+      config_factory.createRequestSourcePlugin(config_any, *api_, std::move(header));
+  plugin->initOnThread();
+  Nighthawk::RequestGenerator generator = plugin->get();
+  Nighthawk::RequestPtr request1 = generator();
+  Nighthawk::RequestPtr request2 = generator();
+  Nighthawk::RequestPtr request3 = generator();
+  ASSERT_NE(request1, nullptr);
+  ASSERT_NE(request2, nullptr);
   Nighthawk::HeaderMapPtr header1 = request1->header();
   Nighthawk::HeaderMapPtr header2 = request2->header();
   EXPECT_EQ(header1->getPathValue(), "/a");
