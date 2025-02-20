@@ -220,8 +220,7 @@ TEST_F(FileBasedRequestSourcePluginTest,
   EXPECT_EQ(request3, nullptr);
 }
 
-TEST_F(FileBasedRequestSourcePluginTest,
-       CreateRequestSourcePluginWithJsonBodySetsRequestSize) {
+TEST_F(FileBasedRequestSourcePluginTest, CreateRequestSourcePluginWithJsonBodySetsRequestSize) {
   nighthawk::request_source::FileBasedOptionsListRequestSourceConfig config =
       MakeFileBasedPluginConfigWithTestYaml(Nighthawk::TestEnvironment::runfilesPath(
           "test/request_source/test_data/test-jsonconfig-ab.yaml"));
@@ -492,8 +491,7 @@ TEST_F(InLineRequestSourcePluginTest,
   EXPECT_EQ(request3, nullptr);
 }
 
-TEST_F(InLineRequestSourcePluginTest,
-       CreateRequestSourcePluginWithJsonBodyGetsRequestSize) {
+TEST_F(InLineRequestSourcePluginTest, CreateRequestSourcePluginWithJsonBodyGetsRequestSize) {
   Envoy::MessageUtil util;
   nighthawk::client::RequestOptionsList options_list;
   THROW_IF_NOT_OK(
@@ -524,8 +522,7 @@ TEST_F(InLineRequestSourcePluginTest,
   EXPECT_EQ(header2->getContentLengthValue(), "26");
 }
 
-TEST_F(InLineRequestSourcePluginTest,
-       CreateRequestSourcePluginWithJsonBodyGetsContentType) {
+TEST_F(InLineRequestSourcePluginTest, CreateRequestSourcePluginWithJsonBodyGetsContentType) {
   Envoy::MessageUtil util;
   nighthawk::client::RequestOptionsList options_list;
   THROW_IF_NOT_OK(
