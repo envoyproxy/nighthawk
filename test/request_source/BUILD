@@ -14,6 +14,7 @@ filegroup(
     srcs = [
         "test_data/test-config-ab.yaml",
         "test_data/test-config-c.yaml",
+        "test_data/test-jsonconfig-ab.yaml",
     ],
 )
 
@@ -45,6 +46,7 @@ envoy_cc_test(
     data = [
         "test_data/test-config-ab.yaml",
         "test_data/test-config-c.yaml",
+	"test_data/test-jsonconfig-ab.yaml",
     ],
     repository = "@envoy",
     deps = [
