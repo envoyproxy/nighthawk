@@ -374,6 +374,11 @@ public:
     PANIC("NighthawkServerFactoryContext::processContext not implemented");
   }
 
+  Envoy::Server::Configuration::TransportSocketFactoryContext&
+  getTransportSocketFactoryContext() const override {
+    PANIC("NighthawkServerFactoryContext::getTransportSocketFactoryContext not implemented");
+  }
+
   Envoy::Server::DrainManager& drainManager() override {
     PANIC("NighthawkServerFactoryContext::drainManager not implemented");
   };
