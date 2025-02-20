@@ -113,7 +113,6 @@ void StreamDecoder::onPoolReady(Envoy::Http::RequestEncoder& encoder,
                                 Envoy::Upstream::HostDescriptionConstSharedPtr,
                                 Envoy::StreamInfo::StreamInfo&,
                                 absl::optional<Envoy::Http::Protocol>) {
-  // Make sure we hear about stream resets on the encoder.
   encoder.getStream().addCallbacks(*this);
   stream_info_.upstreamInfo()->upstreamTiming().onFirstUpstreamTxByteSent(
       time_source_); // XXX(oschaaf): is this correct?
@@ -131,18 +130,19 @@ void StreamDecoder::onPoolReady(Envoy::Http::RequestEncoder& encoder,
     // we'd track the encoder events of the stream to dig up and forward more information. For now,
     // we take the risk of erroneously reporting that we did send all the bytes, instead of always
     // reporting 0 bytes.
-    stream_info_.addBytesReceived(request_body_size_);
     Envoy::Buffer::OwnedImpl body_buffer;
     if (request_body_.empty()) {
       // Revisit this when we have non-uniform request distributions and on-the-fly reconfiguration
       // in place. The string size below MUST match the cap we put on
       // RequestOptions::request_body_size in api/client/options.proto!
+      stream_info_.addBytesReceived(request_body_size_);
       auto* fragment = new Envoy::Buffer::BufferFragmentImpl(
           staticUploadContent().data(), request_body_size_,
           [](const void*, size_t, const Envoy::Buffer::BufferFragmentImpl* frag) { delete frag; });
       body_buffer.addBufferFragment(*fragment);
 
     } else {
+      stream_info_.addBytesReceived(request_body_.size());
       body_buffer.add(absl::string_view(request_body_));
     }
     encoder.encodeData(body_buffer, true);
