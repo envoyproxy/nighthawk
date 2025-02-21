@@ -41,7 +41,7 @@ class StreamDecoder : public Envoy::Http::ResponseDecoder,
                       public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
   // TODO(pelintehcoder): Optimize request body handling by reconsidering the use of std::string.
-  // - Evaluate whether std::string_view or const std::string& can be used instead of storing full
+  // - Evaluate whether absl::string_view or const std::string& can be used instead of storing full
   // copies.
   // - Ensure that lifetime concerns are properly handled to avoid dangling references.
   // - This will reduce unnecessary copies while maintaining safety.
