@@ -194,7 +194,7 @@ TEST_F(StreamDecoderTest, EmptyRequestBodyWithNonZeroRequestBodySize) {
   delete decoder;
 }
 
-TEST_F(StreamDecoderTest, NonEmptyRequestBodyWithNonZeroRequestBodySize) {
+TEST_F(StreamDecoderTest, NonEmptyRequestBodyIgnoresProvidedRequestBodySize) {
   std::string json_body = R"({"Message": "Hello"})";
   Envoy::Buffer::OwnedImpl json_buf(json_body);
   auto decoder = new StreamDecoder(
