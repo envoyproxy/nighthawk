@@ -170,7 +170,7 @@ TEST_F(StreamDecoderTest, LatencyIsMeasured) {
   EXPECT_EQ(1, stream_decoder_export_latency_callbacks_);
 }
 
-TEST_F(StreamDecoderTest, EmptyRequestBody) {
+TEST_F(StreamDecoderTest, EmptyRequestBodyWithNonZeroRequestBodySize) {
   std::string expected_body = "aaaa";
   Envoy::Buffer::OwnedImpl buf(expected_body);
   auto decoder = new StreamDecoder(
@@ -194,7 +194,7 @@ TEST_F(StreamDecoderTest, EmptyRequestBody) {
   delete decoder;
 }
 
-TEST_F(StreamDecoderTest, NonEmptyRequestBody) {
+TEST_F(StreamDecoderTest, NonEmptyRequestBodyIgnoresProvidedRequestBodySize) {
   std::string json_body = R"({"Message": "Hello"})";
   Envoy::Buffer::OwnedImpl json_buf(json_body);
   auto decoder = new StreamDecoder(
