@@ -8,6 +8,9 @@ on:
 
 jobs:
   check:
+    permissions:
+      contents: read
+      packages: read
     runs-on: envoy-x64-medium
     strategy:
       fail-fast: false
@@ -17,4 +20,9 @@ jobs:
     - uses: actions/checkout@v4
     - name: Run CI script
       run: |
-        echo "Hello github"
+        bazel run \
+            --config=remote-envoy-engflow \
+            --@envoy//tools/cat:target=//:hello \
+            @envoy//tools/cat
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
