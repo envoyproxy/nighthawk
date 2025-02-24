@@ -27,7 +27,6 @@ from test.integration import asserts
                      13,
                      17,
                      id="in-line"),
-
         pytest.param("""
         {
         "name": "nighthawk.file-based-request-source-plugin",
@@ -35,11 +34,11 @@ from test.integration import asserts
             "@type": "type.googleapis.com/nighthawk.request_source.FileBasedOptionsListRequestSourceConfig",
             "file_path": "%s"
         }
-        }""" % (os.path.dirname(os.path.abspath(os.path.dirname(__file__))) + "/request_source/test_data/test-jsonconfig-ab.yaml"),
-        13,  
-        17,  
-        id="json-request-body-from-yaml"),
-        
+        }""" % (os.path.dirname(os.path.abspath(os.path.dirname(__file__))) +
+                "/request_source/test_data/test-jsonconfig-ab.yaml"),
+                     13,
+                     17,
+                     id="json-request-body-from-yaml"),
         pytest.param("""
   {
   name:"nighthawk.file-based-request-source-plugin",
