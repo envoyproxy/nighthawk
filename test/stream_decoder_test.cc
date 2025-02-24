@@ -11,14 +11,16 @@
 #include "source/client/stream_decoder.h"
 #include "source/common/statistic_impl.h"
 
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 using namespace std::chrono_literals;
 using namespace testing;
+using ::testing::DoAll;
 
 namespace Nighthawk {
 namespace Client {
-
+using ::testing::SaveArg;
 class StreamDecoderTest : public Test, public StreamDecoderCompletionCallback {
 public:
   StreamDecoderTest()
@@ -27,7 +29,7 @@ public:
         request_headers_(std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(
             std::initializer_list<std::pair<std::string, std::string>>(
                 {{":method", "GET"}, {":path", "/foo"}}))),
-        tracer_(std::make_unique<Envoy::Tracing::NullTracer>()),
+        request_body_(std::string("")), tracer_(std::make_unique<Envoy::Tracing::NullTracer>()),
         test_header_(std::make_unique<Envoy::Http::TestResponseHeaderMapImpl>(
             std::initializer_list<std::pair<std::string, std::string>>({{":status", "200"}}))),
         test_trailer_(std::make_unique<Envoy::Http::TestResponseTrailerMapImpl>(
@@ -52,6 +54,7 @@ public:
   StreamingStatistic response_body_size_statistic_;
   StreamingStatistic origin_latency_statistic_;
   HeaderMapPtr request_headers_;
+  std::string request_body_;
   uint64_t stream_decoder_completion_callbacks_{0};
   uint64_t pool_failures_{0};
   uint64_t stream_decoder_export_latency_callbacks_{0};
@@ -67,8 +70,8 @@ TEST_F(StreamDecoderTest, HeaderOnlyTest) {
   auto decoder = new StreamDecoder(
       *dispatcher_, time_system_, *this, [&is_complete](bool, bool) { is_complete = true; },
       connect_statistic_, latency_statistic_, response_header_size_statistic_,
-      response_body_size_statistic_, origin_latency_statistic_, request_headers_, false, 0,
-      random_generator_, tracer_, "");
+      response_body_size_statistic_, origin_latency_statistic_, request_headers_, request_body_,
+      false, 0, random_generator_, tracer_, "");
   decoder->decodeHeaders(std::move(test_header_), true);
   EXPECT_TRUE(is_complete);
   EXPECT_EQ(1, stream_decoder_completion_callbacks_);
@@ -81,8 +84,8 @@ TEST_F(StreamDecoderTest, HeaderWithBodyTest) {
   auto decoder = new StreamDecoder(
       *dispatcher_, time_system_, *this, [&is_complete](bool, bool) { is_complete = true; },
       connect_statistic_, latency_statistic_, response_header_size_statistic_,
-      response_body_size_statistic_, origin_latency_statistic_, request_headers_, false, 0,
-      random_generator_, tracer_, "");
+      response_body_size_statistic_, origin_latency_statistic_, request_headers_, request_body_,
+      false, 0, random_generator_, tracer_, "");
   decoder->decodeHeaders(std::move(test_header_), false);
   EXPECT_FALSE(is_complete);
   Envoy::Buffer::OwnedImpl buf(std::string(1, 'a'));
@@ -99,8 +102,8 @@ TEST_F(StreamDecoderTest, TrailerTest) {
   auto decoder = new StreamDecoder(
       *dispatcher_, time_system_, *this, [&is_complete](bool, bool) { is_complete = true; },
       connect_statistic_, latency_statistic_, response_header_size_statistic_,
-      response_body_size_statistic_, origin_latency_statistic_, request_headers_, false, 0,
-      random_generator_, tracer_, "");
+      response_body_size_statistic_, origin_latency_statistic_, request_headers_, request_body_,
+      false, 0, random_generator_, tracer_, "");
   Envoy::Http::ResponseHeaderMapPtr headers{
       new Envoy::Http::TestResponseHeaderMapImpl{{":status", "200"}}};
   decoder->decodeHeaders(std::move(headers), false);
@@ -114,7 +117,7 @@ TEST_F(StreamDecoderTest, LatencyIsNotMeasured) {
   auto decoder = new StreamDecoder(
       *dispatcher_, time_system_, *this, [](bool, bool) {}, connect_statistic_, latency_statistic_,
       response_header_size_statistic_, response_body_size_statistic_, origin_latency_statistic_,
-      request_headers_, false, 0, random_generator_, tracer_, "");
+      request_headers_, request_body_, false, 0, random_generator_, tracer_, "");
   Envoy::Http::MockRequestEncoder stream_encoder;
   EXPECT_CALL(stream_encoder, getStream());
   Envoy::Upstream::HostDescriptionConstSharedPtr ptr;
@@ -150,7 +153,7 @@ TEST_F(StreamDecoderTest, LatencyIsMeasured) {
   auto decoder = new StreamDecoder(
       *dispatcher_, time_system_, *this, [](bool, bool) {}, connect_statistic_, latency_statistic_,
       response_header_size_statistic_, response_body_size_statistic_, origin_latency_statistic_,
-      request_header, true, 0, random_generator_, tracer_, "");
+      request_header, request_body_, true, 0, random_generator_, tracer_, "");
   Envoy::Http::MockRequestEncoder stream_encoder;
   EXPECT_CALL(stream_encoder, getStream());
   Envoy::Upstream::HostDescriptionConstSharedPtr ptr;
@@ -167,13 +170,61 @@ TEST_F(StreamDecoderTest, LatencyIsMeasured) {
   EXPECT_EQ(1, stream_decoder_export_latency_callbacks_);
 }
 
+TEST_F(StreamDecoderTest, EmptyRequestBodyWithNonZeroRequestBodySize) {
+  std::string expected_body = "aaaa";
+  Envoy::Buffer::OwnedImpl buf(expected_body);
+  auto decoder = new StreamDecoder(
+      *dispatcher_, time_system_, *this, [](bool, bool) {}, connect_statistic_, latency_statistic_,
+      response_header_size_statistic_, response_body_size_statistic_, origin_latency_statistic_,
+      request_headers_, "", false, 4, random_generator_, tracer_, "");
+  Envoy::Http::MockRequestEncoder stream_encoder;
+  EXPECT_CALL(stream_encoder, getStream());
+  Envoy::Upstream::HostDescriptionConstSharedPtr ptr;
+  NiceMock<Envoy::StreamInfo::MockStreamInfo> stream_info;
+  Envoy::Buffer::OwnedImpl captured_encoder_body_input_buf;
+  EXPECT_CALL(stream_encoder,
+              encodeHeaders(Envoy::HeaderMapEqualRef(request_headers_.get()), false));
+  EXPECT_CALL(stream_encoder, encodeData(_, true))
+      .Times(1)
+      .WillOnce(testing::DoAll(SaveArg<0>(&captured_encoder_body_input_buf)));
+  decoder->onPoolReady(stream_encoder, ptr, stream_info,
+                       {} /*absl::optional<Envoy::Http::Protocol> protocol*/);
+  decoder->decodeHeaders(std::move(test_header_), false);
+  EXPECT_EQ(captured_encoder_body_input_buf.toString(), expected_body);
+  delete decoder;
+}
+
+TEST_F(StreamDecoderTest, NonEmptyRequestBodyIgnoresProvidedRequestBodySize) {
+  std::string json_body = R"({"Message": "Hello"})";
+  Envoy::Buffer::OwnedImpl json_buf(json_body);
+  auto decoder = new StreamDecoder(
+      *dispatcher_, time_system_, *this, [](bool, bool) {}, connect_statistic_, latency_statistic_,
+      response_header_size_statistic_, response_body_size_statistic_, origin_latency_statistic_,
+      request_headers_, json_body, false, 0, random_generator_, tracer_, "");
+  Envoy::Http::MockRequestEncoder stream_encoder;
+  EXPECT_CALL(stream_encoder, getStream());
+  Envoy::Upstream::HostDescriptionConstSharedPtr ptr;
+  NiceMock<Envoy::StreamInfo::MockStreamInfo> stream_info;
+  Envoy::Buffer::OwnedImpl captured_encoder_body_input_buf;
+  EXPECT_CALL(stream_encoder,
+              encodeHeaders(Envoy::HeaderMapEqualRef(request_headers_.get()), false));
+  EXPECT_CALL(stream_encoder, encodeData(_, true))
+      .Times(1)
+      .WillOnce(testing::DoAll(SaveArg<0>(&captured_encoder_body_input_buf)));
+  decoder->onPoolReady(stream_encoder, ptr, stream_info,
+                       {} /*absl::optional<Envoy::Http::Protocol> protocol*/);
+  decoder->decodeHeaders(std::move(test_header_), false);
+  EXPECT_EQ(captured_encoder_body_input_buf.toString(), json_buf.toString());
+  delete decoder;
+}
+
 TEST_F(StreamDecoderTest, StreamResetTest) {
   bool is_complete = false;
   auto decoder = new StreamDecoder(
       *dispatcher_, time_system_, *this, [&is_complete](bool, bool) { is_complete = true; },
       connect_statistic_, latency_statistic_, response_header_size_statistic_,
-      response_body_size_statistic_, origin_latency_statistic_, request_headers_, false, 0,
-      random_generator_, tracer_, "");
+      response_body_size_statistic_, origin_latency_statistic_, request_headers_, request_body_,
+      false, 0, random_generator_, tracer_, "");
   decoder->decodeHeaders(std::move(test_header_), false);
   decoder->onResetStream(Envoy::Http::StreamResetReason::LocalReset, "fooreason");
   EXPECT_TRUE(is_complete); // these do get reported.
@@ -186,8 +237,8 @@ TEST_F(StreamDecoderTest, PoolFailureTest) {
   auto decoder = new StreamDecoder(
       *dispatcher_, time_system_, *this, [&is_complete](bool, bool) { is_complete = true; },
       connect_statistic_, latency_statistic_, response_header_size_statistic_,
-      response_body_size_statistic_, origin_latency_statistic_, request_headers_, false, 0,
-      random_generator_, tracer_, "");
+      response_body_size_statistic_, origin_latency_statistic_, request_headers_, request_body_,
+      false, 0, random_generator_, tracer_, "");
   Envoy::Upstream::HostDescriptionConstSharedPtr ptr;
   decoder->onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason::Overflow, "fooreason",
                          ptr);
@@ -250,7 +301,8 @@ TEST_P(LatencyTrackingViaResponseHeaderTest, LatencyTrackingViaResponseHeader) {
   auto decoder = new StreamDecoder(
       *dispatcher_, time_system_, *this, [](bool, bool) {}, connect_statistic_, latency_statistic_,
       response_header_size_statistic_, response_body_size_statistic_, origin_latency_statistic_,
-      request_headers_, false, 0, random_generator_, tracer_, kLatencyTrackingResponseHeader);
+      request_headers_, request_body_, false, 0, random_generator_, tracer_,
+      kLatencyTrackingResponseHeader);
   const LatencyTrackingViaResponseHeaderTestParam param = GetParam();
   Envoy::Http::ResponseHeaderMapPtr headers{new Envoy::Http::TestResponseHeaderMapImpl{
       {":status", "200"}, {kLatencyTrackingResponseHeader, std::get<0>(param)}}};
@@ -267,7 +319,8 @@ TEST_F(StreamDecoderTest, LatencyTrackingWithMultipleResponseHeadersFails) {
   auto decoder = new StreamDecoder(
       *dispatcher_, time_system_, *this, [](bool, bool) {}, connect_statistic_, latency_statistic_,
       response_header_size_statistic_, response_body_size_statistic_, origin_latency_statistic_,
-      request_headers_, false, 0, random_generator_, tracer_, kLatencyTrackingResponseHeader);
+      request_headers_, request_body_, false, 0, random_generator_, tracer_,
+      kLatencyTrackingResponseHeader);
   Envoy::Http::ResponseHeaderMapPtr headers{
       new Envoy::Http::TestResponseHeaderMapImpl{{":status", "200"},
                                                  {kLatencyTrackingResponseHeader, "1"},

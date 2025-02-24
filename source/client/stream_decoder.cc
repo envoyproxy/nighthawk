@@ -113,35 +113,41 @@ void StreamDecoder::onPoolReady(Envoy::Http::RequestEncoder& encoder,
                                 Envoy::Upstream::HostDescriptionConstSharedPtr,
                                 Envoy::StreamInfo::StreamInfo&,
                                 absl::optional<Envoy::Http::Protocol>) {
-  // Make sure we hear about stream resets on the encoder.
   encoder.getStream().addCallbacks(*this);
   stream_info_.upstreamInfo()->upstreamTiming().onFirstUpstreamTxByteSent(
       time_source_); // XXX(oschaaf): is this correct?
-  const Envoy::Http::Status status =
-      encoder.encodeHeaders(*request_headers_, request_body_size_ == 0);
+  const bool end_stream = request_body_size_ == 0 && request_body_.empty();
+  const Envoy::Http::Status status = encoder.encodeHeaders(*request_headers_, end_stream);
   if (!status.ok()) {
     ENVOY_LOG_EVERY_POW_2(error,
                           "Request header encoding failure. Might be missing one or more required "
                           "HTTP headers in {}.",
                           *request_headers_);
   }
-  if (request_body_size_ > 0) {
+  if (request_body_size_ > 0 || !request_body_.empty()) {
     // TODO(https://github.com/envoyproxy/nighthawk/issues/138): This will show up in the zipkin UI
     // as 'response_size'. We add it here, optimistically assuming it will all be send. Ideally,
     // we'd track the encoder events of the stream to dig up and forward more information. For now,
     // we take the risk of erroneously reporting that we did send all the bytes, instead of always
     // reporting 0 bytes.
-    stream_info_.addBytesReceived(request_body_size_);
-    // Revisit this when we have non-uniform request distributions and on-the-fly reconfiguration in
-    // place. The string size below MUST match the cap we put on RequestOptions::request_body_size
-    // in api/client/options.proto!
-    auto* fragment = new Envoy::Buffer::BufferFragmentImpl(
-        staticUploadContent().data(), request_body_size_,
-        [](const void*, size_t, const Envoy::Buffer::BufferFragmentImpl* frag) { delete frag; });
     Envoy::Buffer::OwnedImpl body_buffer;
-    body_buffer.addBufferFragment(*fragment);
+    if (request_body_.empty()) {
+      // Revisit this when we have non-uniform request distributions and on-the-fly reconfiguration
+      // in place. The string size below MUST match the cap we put on
+      // RequestOptions::request_body_size in api/client/options.proto!
+      stream_info_.addBytesReceived(request_body_size_);
+      auto* fragment = new Envoy::Buffer::BufferFragmentImpl(
+          staticUploadContent().data(), request_body_size_,
+          [](const void*, size_t, const Envoy::Buffer::BufferFragmentImpl* frag) { delete frag; });
+      body_buffer.addBufferFragment(*fragment);
+
+    } else {
+      stream_info_.addBytesReceived(request_body_.size());
+      body_buffer.add(absl::string_view(request_body_));
+    }
     encoder.encodeData(body_buffer, true);
   }
+
   request_start_ = time_source_.monotonicTime();
   if (measure_latencies_) {
     connect_statistic_.addValue((request_start_ - connect_start_).count());
