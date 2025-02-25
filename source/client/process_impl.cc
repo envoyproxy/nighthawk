@@ -312,7 +312,7 @@ public:
         grpc_context_(grpc_context), router_context_(router_context), server_scope_(server_scope),
         http_server_properties_cache_manager_(
             *this, Envoy::ProtobufMessage::getStrictValidationVisitor(), tls),
-        xds_manager_(validation_context_) {}
+        xds_manager_(dispatcher, api, validation_context_) {}
 
   const Envoy::Server::Options& options() override { return options_; };
 
