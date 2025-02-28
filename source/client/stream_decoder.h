@@ -62,6 +62,10 @@ public:
         response_body_sizes_statistic_(response_body_sizes_statistic),
         origin_latency_statistic_(origin_latency_statistic),
         request_headers_(std::move(request_headers)), request_body_(std::move(request_body)),
+        response_headers_(Envoy::Http::ResponseHeaderMapImpl::create(
+            /* max_headers_kb = */ 0, /* max_headers_count = */ 0)),
+        trailer_headers_(Envoy::Http::ResponseTrailerMapImpl::create(
+            /* max_headers_kb = */ 0, /* max_headers_count = */ 0)),
         connect_start_(time_source_.monotonicTime()), measure_latencies_(measure_latencies),
         request_body_size_(request_body_size),
         downstream_address_setter_(std::make_shared<Envoy::Network::ConnectionInfoSetterImpl>(
