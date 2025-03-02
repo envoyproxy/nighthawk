@@ -2,7 +2,6 @@
 
 #include <memory>
 
-#include "envoy/http/header_map.h"
 #include "external/envoy/source/common/http/header_map_impl.h"
 #include "external/envoy/source/common/http/http1/codec_impl.h"
 #include "external/envoy/source/common/http/utility.h"
