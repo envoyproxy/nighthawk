@@ -52,6 +52,9 @@ envoy_cc_binary(
 envoy_cc_binary(
     name = "nighthawk_test_server",
     repository = "@envoy",
+    linkopts = [
+        "-latomic",
+    ],
     deps = [
         "//source/server:http_dynamic_delay_filter_config",
         "//source/server:http_test_server_filter_config",
