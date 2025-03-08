@@ -54,6 +54,7 @@ envoy_cc_binary(
     repository = "@envoy",
     linkopts = [
         "-latomic",
+        "-lrt",
     ],
     deps = [
         "//source/server:http_dynamic_delay_filter_config",
