@@ -23,11 +23,11 @@ filegroup(
 
 envoy_cc_binary(
     name = "nighthawk_adaptive_load_client",
-    repository = "@envoy",
     linkopts = [
         "-latomic",
         "-lrt",
     ],
+    repository = "@envoy",
     deps = [
         "//source/exe:adaptive_load_client_entry_lib",
     ],
@@ -35,11 +35,11 @@ envoy_cc_binary(
 
 envoy_cc_binary(
     name = "nighthawk_client",
-    repository = "@envoy",
     linkopts = [
         "-latomic",
         "-lrt",
     ],
+    repository = "@envoy",
     deps = [
         "//source/exe:nighthawk_client_entry_lib",
     ],
@@ -49,11 +49,11 @@ envoy_cc_binary(
 # to enable integration test use cases.
 envoy_cc_binary(
     name = "nighthawk_client_testonly",
-    repository = "@envoy",
     linkopts = [
         "-latomic",
         "-lrt",
     ],
+    repository = "@envoy",
     deps = [
         "//source/exe:nighthawk_client_entry_lib",
         "//source/user_defined_output:log_response_headers_plugin",
@@ -63,11 +63,11 @@ envoy_cc_binary(
 
 envoy_cc_binary(
     name = "nighthawk_test_server",
-    repository = "@envoy",
     linkopts = [
         "-latomic",
         "-lrt",
     ],
+    repository = "@envoy",
     deps = [
         "//source/server:http_dynamic_delay_filter_config",
         "//source/server:http_test_server_filter_config",
@@ -78,11 +78,11 @@ envoy_cc_binary(
 
 envoy_cc_binary(
     name = "nighthawk_service",
-    repository = "@envoy",
     linkopts = [
         "-latomic",
         "-lrt",
     ],
+    repository = "@envoy",
     deps = [
         "//source/exe:nighthawk_service_entry_lib",
     ],
@@ -90,11 +90,11 @@ envoy_cc_binary(
 
 envoy_cc_binary(
     name = "nighthawk_output_transform",
-    repository = "@envoy",
     linkopts = [
         "-latomic",
         "-lrt",
     ],
+    repository = "@envoy",
     deps = [
         "//source/exe:output_transform_main_entry_lib",
     ],
