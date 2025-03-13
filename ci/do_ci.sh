@@ -125,7 +125,7 @@ function do_opt_build () {
 function do_opt_build_static () {
     bazel build $BAZEL_BUILD_OPTIONS -c opt --define tcmalloc=gperftools //:nighthawk_static
     bazel build $BAZEL_BUILD_OPTIONS -c opt --define tcmalloc=gperftools //benchmarks:benchmarks
-    maybe_copy_binaries_to_directory
+    maybe_copy_binaries_to_directory_static
 }
 
 
