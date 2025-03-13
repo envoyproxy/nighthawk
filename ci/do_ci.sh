@@ -76,6 +76,20 @@ function maybe_copy_binaries_to_directory () {
       done
     fi
 }
+function maybe_copy_binaries_to_directory_static () {
+    if [ -n "${BUILD_DIR}" ]; then
+      echo "Copying built binaries to ${BUILD_DIR}."
+      for BINARY_NAME in \
+        "nighthawk_adaptive_load_client_static" \
+        "nighthawk_client_static" \
+        "nighthawk_output_transform_static" \
+        "nighthawk_service_static" \
+        "nighthawk_test_server_static"; do
+        cp -vf bazel-bin/${BINARY_NAME} ${BUILD_DIR}
+      done
+    fi
+}
+
 
 #######################################
 # Builds non-optimized (fastbuild) binaries of Nighthawk.
