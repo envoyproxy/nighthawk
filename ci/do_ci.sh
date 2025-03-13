@@ -108,6 +108,12 @@ function do_opt_build () {
     bazel build $BAZEL_BUILD_OPTIONS -c opt --define tcmalloc=gperftools //benchmarks:benchmarks
     maybe_copy_binaries_to_directory
 }
+function do_opt_build_static () {
+    bazel build $BAZEL_BUILD_OPTIONS -c opt --define tcmalloc=gperftools //:nighthawk_static
+    bazel build $BAZEL_BUILD_OPTIONS -c opt --define tcmalloc=gperftools //benchmarks:benchmarks
+    maybe_copy_binaries_to_directory
+}
+
 
 function do_test() {
     # The environment variable AZP_BRANCH is used to determine if some expensive
@@ -230,8 +236,8 @@ function do_docker() {
     echo "docker..."
     cd "${SRCDIR}"
     # Note that we implicitly test the opt build in CI here.
-    echo "do_docker: Running do_opt_build."
-    do_opt_build
+    echo "do_docker: Running do_opt_build_static."
+    do_opt_build_static
     echo "do_docker: Running ci/docker/docker_build.sh."
     ./ci/docker/docker_build.sh
     echo "do_docker: Running ci/docker/docker_push.sh."

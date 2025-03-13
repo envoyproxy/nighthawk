@@ -1,12 +1,10 @@
 FROM frolvlad/alpine-glibc:alpine-3.13_glibc-2.33@sha256:92a8245bd6680b6b256225653369d7b0d3a32ed01ef2c2c397e9622e113cbc42
 
-RUN apk add --no-cache libatomic
-
-ADD nighthawk_client /usr/local/bin/nighthawk_client
-ADD nighthawk_test_server /usr/local/bin/nighthawk_test_server
-ADD nighthawk_output_transform /usr/local/bin/nighthawk_output_transform
-ADD nighthawk_service /usr/local/bin/nighthawk_service
-ADD nighthawk_adaptive_load_client /usr/local/bin/nighthawk_adaptive_load_client
+ADD nighthawk_client_static /usr/local/bin/nighthawk_client
+ADD nighthawk_test_server_static /usr/local/bin/nighthawk_test_server
+ADD nighthawk_output_transform_static /usr/local/bin/nighthawk_output_transform
+ADD nighthawk_service_static /usr/local/bin/nighthawk_service
+ADD nighthawk_adaptive_load_client_static /usr/local/bin/nighthawk_adaptive_load_client
 ADD default-config.yaml /etc/envoy/envoy.yaml
 
 # Ports for nighthawk_test_server, see default-config.yaml
