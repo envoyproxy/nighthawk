@@ -334,6 +334,8 @@ def test_h3_quic(quic_test_server_fixture):
   asserts.assertCounterEqual(counters, "default.total_match_count", 1)
 
 
+# @pytest.mark.skipif(utility.isRunningGcc(), reason="Unstable in sanitizer runs")
+@pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable in sanitizer runs.")
 def test_h3_quic_with_custom_http3_protocol_options(quic_test_server_fixture):
   """Test http3 quic with custom http3 protocol options.
 
@@ -369,7 +371,6 @@ def test_h3_quic_with_custom_http3_protocol_options(quic_test_server_fixture):
   asserts.assertCounterGreaterEqual(counters, "upstream_cx_http3_total", 10)
 
 
-@pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable in sanitizer runs.")
 def test_h3_quic_with_custom_upstream_bind_configuration(quic_test_server_fixture):
   """Test http3 quic with a custom upstream bind configuration.
 

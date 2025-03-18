@@ -42,6 +42,15 @@ def isSanitizerRun():
   return True if os.environ.get("NH_INTEGRATION_TEST_SANITIZER_RUN", 0) == "1" else False
 
 
+#def isRunningGcc():
+#    """Detemine if the current execution is running in GCC.
+
+#    Returns:
+#        bool: True if the current execution is determined to be running in GCC.
+#    """
+#    return True if os.environ.get('CC') == 'gcc' else False
+
+
 def run_binary_with_args(binary, args):
   """Execute a Nighthawk binary with the provided arguments.
 
@@ -111,6 +120,15 @@ def isRunningInAzpCi():
       bool: True iff the current execution is running in the AZP CI.
   """
   return True if os.environ.get("AZP_BRANCH", "") else False
+
+
+def isRuningGcc():
+    """Detemine if the current execution is running in GCC.
+
+    Returns:
+        bool: True if the current execution is determined to be running in GCC.
+    """
+    return True if os.environ.get('CC') == 'gcc' else False
 
 
 def substitute_yaml_values(runfiles_instance, obj: Union[dict, list, str], params: dict) -> str:
