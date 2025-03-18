@@ -8,9 +8,9 @@ apipkg==3.0.2 \
     --hash=sha256:a16984c39de280701f3f6406ed3af658f2a1965011fe7bb5be34fbb48423b411 \
     --hash=sha256:c7aa61a4f82697fdaa667e70af1505acf1f7428b1c27b891d204ba7a8a3c5e0d
     # via -r tools/base/requirements.in
-attrs==25.1.0 \
-    --hash=sha256:1c97078a80c814273a76b2a298a932eb681c87415c11dee0a6921de7f1b02c3e \
-    --hash=sha256:c75a69e28a550a7e93789579c22aa26b0f5b83b75dc4e08fe092980051e1090a
+attrs==25.3.0 \
+    --hash=sha256:427318ce031701fea540783410126f03899a97ffc6f61596ad581ac2e40e3bc3 \
+    --hash=sha256:75d7cefc7fb576747b2c81b4442d4d4a1ce0900973527c011d1030fd3bf4af1b
     # via -r tools/base/requirements.in
 certifi==2025.1.31 \
     --hash=sha256:3d5da6925056f6f18f119200434a4780a94263f10d1c21d032a6f6b2baa20651 \
@@ -122,9 +122,9 @@ execnet==2.1.1 \
     # via
     #   -r tools/base/requirements.in
     #   pytest-xdist
-flake8==7.1.1 \
-    --hash=sha256:049d058491e228e03e67b390f311bbf88fce2dbaa8fa673e7aea87b7198b8d38 \
-    --hash=sha256:597477df7860daa5aa0fdd84bf5208a043ab96b8e96ab708770ae0364dd03213
+flake8==7.1.2 \
+    --hash=sha256:1cbc62e65536f65e6d754dfe6f1bada7f5cf392d6f5db3c2b85892466c3e7c1a \
+    --hash=sha256:c586ffd0b41540951ae41af572e6790dbd49fc12b3aa2541685d253d9bd504bd
     # via flake8-docstrings
 flake8-docstrings==1.7.0 \
     --hash=sha256:4c8cc748dc16e6869728699e5d0d685da9a10b0ea718e090b1ba088e67a941af \
@@ -186,9 +186,9 @@ pyflakes==3.2.0 \
     --hash=sha256:1c61603ff154621fb2a9172037d84dca3500def8c8b630657d1701f026f8af3f \
     --hash=sha256:84b5be138a2dfbb40689ca07e2152deb896a65c3a3e24c251c5c62489568074a
     # via flake8
-pytest==8.3.4 \
-    --hash=sha256:50e16d954148559c9a74109af1eaf0c945ba2d8f30f0a3d3335edde19788b6f6 \
-    --hash=sha256:965370d062bce11e73868e0335abac31b4d3de0e82f4007408d242b4f8610761
+pytest==8.3.5 \
+    --hash=sha256:c69214aa47deac29fad6c2a4f590b9c4a9fdb16a403176fe154b79c0b4d4d820 \
+    --hash=sha256:f4efe70cc14e511565ac476b57c279e12a855b11f48f212af1080ef2263d3845
     # via
     #   -r tools/base/requirements.in
     #   pytest-dependency
