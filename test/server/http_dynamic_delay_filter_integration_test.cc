@@ -35,7 +35,7 @@ class HttpDynamicDelayIntegrationTest
     : public HttpFilterIntegrationTestBase,
       public testing::TestWithParam<Envoy::Network::Address::IpVersion> {
 public:
-  HttpDynamicDelayIntegrationTest() : HttpFilterIntegrationTestBase(GetParam()){};
+  HttpDynamicDelayIntegrationTest() : HttpFilterIntegrationTestBase(GetParam()) {};
 };
 
 INSTANTIATE_TEST_SUITE_P(IpVersions, HttpDynamicDelayIntegrationTest,

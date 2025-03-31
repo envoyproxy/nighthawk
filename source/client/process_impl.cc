@@ -116,7 +116,7 @@ public:
 // Implementation of dummy StatsConfig.
 class StatsConfigImpl : public Envoy::Server::Configuration::StatsConfig {
 public:
-  StatsConfigImpl() : flush_interval_(std::chrono::seconds(5)){};
+  StatsConfigImpl() : flush_interval_(std::chrono::seconds(5)) {};
 
   const std::list<Envoy::Stats::SinkPtr>& sinks() const override { return sinks_; }
   std::chrono::milliseconds flushInterval() const override { return flush_interval_; }
