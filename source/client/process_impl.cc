@@ -177,10 +177,10 @@ public:
 
   Envoy::ThreadLocal::SlotAllocator& threadLocal() override { return server_.threadLocal(); }
 
-  Envoy::Upstream::ClusterManager& clusterManager() override {
-    PANIC("NighthawkServerFactoryContext::clusterManager not implemented");
-  };
+  Envoy::Upstream::ClusterManager& clusterManager() override { return *cluster_manager_; };
+
   Envoy::Config::XdsManager& xdsManager() override { return server_.xdsManager(); };
+
   Envoy::Http::HttpServerPropertiesCacheManager& httpServerPropertiesCacheManager() override {
     return server_.httpServerPropertiesCacheManager();
   }
@@ -222,6 +222,12 @@ public:
     PANIC("NighthawkServerFactoryContext::drainManager not implemented");
   };
 
+  Envoy::Ssl::ContextManager& sslContextManager() override { return *ssl_context_manager_; }
+
+  Envoy::Secret::SecretManager& secretManager() override {
+    PANIC("NighthawkServerFactoryContext::secretManager not implemented");
+  }
+
   Envoy::Server::Configuration::StatsConfig& statsConfig() override { return stats_config_; }
 
   envoy::config::bootstrap::v3::Bootstrap& bootstrap() override {
@@ -244,7 +250,17 @@ public:
     PANIC("NighthawkServerFactoryContext::healthCheckFailed not implemented");
   }
 
+  void setClusterManager(Envoy::Upstream::ClusterManager& cluster_manager) {
+    cluster_manager_ = &cluster_manager;
+  }
+
+  void setSslContextManager(Envoy::Ssl::ContextManager& ssl_context_manager) {
+    ssl_context_manager_ = &ssl_context_manager;
+  }
+
 private:
+  Envoy::Ssl::ContextManager* ssl_context_manager_;
+  Envoy::Upstream::ClusterManager* cluster_manager_;
   Envoy::Server::Instance& server_;
   Envoy::Stats::ScopeSharedPtr server_scope_;
   StatsConfigImpl stats_config_;                      // Using the object created here.
@@ -899,6 +915,8 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     ssl_context_manager_ =
         std::make_unique<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>(
             server_->serverFactoryContext());
+    dynamic_cast<NighthawkServerFactoryContext*>(&server_->serverFactoryContext())
+        ->setSslContextManager(*ssl_context_manager_);
     cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
         server_->serverFactoryContext(), store_root_, tls_, http_context_,
         [dns_resolver]() -> Envoy::Network::DnsResolverSharedPtr { return dns_resolver; },
@@ -921,6 +939,8 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
       return false;
     }
     cluster_manager_ = std::move(*cluster_manager);
+    dynamic_cast<NighthawkServerFactoryContext*>(&server_->serverFactoryContext())
+        ->setClusterManager(*cluster_manager_);
     absl::Status status = cluster_manager_->initialize(bootstrap_);
     if (!status.ok()) {
       ENVOY_LOG(error, "cluster_manager initialize failed. Received bad status: {}",
