@@ -177,7 +177,12 @@ public:
 
   Envoy::ThreadLocal::SlotAllocator& threadLocal() override { return server_.threadLocal(); }
 
-  Envoy::Upstream::ClusterManager& clusterManager() override { return *cluster_manager_; };
+  Envoy::Upstream::ClusterManager& clusterManager() override {
+    if (cluster_manager_ != nullptr) {
+      return *cluster_manager_;
+    }
+    PANIC("NighthawkServerFactoryContext::clusterManager not implemented");
+  };
 
   Envoy::Config::XdsManager& xdsManager() override { return server_.xdsManager(); };
 
@@ -222,7 +227,12 @@ public:
     PANIC("NighthawkServerFactoryContext::drainManager not implemented");
   };
 
-  Envoy::Ssl::ContextManager& sslContextManager() override { return *ssl_context_manager_; }
+  Envoy::Ssl::ContextManager& sslContextManager() override {
+    if (ssl_context_manager_ != nullptr) {
+      return *ssl_context_manager_;
+    }
+    PANIC("NighthawkServerFactoryContext::sslContextManager not implemented");
+  }
 
   Envoy::Secret::SecretManager& secretManager() override {
     PANIC("NighthawkServerFactoryContext::secretManager not implemented");
@@ -259,8 +269,8 @@ public:
   }
 
 private:
-  Envoy::Ssl::ContextManager* ssl_context_manager_;
-  Envoy::Upstream::ClusterManager* cluster_manager_;
+  Envoy::Ssl::ContextManager* ssl_context_manager_ = nullptr;
+  Envoy::Upstream::ClusterManager* cluster_manager_ = nullptr;
   Envoy::Server::Instance& server_;
   Envoy::Stats::ScopeSharedPtr server_scope_;
   StatsConfigImpl stats_config_;                      // Using the object created here.
