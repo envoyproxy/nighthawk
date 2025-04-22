@@ -419,7 +419,7 @@ def _do_tls_configuration_test(https_test_server_fixture, cli_parameter, use_h2,
   """
   validation_context = ", validation_context:{}" if use_validation_context else ""
   if cli_parameter == "--tls-context":
-    json_template = "{common_tls_context:{tls_params:{cipher_suites:[\"-ALL:%s\"]}%s}}" % validation_context
+    json_template = "{common_tls_context:{tls_params:{cipher_suites:[\"-ALL:%s\"]}" + "%s}}" % validation_context
   else:
     json_template = "%s%s%s" % (
         "{name:\"envoy.transport_sockets.tls\",typed_config:{",
