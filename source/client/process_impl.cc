@@ -234,9 +234,7 @@ public:
     PANIC("NighthawkServerFactoryContext::sslContextManager not implemented");
   }
 
-  Envoy::Secret::SecretManager& secretManager() override {
-    PANIC("NighthawkServerFactoryContext::secretManager not implemented");
-  }
+  Envoy::Secret::SecretManager& secretManager() override { return server_.secretManager(); }
 
   Envoy::Server::Configuration::StatsConfig& statsConfig() override { return stats_config_; }
 
@@ -291,7 +289,8 @@ public:
                           Envoy::LocalInfo::LocalInfo& local_info,
                           Envoy::ProtobufMessage::ProdValidationContextImpl& validation_context,
                           Envoy::Grpc::Context& grpc_context,
-                          Envoy::Router::Context& router_context, Envoy::Stats::StoreRoot& store)
+                          Envoy::Router::Context& router_context, Envoy::Stats::StoreRoot& store,
+                          Envoy::Secret::SecretManagerImpl& secret_manager)
       : admin_(admin), api_(api), dispatcher_(dispatcher), log_manager_(log_manager),
         options_(options), runtime_(runtime), singleton_manager_(singleton_manager),
         stats_store_(store), tls_(tls), local_info_(local_info),
@@ -299,7 +298,8 @@ public:
         router_context_(router_context), server_factory_context_(*this),
         http_server_properties_cache_manager_(
             server_factory_context_, Envoy::ProtobufMessage::getStrictValidationVisitor(), tls),
-        xds_manager_(dispatcher, api, local_info, validation_context_, *this) {}
+        xds_manager_(dispatcher, api, local_info, validation_context_, *this),
+        secret_manager_(secret_manager) {}
 
   void run() override { PANIC("NighthawkServerInstance::run not implemented"); }
   Envoy::OptRef<Envoy::Server::Admin> admin() override { return admin_; }
@@ -351,9 +351,7 @@ public:
   Envoy::Server::OverloadManager& nullOverloadManager() override {
     PANIC("NighthawkServerInstance::nullOverloadManager not implemented");
   }
-  Envoy::Secret::SecretManager& secretManager() override {
-    PANIC("NighthawkServerInstance::secretManager not implemented");
-  }
+  Envoy::Secret::SecretManager& secretManager() override { return secret_manager_; }
   const Envoy::Server::Options& options() override { return options_; }
   Envoy::Runtime::Loader& runtime() override { return runtime_; }
   Envoy::Server::ServerLifecycleNotifier& lifecycleNotifier() override {
@@ -430,6 +428,7 @@ private:
   Envoy::Http::HttpServerPropertiesCacheManagerImpl http_server_properties_cache_manager_;
   Envoy::Config::XdsManagerImpl xds_manager_;
   NighthawkLifecycleNotifierImpl lifecycle_notifier_; // A no-op object that lives here.
+  Envoy::Secret::SecretManagerImpl& secret_manager_;
 };
 
 /**
@@ -921,7 +920,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     server_ = std::make_unique<NighthawkServerInstance>(
         admin_, *api_, *dispatcher_, access_log_manager_, envoy_options_, *runtime_loader_.get(),
         *singleton_manager_, tls_, *local_info_, validation_context_, grpc_context_,
-        router_context_, store_root_);
+        router_context_, store_root_, secret_manager_);
     ssl_context_manager_ =
         std::make_unique<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>(
             server_->serverFactoryContext());
