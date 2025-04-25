@@ -2,6 +2,7 @@
 
 #include <memory>
 
+#include "external/envoy/source/common/http/header_map_impl.h"
 #include "external/envoy/source/common/http/http1/codec_impl.h"
 #include "external/envoy/source/common/http/utility.h"
 #include "external/envoy/source/common/network/address_impl.h"
@@ -86,7 +87,13 @@ void StreamDecoder::onComplete(bool success) {
   stream_info_.upstreamInfo()->upstreamTiming().onLastUpstreamRxByteReceived(time_source_);
   response_body_sizes_statistic_.addValue(stream_info_.bytesSent());
   stream_info_.onRequestComplete();
-  decoder_completion_callback_.onComplete(success, *response_headers_);
+  if (response_headers_ != nullptr) {
+    decoder_completion_callback_.onComplete(success, *response_headers_);
+  } else {
+    Envoy::Http::ResponseHeaderMapPtr empty_headers = Envoy::Http::ResponseHeaderMapImpl::create(
+        /* max_headers_kb = */ 0, /* max_headers_count = */ 0);
+    decoder_completion_callback_.onComplete(success, *empty_headers);
+  }
   finalizeActiveSpan();
   caller_completion_callback_(complete_, success);
   dispatcher_.deferredDelete(std::unique_ptr<StreamDecoder>(this));
@@ -113,35 +120,41 @@ void StreamDecoder::onPoolReady(Envoy::Http::RequestEncoder& encoder,
                                 Envoy::Upstream::HostDescriptionConstSharedPtr,
                                 Envoy::StreamInfo::StreamInfo&,
                                 absl::optional<Envoy::Http::Protocol>) {
-  // Make sure we hear about stream resets on the encoder.
   encoder.getStream().addCallbacks(*this);
   stream_info_.upstreamInfo()->upstreamTiming().onFirstUpstreamTxByteSent(
       time_source_); // XXX(oschaaf): is this correct?
-  const Envoy::Http::Status status =
-      encoder.encodeHeaders(*request_headers_, request_body_size_ == 0);
+  const bool end_stream = request_body_size_ == 0 && request_body_.empty();
+  const Envoy::Http::Status status = encoder.encodeHeaders(*request_headers_, end_stream);
   if (!status.ok()) {
     ENVOY_LOG_EVERY_POW_2(error,
                           "Request header encoding failure. Might be missing one or more required "
                           "HTTP headers in {}.",
                           *request_headers_);
   }
-  if (request_body_size_ > 0) {
+  if (request_body_size_ > 0 || !request_body_.empty()) {
     // TODO(https://github.com/envoyproxy/nighthawk/issues/138): This will show up in the zipkin UI
     // as 'response_size'. We add it here, optimistically assuming it will all be send. Ideally,
     // we'd track the encoder events of the stream to dig up and forward more information. For now,
     // we take the risk of erroneously reporting that we did send all the bytes, instead of always
     // reporting 0 bytes.
-    stream_info_.addBytesReceived(request_body_size_);
-    // Revisit this when we have non-uniform request distributions and on-the-fly reconfiguration in
-    // place. The string size below MUST match the cap we put on RequestOptions::request_body_size
-    // in api/client/options.proto!
-    auto* fragment = new Envoy::Buffer::BufferFragmentImpl(
-        staticUploadContent().data(), request_body_size_,
-        [](const void*, size_t, const Envoy::Buffer::BufferFragmentImpl* frag) { delete frag; });
     Envoy::Buffer::OwnedImpl body_buffer;
-    body_buffer.addBufferFragment(*fragment);
+    if (request_body_.empty()) {
+      // Revisit this when we have non-uniform request distributions and on-the-fly reconfiguration
+      // in place. The string size below MUST match the cap we put on
+      // RequestOptions::request_body_size in api/client/options.proto!
+      stream_info_.addBytesReceived(request_body_size_);
+      auto* fragment = new Envoy::Buffer::BufferFragmentImpl(
+          staticUploadContent().data(), request_body_size_,
+          [](const void*, size_t, const Envoy::Buffer::BufferFragmentImpl* frag) { delete frag; });
+      body_buffer.addBufferFragment(*fragment);
+
+    } else {
+      stream_info_.addBytesReceived(request_body_.size());
+      body_buffer.add(absl::string_view(request_body_));
+    }
     encoder.encodeData(body_buffer, true);
   }
+
   request_start_ = time_source_.monotonicTime();
   if (measure_latencies_) {
     connect_statistic_.addValue((request_start_ - connect_start_).count());

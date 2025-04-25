@@ -1,4 +1,6 @@
-FROM frolvlad/alpine-glibc:alpine-3.13_glibc-2.33@sha256:92a8245bd6680b6b256225653369d7b0d3a32ed01ef2c2c397e9622e113cbc42
+FROM ubuntu:24.04@sha256:1e622c5f073b4f6bfad6632f2616c7f59ef256e96fe78bf6a595d1dc4376ac02
+
+RUN apt-get update && apt-get install libatomic1
 
 ADD nighthawk_client /usr/local/bin/nighthawk_client
 ADD nighthawk_test_server /usr/local/bin/nighthawk_test_server

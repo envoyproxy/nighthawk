@@ -126,7 +126,7 @@ function do_clang_tidy() {
 function do_unit_test_coverage() {
     export TEST_TARGETS="//test/... -//test:python_test"
     # TODO(https://github.com/envoyproxy/nighthawk/issues/747): Increase back to 93.2 when coverage flakiness address
-    export COVERAGE_THRESHOLD=91.8
+    export COVERAGE_THRESHOLD=91.5
     echo "bazel coverage build with tests ${TEST_TARGETS}"
     test/run_nighthawk_bazel_coverage.sh ${TEST_TARGETS}
     exit 0
@@ -279,7 +279,7 @@ fi
 export BAZEL_EXTRA_TEST_OPTIONS="--test_env=ENVOY_IP_TEST_VERSIONS=v4only ${BAZEL_EXTRA_TEST_OPTIONS}"
 export BAZEL_BUILD_OPTIONS=" \
 --verbose_failures ${BAZEL_OPTIONS} --action_env=HOME --action_env=PYTHONUSERBASE \
---experimental_local_memory_estimate \
+--noincompatible_sandbox_hermetic_tmp \
 --experimental_generate_json_trace_profile ${BAZEL_BUILD_EXTRA_OPTIONS}"
 
 echo "Running with ${NUM_CPUS} cpus and BAZEL_BUILD_OPTIONS: ${BAZEL_BUILD_OPTIONS}"

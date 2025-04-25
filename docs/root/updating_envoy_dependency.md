@@ -72,7 +72,6 @@ git checkout -b $branch
 
 Clone the Envoy repo (https://github.com/envoyproxy/envoy.git) into a temp directory.
 
-
 #### Example commands
 
 ```bash
@@ -100,23 +99,25 @@ Click the link in the terminal to double check the date of the Envoy commit to w
 (See **Example commands** for shell commands covering this entire step.)
 
 Edit [bazel/repositories.bzl](/bazel/repositories.bzl):
-1. Update `ENVOY_COMMIT` to the latest Envoy's commit from 
+
+1. Update `ENVOY_COMMIT` to the latest Envoy's commit from
    [this page](https://github.com/envoyproxy/envoy/commits/main). (Clicking on the
    short commit id opens a page that contains the fully expanded commit id).
-1. Set `ENVOY_SHA` to an empty string initially, we will get the correct
-   sha256 after the first bazel execution.
-   Example content of `bazel/repositories.bzl` after the edits:
-      ```
-      ENVOY_COMMIT = "9753819331d1547c4b8294546a6461a3777958f5"
-      ENVOY_SHA = ""
-      ```
-1. Run `ci/do_ci.sh build`, notice the sha256 value at the top of the output,
-   example:
-      ```
-      INFO: SHA256 (https://github.com/envoyproxy/envoy/archive/9753819331d1547c4b8294546a6461a3777958f5.tar.gz) = f4d26c7e78c0a478d959ea8bc877f260d4658a8b44e294e3a400f20ad44d41a3
-      ```
+
+1. Run `ci/do_ci.sh build`. This build will fail because the downloaded envoy repository version now doesn't satisfy the SHA integrity check.
+
+For example:
+
+```
+Error in download_and_extract: java.io.IOException: Error downloading [https://github.com/envoyproxy/envoy/archive/b0d58be31c2d7fe3ea8fd620c7aedb6b09a4bb89.tar.gz] to /usr/local/google/home/zhangtom/.cache/bazel/_bazel_zhangtom/56ac6ccac3919b4b0
+24c2cb2cc80a341/external/envoy/temp16830088231701668784/b0d58be31c2d7fe3ea8fd620c7aedb6b09a4bb89.tar.gz: Checksum was 66e09f6146cb1548bd0cf6b6cfda1a5cc5fdb349f7bcb98e81cc23c9dd6c7d16 but wanted eb8ed0282dd9fe13aac5f0d260e481e367439d53a9c8fdddd44
+e38f8cf5c4b92
+```
+
+We will now replace the `ENVOY_SHA` value with the intended value.
+
 1. Update `ENVOY_SHA` in [bazel/repositories.bzl](/bazel/repositories.bzl) to
-      this value.
+   this value.
 
 #### Example commands
 
@@ -125,26 +126,21 @@ Overwrite `ENVOY_COMMIT` and `ENVOY_SHA` in `bazel/repositories.bzl`:
 ```bash
 sed -i -e "s/ENVOY_COMMIT =.*/ENVOY_COMMIT = \"${envoy_commit}\"/" bazel/repositories.bzl
 
-sed -i -e "s/ENVOY_SHA =.*/ENVOY_SHA = \"\"/" bazel/repositories.bzl
-
 git diff
 ```
 
 At this point:
 
 - `ENVOY_COMMIT` should be a new value
-- `ENVOY_SHA` should be blank
 
-The easiest way to obtain the Envoy SHA is to run a build from a clean state. In
+The easiest way to obtain the Envoy SHA is to run a build with an inappropriate SHA from a clean state. In
 this case the Envoy SHA is printed to Bazel's stdout near the beginning of the
-build. The following commands extract the Envoy SHA from the Bazel's stdout (assuming the build progresses far
-enough):
-
+build. The build will fail due to the SHA mismatch.:
 
 ```bash
 bazel clean --expunge
 
-envoy_sha=$(ci/do_ci.sh build 2>&1 | head -30 | egrep -m 1 -o '[0-9a-f]{64}')
+envoy_sha=$(ci/do_ci.sh build 2>&1 | sed -En 's/.*Checksum was ([0-9a-f]{64}).*/\1/p' | uniq)
 
 echo "envoy_sha=$envoy_sha"
 ```
@@ -209,9 +205,9 @@ Once you have done some partial work, save the file and repeat the `merge_from_e
 ### Step 6
 
 Sync (copy) [.bazelrc](/.bazelrc) from
-   [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/.bazelrc) to
-   update our build configurations. Be sure to retain our local modifications,
-   all lines that are unique to Nighthawk are marked with comment `# unique`.
+[Envoy's version](https://github.com/envoyproxy/envoy/blob/main/.bazelrc) to
+update our build configurations. Be sure to retain our local modifications,
+all lines that are unique to Nighthawk are marked with comment `# unique`.
 
 #### Example commands
 
@@ -222,8 +218,8 @@ merge_from_envoy ".bazelrc"
 ### Step 7
 
 Sync (copy) [.bazelversion](/.bazelversion) from
-   [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/.bazelversion)
-   to ensure we are using the same build system version.
+[Envoy's version](https://github.com/envoyproxy/envoy/blob/main/.bazelversion)
+to ensure we are using the same build system version.
 
 #### Example commands
 
@@ -234,9 +230,9 @@ cp -v "$envoy_dir/.bazelversion" ".bazelversion"
 ### Step 8
 
 Sync (copy) [ci/run_envoy_docker.sh](/ci/run_envoy_docker.sh) from
-   [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/ci/run_envoy_docker.sh).
-   Be sure to retain our local modifications, all lines that are unique to
-   Nighthawk are marked with comment `# unique`.
+[Envoy's version](https://github.com/envoyproxy/envoy/blob/main/ci/run_envoy_docker.sh).
+Be sure to retain our local modifications, all lines that are unique to
+Nighthawk are marked with comment `# unique`.
 
 #### Example commands
 
@@ -247,9 +243,9 @@ merge_from_envoy "ci/run_envoy_docker.sh"
 ### Step 9
 
 Sync (copy) [tools/gen_compilation_database.py](/tools/gen_compilation_database.py) from
-   [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/tools/gen_compilation_database.py) to
-   update our build configurations. Be sure to retain our local modifications,
-   all lines that are unique to Nighthawk are marked with comment `# unique`.
+[Envoy's version](https://github.com/envoyproxy/envoy/blob/main/tools/gen_compilation_database.py) to
+update our build configurations. Be sure to retain our local modifications,
+all lines that are unique to Nighthawk are marked with comment `# unique`.
 
 #### Example commands
 
@@ -260,9 +256,9 @@ merge_from_envoy "tools/gen_compilation_database.py"
 ### Step 10
 
 Sync (copy) [tools/code_format/config.yaml](/tools/code_format/config.yaml) from
-   [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/tools/code_format/config.yaml) to
-   update our format checker configuration. Be sure to retain our local modifications,
-   all lines that are unique to Nighthawk are marked with comment `# unique`.
+[Envoy's version](https://github.com/envoyproxy/envoy/blob/main/tools/code_format/config.yaml) to
+update our format checker configuration. Be sure to retain our local modifications,
+all lines that are unique to Nighthawk are marked with comment `# unique`.
 
 #### Example commands
 
@@ -271,6 +267,7 @@ merge_from_envoy "tools/code_format/config.yaml"
 ```
 
 ### Step 11
+
 Perform this step if [tools/base/requirements.in](/tools/base/requirements.in)
 has not been updated in the last 30 days (based on comment at top of file).
 
@@ -315,8 +312,8 @@ ci/do_ci.sh build
 ```
 
 Sometimes the dependency update comes with changes
-   that break our build. Include any changes required to Nighthawk to fix that
-   in the same PR.
+that break our build. Include any changes required to Nighthawk to fix that
+in the same PR.
 
 If there are build failures, you will need to fix them at this point.
 
@@ -348,7 +345,6 @@ ci/do_ci.sh fix_format
 
 to reformat the files and avoid a CI format check failure.
 
-
 If you get a Python error message not related to the purpose of the script, this can sometimes be fixed by:
 
 ```bash
@@ -356,7 +352,6 @@ rm -rf tools/pyformat/
 ```
 
 and retrying the format command.
-
 
 ### Step 14
 
@@ -367,14 +362,14 @@ tools/update_cli_readme_documentation.sh --mode fix
 ```
 
 to regenerate the
-   portion of our documentation that captures the CLI help output. This will
-   prevent a CI failure in case any flags changed in the PR or upstream.
+portion of our documentation that captures the CLI help output. This will
+prevent a CI failure in case any flags changed in the PR or upstream.
 
 ### Step 15
 
 Create a PR with a title like `Update Envoy to 9753819 (Jan 24th 2021)`,
-   describe all performed changes in the PR's description ([example PR
-   description](https://github.com/envoyproxy/nighthawk/pull/758)).
+describe all performed changes in the PR's description ([example PR
+description](https://github.com/envoyproxy/nighthawk/pull/758)).
 
 #### Example commands
 

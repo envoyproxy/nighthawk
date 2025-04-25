@@ -33,7 +33,7 @@ class HttpTimeTrackingIntegrationTest
     : public HttpFilterIntegrationTestBase,
       public testing::TestWithParam<Envoy::Network::Address::IpVersion> {
 public:
-  HttpTimeTrackingIntegrationTest() : HttpFilterIntegrationTestBase(GetParam()){};
+  HttpTimeTrackingIntegrationTest() : HttpFilterIntegrationTestBase(GetParam()) {};
 };
 
 INSTANTIATE_TEST_SUITE_P(IpVersions, HttpTimeTrackingIntegrationTest,

@@ -196,6 +196,7 @@ bazel-bin/nighthawk_test_server  [--stats-tag <string>] ...
 <string>] [-l <string>]
 [--local-address-ip-version <string>]
 [--admin-address-path <string>]
+[--skip-deprecated-logs]
 [--ignore-unknown-dynamic-fields]
 [--reject-unknown-dynamic-fields]
 [--allow-unknown-static-fields]
@@ -301,6 +302,10 @@ The local IP address version (v4 or v6).
 
 --admin-address-path <string>
 Admin address path
+
+--skip-deprecated-logs
+Skips the logging of deprecated field warnings during Protobuf message
+validation
 
 --ignore-unknown-dynamic-fields
 Ignore unknown fields in dynamic configuration

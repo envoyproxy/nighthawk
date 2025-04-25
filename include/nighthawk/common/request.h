@@ -20,6 +20,7 @@ public:
    * @return HeaderMapPtr shared pointer to a request header specification.
    */
   virtual HeaderMapPtr header() const PURE;
+  virtual const std::string& body() const PURE;
   // TODO(oschaaf): expectations
 };
 

@@ -31,9 +31,7 @@ std::vector<std::string> OutputFormatterImpl::getLowerCaseOutputFormats() {
   // We skip the first, which is DEFAULT, as it's not selectable.
   for (int i = 1; i < enum_descriptor->value_count(); ++i) {
     auto* value_descriptor = enum_descriptor->value(i);
-    std::string name = value_descriptor->name();
-    std::transform(name.begin(), name.end(), name.begin(),
-                   [](unsigned char c) { return std::tolower(c); });
+    std::string name = absl::AsciiStrToLower(value_descriptor->name());
     values.push_back(name);
   }
   return values;
