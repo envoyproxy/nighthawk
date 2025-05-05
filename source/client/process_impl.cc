@@ -298,9 +298,10 @@ public:
         router_context_(router_context), server_factory_context_(*this),
         http_server_properties_cache_manager_(
             server_factory_context_, Envoy::ProtobufMessage::getStrictValidationVisitor(), tls),
-        xds_manager_(dispatcher, api, store, local_info, validation_context_, *this),
+        xds_manager_(dispatcher, api, local_info, validation_context_, *this),
         secret_manager_(secret_manager) {}
 
+  // dummy comment
   void run() override { PANIC("NighthawkServerInstance::run not implemented"); }
   Envoy::OptRef<Envoy::Server::Admin> admin() override { return admin_; }
   Envoy::Api::Api& api() override { return api_; }
