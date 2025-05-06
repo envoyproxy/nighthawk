@@ -301,7 +301,6 @@ public:
         xds_manager_(dispatcher, api, local_info, validation_context_, *this),
         secret_manager_(secret_manager) {}
 
-  // dummy comment
   void run() override { PANIC("NighthawkServerInstance::run not implemented"); }
   Envoy::OptRef<Envoy::Server::Admin> admin() override { return admin_; }
   Envoy::Api::Api& api() override { return api_; }
