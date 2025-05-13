@@ -383,6 +383,9 @@ public:
   Envoy::ProtobufMessage::ValidationContext& messageValidationContext() override {
     return validation_context_;
   }
+  Envoy::ProtobufMessage::ValidationVisitor& messageValidationVisitor() override {
+    return validation_context_.staticValidationVisitor();
+  }
   Envoy::Server::Configuration::StatsConfig& statsConfig() override {
     PANIC("NighthawkServerInstance::statsConfig not implemented");
   }
