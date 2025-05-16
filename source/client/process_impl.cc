@@ -298,7 +298,7 @@ public:
         router_context_(router_context), server_factory_context_(*this),
         http_server_properties_cache_manager_(
             server_factory_context_, Envoy::ProtobufMessage::getStrictValidationVisitor(), tls),
-        xds_manager_(dispatcher, api, local_info, validation_context_, *this),
+        xds_manager_(dispatcher, api, store, local_info, validation_context_, *this),
         secret_manager_(secret_manager) {}
 
   void run() override { PANIC("NighthawkServerInstance::run not implemented"); }
@@ -382,6 +382,9 @@ public:
   void flushStats() override { PANIC("NighthawkServerInstance::flushStats not implemented"); }
   Envoy::ProtobufMessage::ValidationContext& messageValidationContext() override {
     return validation_context_;
+  }
+  Envoy::ProtobufMessage::ValidationVisitor& messageValidationVisitor() override {
+    return validation_context_.staticValidationVisitor();
   }
   Envoy::Server::Configuration::StatsConfig& statsConfig() override {
     PANIC("NighthawkServerInstance::statsConfig not implemented");
