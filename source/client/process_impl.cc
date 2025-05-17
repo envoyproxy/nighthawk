@@ -218,11 +218,6 @@ public:
     PANIC("NighthawkServerFactoryContext::processContext not implemented");
   }
 
-  Envoy::Server::Configuration::TransportSocketFactoryContext&
-  getTransportSocketFactoryContext() const override {
-    PANIC("NighthawkServerFactoryContext::getTransportSocketFactoryContext not implemented");
-  }
-
   Envoy::Server::DrainManager& drainManager() override {
     PANIC("NighthawkServerFactoryContext::drainManager not implemented");
   };
@@ -932,7 +927,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
         server_->serverFactoryContext(), store_root_, tls_, http_context_,
         [dns_resolver]() -> Envoy::Network::DnsResolverSharedPtr { return dns_resolver; },
-        *ssl_context_manager_, secret_manager_, quic_stat_names_, *server_);
+        *ssl_context_manager_, quic_stat_names_, *server_);
     cluster_manager_factory_->setConnectionReuseStrategy(
         options_.h1ConnectionReuseStrategy() == nighthawk::client::H1ConnectionReuseStrategy::LRU
             ? Http1PoolImpl::ConnectionReuseStrategy::LRU
