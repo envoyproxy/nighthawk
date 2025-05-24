@@ -114,6 +114,7 @@ build:gcc --linkopt=-fuse-ld=gold --host_linkopt=-fuse-ld=gold
 build:gcc --test_env=HEAPCHECK=
 build:gcc --action_env=BAZEL_COMPILER=gcc
 build:gcc --action_env=CC=gcc --action_env=CXX=g++
+build:gcc --copt=-Wno-all
 # This is to work around a bug in GCC that makes debug-types-section
 # option not play well with fission:
 # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=110885
@@ -123,8 +124,8 @@ build:gcc --copt=-fno-debug-types-section
 # And in all cases the reports appear to be clear false positives.
 build:gcc --copt=-Wno-error=restrict
 build:gcc --copt=-Wno-error=uninitialized
-build:gcc --copt=-Wno-error=concept-id
 build:gcc --copt=-Wno-missing-requires
+build:gcc --cxxopt=-Wno-all
 build:gcc --cxxopt=-Wno-missing-requires
 build:gcc --cxxopt=-Wno-dangling-reference
 build:gcc --cxxopt=-Wno-nonnull-compare
