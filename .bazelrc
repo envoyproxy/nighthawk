@@ -123,7 +123,7 @@ build:gcc --copt=-fno-debug-types-section
 # And in all cases the reports appear to be clear false positives.
 build:gcc --copt=-Wno-error=restrict
 build:gcc --copt=-Wno-error=uninitialized
-build:gcc --copt=-Wno-error=config_id
+build:gcc --copt=-Wno-error=concept-id
 # We need this because -Wno-missing-requires options is rather new
 # in GCC, so flags -Wno-missing-requires exists in GCC 12, but does
 # not in GCC 11 and GCC 11 is what is used in docker-gcc
