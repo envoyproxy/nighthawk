@@ -54,7 +54,6 @@ envoy_cc_library(
         "@envoy_api//envoy/extensions/filters/udp/udp_proxy/v3:pkg_cc_proto",
         "@envoy_api//envoy/extensions/filters/network/tcp_proxy/v3:pkg_cc_proto",
         "@envoy_api//envoy/extensions/filters/udp/udp_proxy/session/http_capsule/v3:pkg_cc_proto",
-        "@envoy//source/common/common:thread_lib_with_external_headers",
     ],
 )
 

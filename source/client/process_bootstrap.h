@@ -10,6 +10,7 @@
 #include "external/envoy/source/common/event/dispatcher_impl.h"
 #include "external/envoy/source/common/network/dns_resolver/dns_factory_util.h"
 #include "external/envoy_api/envoy/config/bootstrap/v3/bootstrap.pb.h"
+#include "external/envoy/source/common/common/posix/thread_impl.h"
 
 namespace Nighthawk {
 
@@ -62,7 +63,7 @@ absl::StatusOr<envoy::config::bootstrap::v3::Bootstrap> createEncapBootstrap(con
 
 
 /**
- * Forks a separate process for Envoy. Both nighthawk and envoy expect to be their own processes
+ * Forks a separate process for Envoy. Both nighthawk and envoy are required to be their own processes
  *
  * @param nighthawk_runner executes nighthawk's workers
  * @param encap_envoy_runner starts up Encapsulation Envoy
@@ -70,14 +71,5 @@ absl::StatusOr<envoy::config::bootstrap::v3::Bootstrap> createEncapBootstrap(con
  * @return error status for processes
  */
 absl::Status RunWithSubprocess(std::function<void()> nighthawk_runner, std::function<void(sem_t&, sem_t&)> encap_envoy_runner);
-
-/**
- * Spins a simple thread from a function
- *
- * @param thread_routine the function to execute
- *
- * @return the thread pointer
- */
-// Envoy::Thread::PosixThreadPtr createThread(std::function<void()> thread_routine);
 
 } // namespace Nighthawk
