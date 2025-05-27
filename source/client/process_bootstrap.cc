@@ -15,7 +15,6 @@
 #include "external/envoy_api/envoy/extensions/filters/network/tcp_proxy/v3/tcp_proxy.pb.h"
 #include "external/envoy_api/envoy/extensions/filters/udp/udp_proxy/v3/route.pb.h"
 #include "external/envoy_api/envoy/extensions/filters/udp/udp_proxy/session/http_capsule/v3/http_capsule.pb.h"
-#include "external/envoy/source/common/common/posix/thread_impl.h"
 
 #include "source/client/sni_utility.h"
 #include "source/common/uri_impl.h"
@@ -483,26 +482,26 @@ absl::Status RunWithSubprocess(std::function<void()> nigthawk_fn, std::function<
 }
 
 
-// Envoy::Thread::PosixThreadPtr createThread(std::function<void()> thread_routine) {
+Envoy::Thread::PosixThreadPtr createThread(std::function<void()> thread_routine) {
   
-//   Envoy::Thread::Options options;
+  Envoy::Thread::Options options;
   
-//   auto thread_handle =
-//       new Envoy::Thread::ThreadHandle(thread_routine, options.priority_);
-//   const int rc =  pthread_create(
-//     &thread_handle->handle(), nullptr,
-//     [](void* arg) -> void* {
-//       auto* handle = static_cast<Envoy::Thread::ThreadHandle*>(arg);
-//       handle->routine()();
-//       return nullptr;
-//     },
-//     reinterpret_cast<void*>(thread_handle));
-//   if (rc != 0) {
-//     delete thread_handle;
-//     IS_ENVOY_BUG(fmt::format("Unable to create a thread with return code: {}", rc));
-//     return nullptr;
-//   }
-//   return std::make_unique<Envoy::Thread::PosixThread>(thread_handle, options);
-// }
+  auto thread_handle =
+      new Envoy::Thread::ThreadHandle(thread_routine, options.priority_);
+  const int rc =  pthread_create(
+    &thread_handle->handle(), nullptr,
+    [](void* arg) -> void* {
+      auto* handle = static_cast<Envoy::Thread::ThreadHandle*>(arg);
+      handle->routine()();
+      return nullptr;
+    },
+    reinterpret_cast<void*>(thread_handle));
+  if (rc != 0) {
+    delete thread_handle;
+    IS_ENVOY_BUG(fmt::format("Unable to create a thread with return code: {}", rc));
+    return nullptr;
+  }
+  return std::make_unique<Envoy::Thread::PosixThread>(thread_handle, options);
+}
 
 } // namespace Nighthawk
