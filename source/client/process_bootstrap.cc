@@ -11,6 +11,12 @@
 #include "external/envoy_api/envoy/extensions/transport_sockets/quic/v3/quic_transport.pb.h"
 #include "external/envoy_api/envoy/extensions/upstreams/http/v3/http_protocol_options.pb.h"
 
+#include "external/envoy_api/envoy/extensions/filters/udp/udp_proxy/v3/udp_proxy.pb.h"
+#include "external/envoy_api/envoy/extensions/filters/network/tcp_proxy/v3/tcp_proxy.pb.h"
+#include "external/envoy_api/envoy/extensions/filters/udp/udp_proxy/v3/route.pb.h"
+#include "external/envoy_api/envoy/extensions/filters/udp/udp_proxy/session/http_capsule/v3/http_capsule.pb.h"
+#include "external/envoy/source/common/common/posix/thread_impl.h"
+
 #include "source/client/sni_utility.h"
 #include "source/common/uri_impl.h"
 #include "source/common/utility.h"
@@ -207,7 +213,6 @@ absl::Status extractAndResolveUrisFromOptions(Envoy::Event::Dispatcher& dispatch
                    Utility::translateFamilyOptionString(options.addressFamily()));
     }
     if(!options.tunnelUri().empty()){
-      //TODO see if localhost here works
       encap_uri = std::make_unique<UriImpl>(fmt::format("https://localhost:{}", options.encapPort()));
       encap_uri->resolve(dispatcher, dns_resolver,
                    Utility::translateFamilyOptionString(options.addressFamily()));
@@ -294,5 +299,210 @@ absl::StatusOr<Bootstrap> createBootstrapConfiguration(
 
   return bootstrap;
 }
+
+
+absl::StatusOr<Bootstrap> createEncapBootstrap(const Client::Options& options, UriImpl& tunnel_uri,
+    Envoy::Event::Dispatcher& dispatcher,
+    Envoy::Api::Api& api,
+    Envoy::Network::DnsResolverFactory& dns_resolver_factory,
+    const envoy::config::core::v3::TypedExtensionConfig& typed_dns_resolver_config) {
+  envoy::config::bootstrap::v3::Bootstrap encap_bootstrap;
+
+  absl::StatusOr<Envoy::Network::DnsResolverSharedPtr> dns_resolver =
+      dns_resolver_factory.createDnsResolver(dispatcher, api, typed_dns_resolver_config);
+  if (!dns_resolver.ok()) {
+    return dns_resolver.status();
+  }
+      
+  // CONNECT-UDP for HTTP3.
+  bool is_udp = options.protocol() == Envoy::Http::Protocol::Http3;
+  auto tunnel_protocol = options.tunnelProtocol();
+
+  // Create encap bootstrap.
+  auto *listener = encap_bootstrap.mutable_static_resources()->add_listeners();
+  listener->set_name("encap_listener");
+  auto *address = listener->mutable_address();
+  auto *socket_address = address->mutable_socket_address();
+
+  UriImpl encap_uri(fmt::format("http://localhost:{}", options.encapPort()));
+  encap_uri.resolve(dispatcher, *dns_resolver.value(),
+                Utility::translateFamilyOptionString(options.addressFamily()));
+  
+  socket_address->set_address(encap_uri.address()->ip()->addressAsString());
+  socket_address->set_protocol(is_udp ? envoy::config::core::v3::SocketAddress::UDP : envoy::config::core::v3::SocketAddress::TCP);
+  socket_address->set_port_value(encap_uri.port());
+
+  if (is_udp) {
+    address->mutable_socket_address()->set_protocol(envoy::config::core::v3::SocketAddress::UDP);
+    auto *filter = listener->add_listener_filters();
+    filter->set_name("envoy.filters.listener.udp_proxy");
+    filter->mutable_typed_config()->set_type_url("type.googleapis.com/envoy.extensions.filters.listener.udp_proxy.v3.UdpProxy");
+    envoy::extensions::filters::udp::udp_proxy::v3::UdpProxyConfig udp_proxy_config;
+    *udp_proxy_config.mutable_stat_prefix() = "udp_proxy";
+    auto *action = udp_proxy_config.mutable_matcher()->mutable_on_no_match()->mutable_action();
+    action->set_name("route");
+    action->mutable_typed_config()->set_type_url("type.googleapis.com/envoy.extensions.filters.udp.udp_proxy.v3.Route");
+    envoy::extensions::filters::udp::udp_proxy::v3::Route route_config;
+    route_config.set_cluster("cluster_0");
+    action->mutable_typed_config()->PackFrom(route_config);
+    
+    auto *session_filter = udp_proxy_config.mutable_session_filters()->Add();
+    session_filter->set_name("envoy.filters.udp.session.http_capsule");
+    session_filter->mutable_typed_config()->set_type_url("type.googleapis.com/envoy.extensions.filters.udp.udp_proxy.session.http_capsule.v3.FilterConfig");
+    envoy::extensions::filters::udp::udp_proxy::session::http_capsule::v3::FilterConfig session_filter_config;
+    session_filter->mutable_typed_config()->PackFrom(session_filter_config);
+    
+    auto *tunneling_config = udp_proxy_config.mutable_tunneling_config();
+    *tunneling_config->mutable_proxy_host() = "%FILTER_STATE(proxy.host.key:PLAIN)%";
+    *tunneling_config->mutable_target_host() = "%FILTER_STATE(target.host.key:PLAIN)%";
+    tunneling_config->set_default_target_port(443);
+    auto *retry_options = tunneling_config->mutable_retry_options();
+    retry_options->mutable_max_connect_attempts()->set_value(2);
+    auto *buffer_options = tunneling_config->mutable_buffer_options();
+    buffer_options->mutable_max_buffered_datagrams()->set_value(1024);
+    buffer_options->mutable_max_buffered_bytes()->set_value(16384);
+    auto *headers_to_add = tunneling_config->mutable_headers_to_add()->Add();
+    headers_to_add->mutable_header()->set_key("original_dst_port");
+    headers_to_add->mutable_header()->set_value("%DOWNSTREAM_LOCAL_PORT%");
+    
+    filter->mutable_typed_config()->PackFrom(udp_proxy_config);
+    
+  } else {
+    address->mutable_socket_address()->set_protocol(envoy::config::core::v3::SocketAddress::TCP);
+    auto *filter = listener->add_filter_chains()->add_filters();
+    filter->set_name("envoy.filters.network.tcp_proxy");
+    filter->mutable_typed_config()->set_type_url("type.googleapis.com/envoy.extensions.filters.network.tcp_proxy.v3.TcpProxy");
+    envoy::extensions::filters::network::tcp_proxy::v3::TcpProxy tcp_proxy_config;
+    tcp_proxy_config.set_stat_prefix("tcp_proxy");
+    *tcp_proxy_config.mutable_cluster() = "cluster_0";
+    auto *tunneling_config = tcp_proxy_config.mutable_tunneling_config();
+    *tunneling_config->mutable_hostname() = "host.com:443";
+    auto *header_to_add = tunneling_config->add_headers_to_add();
+    header_to_add->mutable_header()->set_key("original_dst_port");
+    header_to_add->mutable_header()->set_value("%DOWNSTREAM_LOCAL_PORT%");
+    filter->mutable_typed_config()->PackFrom(tcp_proxy_config);
+  }
+
+  auto *cluster = encap_bootstrap.mutable_static_resources()->add_clusters();
+  cluster->set_name("cluster_0");
+  cluster->mutable_connect_timeout()->set_seconds(5);
+
+  envoy::extensions::upstreams::http::v3::HttpProtocolOptions protocol_options;
+  if(tunnel_protocol == Envoy::Http::Protocol::Http3){
+    auto h3_options = protocol_options.mutable_explicit_http_config()->mutable_http3_protocol_options();
+
+    if(options.tunnelHttp3ProtocolOptions().has_value()){
+      h3_options->MergeFrom(options.tunnelHttp3ProtocolOptions().value());
+    }
+    auto *transport_socket = cluster->mutable_transport_socket();
+    envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext upstream_tls_context = options.tunnelTlsContext();
+    transport_socket->set_name("envoy.transport_sockets.quic");
+    envoy::extensions::transport_sockets::quic::v3::QuicUpstreamTransport quic_upstream_transport;
+    *quic_upstream_transport.mutable_upstream_tls_context() = upstream_tls_context;
+    transport_socket->mutable_typed_config()->PackFrom(quic_upstream_transport);
+    
+  }
+  else if(tunnel_protocol == Envoy::Http::Protocol::Http2){
+      protocol_options.mutable_explicit_http_config()->mutable_http2_protocol_options();
+  } else {
+      protocol_options.mutable_explicit_http_config()->mutable_http_protocol_options();
+  }
+
+  (*cluster->mutable_typed_extension_protocol_options())
+  ["envoy.extensions.upstreams.http.v3.HttpProtocolOptions"]
+      .PackFrom(protocol_options);
+
+
+  *cluster->mutable_load_assignment()->mutable_cluster_name() = "cluster_0";
+  auto *endpoint = cluster->mutable_load_assignment()->mutable_endpoints()->Add()->add_lb_endpoints()->mutable_endpoint();
+
+  tunnel_uri.resolve(dispatcher, *dns_resolver.value(),
+                   Utility::translateFamilyOptionString(options.addressFamily()));
+
+  auto endpoint_socket = endpoint->mutable_address()->mutable_socket_address();
+  endpoint_socket->set_address(tunnel_uri.address()->ip()->addressAsString());
+  endpoint_socket->set_port_value(tunnel_uri.port());
+  
+  
+  return encap_bootstrap;
+}
+
+absl::Status RunWithSubprocess(std::function<void()> nigthawk_fn, std::function<void(sem_t&, sem_t&)> envoy_fn) {
+    
+  sem_t* envoy_control_sem
+  
+  = static_cast<sem_t*>(mmap(NULL, sizeof(sem_t), PROT_READ |PROT_WRITE,MAP_SHARED|MAP_ANONYMOUS, -1, 0));
+  sem_t* nighthawk_control_sem
+  
+  = static_cast<sem_t*>(mmap(NULL, sizeof(sem_t), PROT_READ |PROT_WRITE,MAP_SHARED|MAP_ANONYMOUS, -1, 0));
+
+  // create blocked semaphore for envoy
+  int ret = sem_init(envoy_control_sem, /*pshared=*/1, /*count=*/0); 
+  if (ret != 0) {
+    return absl::InternalError("sem_init failed");
+  }
+  
+  // create blocked semaphore for nighthawk
+  ret = sem_init(nighthawk_control_sem, /*pshared=*/1, /*count=*/0);
+  if (ret != 0) {
+    return absl::InternalError("sem_init failed");
+  }
+
+  pid_t pid = fork();
+  if (pid == -1) {
+    return absl::InternalError("fork failed");
+  }
+  if (pid == 0) {
+    envoy_fn(*envoy_control_sem, *nighthawk_control_sem);
+    exit(0);
+  }
+  else{
+    // wait for envoy to start and signal nighthawk to start
+    sem_wait(nighthawk_control_sem);
+    // start nighthawk
+    nigthawk_fn();
+    // signal envoy to shutdown
+    sem_post(envoy_control_sem);
+  }
+  
+  int status;
+  waitpid(pid, &status, 0);
+  
+  sem_destroy(envoy_control_sem);
+  munmap(envoy_control_sem, sizeof(sem_t));
+  
+  sem_destroy(nighthawk_control_sem);
+  munmap(nighthawk_control_sem, sizeof(sem_t));
+  if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
+    // Child process did not crash.
+    return absl::OkStatus();
+  }
+  // Child process crashed.
+  return absl::InternalError(absl::StrCat("Execution crashed ", status));
+  
+}
+
+
+// Envoy::Thread::PosixThreadPtr createThread(std::function<void()> thread_routine) {
+  
+//   Envoy::Thread::Options options;
+  
+//   auto thread_handle =
+//       new Envoy::Thread::ThreadHandle(thread_routine, options.priority_);
+//   const int rc =  pthread_create(
+//     &thread_handle->handle(), nullptr,
+//     [](void* arg) -> void* {
+//       auto* handle = static_cast<Envoy::Thread::ThreadHandle*>(arg);
+//       handle->routine()();
+//       return nullptr;
+//     },
+//     reinterpret_cast<void*>(thread_handle));
+//   if (rc != 0) {
+//     delete thread_handle;
+//     IS_ENVOY_BUG(fmt::format("Unable to create a thread with return code: {}", rc));
+//     return nullptr;
+//   }
+//   return std::make_unique<Envoy::Thread::PosixThread>(thread_handle, options);
+// }
 
 } // namespace Nighthawk
