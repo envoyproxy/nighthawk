@@ -13,7 +13,7 @@ def nighthawk_dependencies():
         strip_prefix = "envoy-%s" % ENVOY_COMMIT,
         # // clang-format off: Envoy's format check: Only repository_locations.bzl may contains URL references
         url = "https://github.com/envoyproxy/envoy/archive/%s.tar.gz" % ENVOY_COMMIT,
-        # // clang-format on
+        # // clang-format on.
     )
     http_archive(
         name = "dep_hdrhistogram_c",
