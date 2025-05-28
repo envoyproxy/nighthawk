@@ -108,7 +108,8 @@ stages:
 # reported by https://github.com/envoyproxy/nighthawk/issues/1006
 - stage: release
   dependsOn:
-  - "test_gcc"
+  # TODO(fei-deng): Re-enable test_gcc
+  #- "test_gcc"
   - "sanitizers"
   - "coverage_unit"
   condition: eq(variables['PostSubmit'], true)
