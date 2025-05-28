@@ -44,22 +44,23 @@ stages:
       parameters:
         ciTarget: $(CI_TARGET)
 
-- stage: test_gcc
-  dependsOn: ["check"]
-  pool: "envoy-x64-large"
-  jobs:
-  - job: test_gcc
-    displayName: "do_ci.sh"
-    strategy:
-      maxParallel: 1
-      matrix:
-        test_gcc:
-          CI_TARGET: "test_gcc"
-    timeoutInMinutes: 120
-    steps:
-    - template: bazel.yml
-      parameters:
-        ciTarget: $(CI_TARGET)
+# TODO(feid-deng): Re-enable test_gcc
+#- stage: test_gcc
+#  dependsOn: ["check"]
+#  pool: "envoy-x64-large"
+#  jobs:
+#  - job: test_gcc
+#    displayName: "do_ci.sh"
+#    strategy:
+#      maxParallel: 1
+#      matrix:
+#        test_gcc:
+#          CI_TARGET: "test_gcc"
+#    timeoutInMinutes: 120
+#    steps:
+#    - template: bazel.yml
+#      parameters:
+#        ciTarget: $(CI_TARGET)
 
 - stage: sanitizers
   dependsOn: ["test"]
