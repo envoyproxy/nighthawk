@@ -148,6 +148,7 @@ function setup_gcc_toolchain() {
     export BAZEL_COMPILER=gcc
     [[ "${NIGHTHAWK_BUILD_ARCH}" == "aarch64" ]] && BAZEL_BUILD_OPTIONS="$BAZEL_BUILD_OPTIONS --copt -march=armv8-a+crypto"
     [[ "${NIGHTHAWK_BUILD_ARCH}" == "aarch64" ]] && BAZEL_TEST_OPTIONS="$BAZEL_TEST_OPTIONS --copt -march=armv8-a+crypto"
+    BAZEL_BUILD_OPTIONS="$BAZEL_BUILD_OPTIONS --config=gcc"
     echo "$CC/$CXX toolchain configured"
 }
 
