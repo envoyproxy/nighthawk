@@ -85,6 +85,8 @@ def modify_compile_command(target, args):
     # clang-tidy will misinterpret them.
     options = options.replace("-std=c++0x ", "")
     options = options.replace("-std=c++11 ", "")
+    options = options.replace("-std=c++13 ", "")
+    options = options.replace("-stdlib=libstdc++", "")
 
     if args.vscode:
         # Visual Studio Code doesn't seem to like "-iquote". Replace it with
