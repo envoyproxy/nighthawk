@@ -146,6 +146,8 @@ function setup_gcc_toolchain() {
     export CC=gcc
     export CXX=g++
     export BAZEL_COMPILER=gcc
+    BAZEL_BUILD_OPTIONS="$BAZEL_BUILD_OPTIONS --config=remote-gcc --cxxopt=-Wno-missing-requires"
+    BAZEL_TEST_OPTIONS="$BAZEL_TEST_OPTIONS --config=remote-gcc --cxxopt=-Wno-missing-requires"
     [[ "${NIGHTHAWK_BUILD_ARCH}" == "aarch64" ]] && BAZEL_BUILD_OPTIONS="$BAZEL_BUILD_OPTIONS --copt -march=armv8-a+crypto"
     [[ "${NIGHTHAWK_BUILD_ARCH}" == "aarch64" ]] && BAZEL_TEST_OPTIONS="$BAZEL_TEST_OPTIONS --copt -march=armv8-a+crypto"
     echo "$CC/$CXX toolchain configured"
