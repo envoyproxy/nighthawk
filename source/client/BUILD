@@ -124,6 +124,7 @@ envoy_cc_library(
         "@envoy//source/common/network:address_lib_with_external_headers",
         "@envoy//source/common/protobuf:message_validator_lib_with_external_headers",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
+        "@envoy//source/exe:main_common_lib_with_external_headers",
         "@envoy//source/common/router:context_lib_with_external_headers",
         "@envoy//source/common/runtime:runtime_lib_with_external_headers",
         "@envoy//source/common/secret:secret_manager_impl_lib_with_external_headers",

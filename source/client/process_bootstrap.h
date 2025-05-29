@@ -48,18 +48,11 @@ absl::StatusOr<envoy::config::bootstrap::v3::Bootstrap> createBootstrapConfigura
  * @param tunnel_uri URI to the terminating proxy.
  * @param dispatcher is used when resolving hostnames to IP addresses in the
  * bootstrap.
- * @param dns_resolver_factory used to create a DNS resolver to resolve hostnames
- * in the bootstrap.
- * @param typed_dns_resolver_config config used when creating dns_resolver_factory,
- * also needed when creating the resolver.
+ * @param resolver bootstrap resolver
  *
  * @return the created bootstrap configuration.
  */
-absl::StatusOr<envoy::config::bootstrap::v3::Bootstrap> createEncapBootstrap(const Client::Options& options, const UriImpl& tunnel_uri,
-    Envoy::Event::Dispatcher& dispatcher,
-    Envoy::Api::Api& api,
-    Envoy::Network::DnsResolverFactory& dns_resolver_factory,
-    const envoy::config::core::v3::TypedExtensionConfig& typed_dns_resolver_config);
+absl::StatusOr<envoy::config::bootstrap::v3::Bootstrap> createEncapBootstrap(const Client::Options& options, UriImpl& tunnel_uri, Envoy::Event::Dispatcher& dispatcher, const Envoy::Network::DnsResolverSharedPtr& resolver);
 
 
 /**
@@ -71,5 +64,15 @@ absl::StatusOr<envoy::config::bootstrap::v3::Bootstrap> createEncapBootstrap(con
  * @return error status for processes
  */
 absl::Status RunWithSubprocess(std::function<void()> nighthawk_runner, std::function<void(sem_t&, sem_t&)> encap_envoy_runner);
+
+
+/**
+ * Spins function into thread
+ *
+ * @param thread_routine executes nighthawk's workers
+ *
+ * @return thread pointer
+ */
+Envoy::Thread::PosixThreadPtr createThread(std::function<void()> thread_routine);
 
 } // namespace Nighthawk
