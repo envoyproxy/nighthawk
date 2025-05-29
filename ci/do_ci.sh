@@ -126,6 +126,10 @@ function do_clang_tidy() {
 function do_unit_test_coverage() {
     export TEST_TARGETS="//test/... -//test:python_test"
     # TODO(https://github.com/envoyproxy/nighthawk/issues/747): Increase back to 93.2 when coverage flakiness address
+    ENVOY_GENHTML_ARGS=(
+            --ignore-errors "category,corrupt,inconsistent")
+        GENHTML_ARGS="${ENVOY_GENHTML_ARGS[*]}"
+    export GENHTML_ARGS
     export COVERAGE_THRESHOLD=91.5
     echo "bazel coverage build with tests ${TEST_TARGETS}"
     test/run_nighthawk_bazel_coverage.sh ${TEST_TARGETS}
@@ -134,6 +138,10 @@ function do_unit_test_coverage() {
 
 function do_integration_test_coverage() {
     export TEST_TARGETS="//test:python_test"
+    ENVOY_GENHTML_ARGS=(
+            --ignore-errors "category,corrupt,inconsistent")
+        GENHTML_ARGS="${ENVOY_GENHTML_ARGS[*]}"
+    export GENHTML_ARGS
     # TODO(#830): Raise the integration test coverage.
     # TODO(dubious90): Raise this back up to at least 73.
     export COVERAGE_THRESHOLD=72.9
