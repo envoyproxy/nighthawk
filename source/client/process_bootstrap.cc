@@ -299,20 +299,10 @@ absl::StatusOr<Bootstrap> createBootstrapConfiguration(
   return bootstrap;
 }
 
-
-absl::StatusOr<Bootstrap> createEncapBootstrap(const Client::Options& options, UriImpl& tunnel_uri,
-    Envoy::Event::Dispatcher& dispatcher,
-    Envoy::Api::Api& api,
-    Envoy::Network::DnsResolverFactory& dns_resolver_factory,
-    const envoy::config::core::v3::TypedExtensionConfig& typed_dns_resolver_config) {
+absl::StatusOr<envoy::config::bootstrap::v3::Bootstrap> createEncapBootstrap(const Client::Options& options, UriImpl& tunnel_uri, Envoy::Event::Dispatcher& dispatcher, const Envoy::Network::DnsResolverSharedPtr& dns_resolver)
+{
   envoy::config::bootstrap::v3::Bootstrap encap_bootstrap;
 
-  absl::StatusOr<Envoy::Network::DnsResolverSharedPtr> dns_resolver =
-      dns_resolver_factory.createDnsResolver(dispatcher, api, typed_dns_resolver_config);
-  if (!dns_resolver.ok()) {
-    return dns_resolver.status();
-  }
-      
   // CONNECT-UDP for HTTP3.
   bool is_udp = options.protocol() == Envoy::Http::Protocol::Http3;
   auto tunnel_protocol = options.tunnelProtocol();
@@ -324,7 +314,7 @@ absl::StatusOr<Bootstrap> createEncapBootstrap(const Client::Options& options, U
   auto *socket_address = address->mutable_socket_address();
 
   UriImpl encap_uri(fmt::format("http://localhost:{}", options.encapPort()));
-  encap_uri.resolve(dispatcher, *dns_resolver.value(),
+  encap_uri.resolve(dispatcher, *dns_resolver,
                 Utility::translateFamilyOptionString(options.addressFamily()));
   
   socket_address->set_address(encap_uri.address()->ip()->addressAsString());
@@ -415,7 +405,7 @@ absl::StatusOr<Bootstrap> createEncapBootstrap(const Client::Options& options, U
   *cluster->mutable_load_assignment()->mutable_cluster_name() = "cluster_0";
   auto *endpoint = cluster->mutable_load_assignment()->mutable_endpoints()->Add()->add_lb_endpoints()->mutable_endpoint();
 
-  tunnel_uri.resolve(dispatcher, *dns_resolver.value(),
+  tunnel_uri.resolve(dispatcher, *dns_resolver,
                    Utility::translateFamilyOptionString(options.addressFamily()));
 
   auto endpoint_socket = endpoint->mutable_address()->mutable_socket_address();
