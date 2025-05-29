@@ -40,8 +40,30 @@ COVERAGE_DATA="${COVERAGE_DIR}/coverage.dat"
 
 cp bazel-out/_coverage/_coverage_report.dat "${COVERAGE_DATA}"
 
-COVERAGE_VALUE=$(genhtml --prefix ${PWD} --output "${COVERAGE_DIR}" "${COVERAGE_DATA}" | grep lines... | cut -d ' ' -f 4)
+read -ra GENHTML_ARGS <<< "${GENHTML_ARGS:-}"
+# TEMP WORKAROUND FOR MOBILE
+CWDNAME="$(basename "${SRCDIR}")"
+if [[ "$CWDNAME" == "mobile" ]]; then
+    for arg in "${GENHTML_ARGS[@]}"; do
+        if [[ "$arg" == --erase-functions=* ]]; then
+            mobile_args_present=true
+        fi
+    done
+    if [[ "$mobile_args_present" != "true" ]]; then
+        GENHTML_ARGS+=(
+            --erase-functions=__cxx_global_var_init
+            --ignore-errors "category,corrupt,inconsistent")
+    fi
+fi
+GENHTML_ARGS=(
+    --prefix "${PWD}"
+    --output "${COVERAGE_DIR}"
+    "${GENHTML_ARGS[@]}"
+    "${COVERAGE_DATA}")
+COVERAGE_VALUE="$(genhtml "${GENHTML_ARGS[@]}" | tee /dev/stderr | grep lines... | cut -d ' ' -f 4)"
+
 COVERAGE_VALUE=${COVERAGE_VALUE%?}
+
 echo "Zipping coverage report to ${SRCDIR}/coverage_html.zip".
 zip -r "${SRCDIR}/coverage_html.zip" "${COVERAGE_DIR}"
 
