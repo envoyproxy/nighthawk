@@ -53,7 +53,7 @@ public:
   virtual Envoy::Http::Protocol tunnelProtocol() const PURE;
   virtual std::string tunnelUri() const PURE;
   virtual uint32_t encapPort() const PURE;
-  virtual const envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext&
+  virtual const absl::optional<envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext>
   tunnelTlsContext() const PURE;
   virtual const absl::optional<envoy::config::core::v3::Http3ProtocolOptions>&
   tunnelHttp3ProtocolOptions() const PURE;

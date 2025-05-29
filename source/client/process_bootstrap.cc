@@ -302,6 +302,7 @@ absl::StatusOr<Bootstrap> createBootstrapConfiguration(
 absl::StatusOr<envoy::config::bootstrap::v3::Bootstrap> createEncapBootstrap(const Client::Options& options, UriImpl& tunnel_uri, Envoy::Event::Dispatcher& dispatcher, const Envoy::Network::DnsResolverSharedPtr& dns_resolver)
 {
   envoy::config::bootstrap::v3::Bootstrap encap_bootstrap;
+  encap_bootstrap.mutable_stats_server_version_override()->set_value(1);
 
   // CONNECT-UDP for HTTP3.
   bool is_udp = options.protocol() == Envoy::Http::Protocol::Http3;
@@ -324,8 +325,10 @@ absl::StatusOr<envoy::config::bootstrap::v3::Bootstrap> createEncapBootstrap(con
   if (is_udp) {
     address->mutable_socket_address()->set_protocol(envoy::config::core::v3::SocketAddress::UDP);
     auto *filter = listener->add_listener_filters();
-    filter->set_name("envoy.filters.listener.udp_proxy");
-    filter->mutable_typed_config()->set_type_url("type.googleapis.com/envoy.extensions.filters.listener.udp_proxy.v3.UdpProxy");
+    filter->set_name("udp_proxy");
+    //type.googleapis.com/envoy.extensions.filters.listener.udp_proxy.v3.UdpProxy
+    //type.googleapis.com/envoy.extensions.filters.udp.udp_proxy.v3.UdpProxyConfig
+    filter->mutable_typed_config()->set_type_url("type.googleapis.com/envoy.extensions.filters.udp.udp_proxy.v3.UdpProxyConfig");
     envoy::extensions::filters::udp::udp_proxy::v3::UdpProxyConfig udp_proxy_config;
     *udp_proxy_config.mutable_stat_prefix() = "udp_proxy";
     auto *action = udp_proxy_config.mutable_matcher()->mutable_on_no_match()->mutable_action();
@@ -384,17 +387,33 @@ absl::StatusOr<envoy::config::bootstrap::v3::Bootstrap> createEncapBootstrap(con
       h3_options->MergeFrom(options.tunnelHttp3ProtocolOptions().value());
     }
     auto *transport_socket = cluster->mutable_transport_socket();
-    envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext upstream_tls_context = options.tunnelTlsContext();
+    envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext upstream_tls_context = *options.tunnelTlsContext();
     transport_socket->set_name("envoy.transport_sockets.quic");
     envoy::extensions::transport_sockets::quic::v3::QuicUpstreamTransport quic_upstream_transport;
     *quic_upstream_transport.mutable_upstream_tls_context() = upstream_tls_context;
     transport_socket->mutable_typed_config()->PackFrom(quic_upstream_transport);
+    CommonTlsContext* common_tls_context = upstream_tls_context.mutable_common_tls_context();
+    common_tls_context->add_alpn_protocols("h3");
     
   }
   else if(tunnel_protocol == Envoy::Http::Protocol::Http2){
       protocol_options.mutable_explicit_http_config()->mutable_http2_protocol_options();
+      if(options.tunnelTlsContext().has_value()){
+        auto *transport_socket = cluster->mutable_transport_socket();
+        envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext upstream_tls_context = *options.tunnelTlsContext();
+        CommonTlsContext* common_tls_context = upstream_tls_context.mutable_common_tls_context();
+        transport_socket->set_name("envoy.transport_sockets.tls");
+        common_tls_context->add_alpn_protocols("h2");
+      }
   } else {
       protocol_options.mutable_explicit_http_config()->mutable_http_protocol_options();
+      if(options.tunnelTlsContext().has_value()){
+        auto *transport_socket = cluster->mutable_transport_socket();
+        envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext upstream_tls_context = *options.tunnelTlsContext();
+        CommonTlsContext* common_tls_context = upstream_tls_context.mutable_common_tls_context();
+        transport_socket->set_name("envoy.transport_sockets.tls");
+        common_tls_context->add_alpn_protocols("http/1.1");
+      }
   }
 
   (*cluster->mutable_typed_extension_protocol_options())
