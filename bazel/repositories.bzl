@@ -1,7 +1,7 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-ENVOY_COMMIT = "8f16edbbbe2fbb2158d208f0009d24cdefd2b687"
-ENVOY_SHA = "d310c7df89448ec56c914d32d0c6fac8c32970dd70a3897251a3bb9d2fa59ff9"
+ENVOY_COMMIT = "1be4901329b805d2b2ea551148654d0708e26432"
+ENVOY_SHA = "04e31707efaf35a6be8a12199754acbf8b7e9e59bca9f993d1b0b0dc90940994"
 
 HDR_HISTOGRAM_C_VERSION = "0.11.2"  # October 12th, 2020
 HDR_HISTOGRAM_C_SHA = "637f28b5f64de2e268131e4e34e6eef0b91cf5ff99167db447d9b2825eae6bad"
