@@ -392,8 +392,6 @@ absl::StatusOr<envoy::config::bootstrap::v3::Bootstrap> createEncapBootstrap(con
     envoy::extensions::transport_sockets::quic::v3::QuicUpstreamTransport quic_upstream_transport;
     *quic_upstream_transport.mutable_upstream_tls_context() = upstream_tls_context;
     transport_socket->mutable_typed_config()->PackFrom(quic_upstream_transport);
-    CommonTlsContext* common_tls_context = upstream_tls_context.mutable_common_tls_context();
-    common_tls_context->add_alpn_protocols("h3");
     
   }
   else if(tunnel_protocol == Envoy::Http::Protocol::Http2){
@@ -401,18 +399,16 @@ absl::StatusOr<envoy::config::bootstrap::v3::Bootstrap> createEncapBootstrap(con
       if(options.tunnelTlsContext().has_value()){
         auto *transport_socket = cluster->mutable_transport_socket();
         envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext upstream_tls_context = *options.tunnelTlsContext();
-        CommonTlsContext* common_tls_context = upstream_tls_context.mutable_common_tls_context();
+        transport_socket->mutable_typed_config()->PackFrom(upstream_tls_context);
         transport_socket->set_name("envoy.transport_sockets.tls");
-        common_tls_context->add_alpn_protocols("h2");
       }
   } else {
       protocol_options.mutable_explicit_http_config()->mutable_http_protocol_options();
       if(options.tunnelTlsContext().has_value()){
         auto *transport_socket = cluster->mutable_transport_socket();
         envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext upstream_tls_context = *options.tunnelTlsContext();
-        CommonTlsContext* common_tls_context = upstream_tls_context.mutable_common_tls_context();
+        transport_socket->mutable_typed_config()->PackFrom(upstream_tls_context);
         transport_socket->set_name("envoy.transport_sockets.tls");
-        common_tls_context->add_alpn_protocols("http/1.1");
       }
   }
 
@@ -430,7 +426,6 @@ absl::StatusOr<envoy::config::bootstrap::v3::Bootstrap> createEncapBootstrap(con
   auto endpoint_socket = endpoint->mutable_address()->mutable_socket_address();
   endpoint_socket->set_address(tunnel_uri.address()->ip()->addressAsString());
   endpoint_socket->set_port_value(tunnel_uri.port());
-  
   
   return encap_bootstrap;
 }
