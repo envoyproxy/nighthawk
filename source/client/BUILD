@@ -59,8 +59,7 @@ envoy_cc_library(
         "@envoy//source/extensions/filters/udp/udp_proxy:udp_proxy_filter_lib",
         "@envoy//source/extensions/filters/network/tcp_proxy:config",
         "@envoy//source/extensions/filters/udp/udp_proxy:config",
-
-
+        "@envoy//source/common/formatter:formatter_extension_lib",
     ],
 )
 
