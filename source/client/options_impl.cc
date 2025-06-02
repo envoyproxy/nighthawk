@@ -557,10 +557,10 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
 
   if (!tunnel_tls_context.getValue().empty()) {
     try {
-      tunnel_tls_context_ = {};
-      Envoy::MessageUtil::loadFromJson(tunnel_tls_context.getValue(), *tunnel_tls_context_,
+      tunnel_tls_context_.emplace(envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext());
+      Envoy::MessageUtil::loadFromJson(tunnel_tls_context.getValue(), tunnel_tls_context_.value(),
                                        Envoy::ProtobufMessage::getStrictValidationVisitor());
-    } catch (const Envoy::EnvoyException& e) {
+        } catch (const Envoy::EnvoyException& e) {
       throw MalformedArgvException(e.what());
     }
   }
@@ -903,7 +903,6 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
       tunnel_http3_protocol_options_.emplace(Http3ProtocolOptions());
       tunnel_http3_protocol_options_.value().MergeFrom(options.tunnel_options().tunnel_http3_protocol_options());
     }
-
     tunnel_tls_context_->MergeFrom(options.tunnel_options().tunnel_tls_context());
   }
 
