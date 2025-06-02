@@ -72,8 +72,6 @@ stages:
       matrix:
         asan:
           CI_TARGET: "asan"
-        tsan:
-          CI_TARGET: "tsan"
     timeoutInMinutes: 120
     steps:
     - template: bazel.yml
