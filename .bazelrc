@@ -207,7 +207,6 @@ build:clang-tsan --copt -DEVENT__DISABLE_DEBUG_MODE
 # https://github.com/google/sanitizers/issues/953
 build:clang-tsan --test_env="TSAN_OPTIONS=report_atomic_races=0"
 build:clang-tsan --test_timeout=120,600,1500,4800
-build:clang-tsan --action_env=CC=clang --action_env=CXX=clang++
 
 # Clang MSAN - this is the base config for remote-msan and docker-msan. To run this config without
 # our build image, follow https://github.com/google/sanitizers/wiki/MemorySanitizerLibcxxHowTo
