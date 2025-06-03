@@ -85,8 +85,8 @@ build:linux --cxxopt=-fsized-deallocation --host_cxxopt=-fsized-deallocation
 build:linux --conlyopt=-fexceptions
 build:linux --fission=dbg,opt
 build:linux --features=per_object_debug_info
-#build:linux --action_env=BAZEL_LINKLIBS=-l%:libstdc++.a
-#build:linux --action_env=BAZEL_LINKOPTS=-lm
+build:linux --action_env=BAZEL_LINKLIBS=-l%:libstdc++.a
+build:linux --action_env=BAZEL_LINKOPTS=-lm
 
 # We already have absl in the build, define absl=1 to tell googletest to use absl for backtrace.
 build --define absl=1
@@ -208,10 +208,6 @@ build:clang-tsan --copt -DEVENT__DISABLE_DEBUG_MODE
 build:clang-tsan --test_env="TSAN_OPTIONS=report_atomic_races=0"
 build:clang-tsan --test_timeout=120,600,1500,4800
 build:clang-tsan --action_env=CC=clang --action_env=CXX=clang++
-# Explicitly choose libc++, otherwise some targets pick up the system's libstdc++,          # unique
-# resulting in a symbol conflict.                                                           # unique
-#build:clang-tsan --action_env=CXXFLAGS=-stdlib=libc++                                       # unique
-#build:clang-tsan --action_env=LDFLAGS=-stdlib=libc++                                        # unique
 
 # Clang MSAN - this is the base config for remote-msan and docker-msan. To run this config without
 # our build image, follow https://github.com/google/sanitizers/wiki/MemorySanitizerLibcxxHowTo
