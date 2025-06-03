@@ -195,7 +195,7 @@ function do_sanitizer() {
 
     # We build this in steps to avoid running out of memory in CI
     # The Envoy build system now uses hermetic SAN libraries that come with
-    # Baazel. Those are built with libc++ instead of the GCC libstdc++.
+    # Bazel. Those are built with libc++ instead of the GCC libstdc++.
     # Explicitly setting --config=libc++ to avoid duplicate symbols.
     run_on_build_parts "run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=$CONFIG --config=libc++ --"
     run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config="$CONFIG" --config=libc++ -- //test/...
