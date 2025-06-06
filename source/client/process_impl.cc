@@ -94,6 +94,13 @@ public:
     // affinity is set / we don't have affinity with all cores, we should default to autoscale.
     // (e.g. we are called via taskset).
     uint32_t concurrency = autoscale ? cpu_cores_with_affinity : std::stoi(options.concurrency());
+    if(!options.tunnelUri().empty() && options.tunnelConcurrency() == "auto"){
+      // Divide concurrency in half
+      concurrency = concurrency/2;
+      if(concurrency == 0){
+        concurrency = 1;
+      }
+    }
 
     if (autoscale) {
       ENVOY_LOG(info, "Detected {} (v)CPUs with affinity..", cpu_cores_with_affinity);
@@ -886,7 +893,8 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     
     UriImpl tunnel_uri(options_.tunnelUri());
     
-    auto status_or_bootstrap = createEncapBootstrap(options_, tunnel_uri, *dispatcher_.get(), dns_resolver);
+    auto status_or_bootstrap = createEncapBootstrap(options_, tunnel_uri, *dispatcher_.get(),
+      dns_resolver);
     if(!status_or_bootstrap.ok()){
       ENVOY_LOG(error, status_or_bootstrap.status().ToString());
       return false;
@@ -904,7 +912,16 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
 
     Envoy::OptionsImpl envoy_options ({"encap_envoy"}, hot_restart_version_cb, spdlog::level::from_str(lower));
 
+
+    ENVOY_LOG(error, encap_bootstrap.DebugString());
     envoy_options.setConfigProto(encap_bootstrap);
+    if(options_.tunnelConcurrency() == "auto"){
+      envoy_options.setConcurrency(number_of_workers_);
+    }
+    else {
+      uint64_t encap_concurrency;
+      absl::SimpleAtoi(options_.tunnelConcurrency(),&encap_concurrency);
+    }
 
     Envoy::Event::RealTimeSystem real_time_system;
     Envoy::ProdComponentFactory prod_component_factory;
@@ -1039,6 +1056,8 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
       setupStatsSinks(bootstrap_, stats_sinks);
       std::chrono::milliseconds stats_flush_interval = std::chrono::milliseconds(
           Envoy::DurationUtil::durationToMilliseconds(bootstrap_.stats_flush_interval()));
+
+      ENVOY_LOG(error, bootstrap_.DebugString());
 
       if (!options_.statsSinks().empty()) {
         // There should be only a single live flush worker instance at any time.

@@ -59,6 +59,7 @@ public:
   tunnelHttp3ProtocolOptions() const PURE;
 
   virtual std::string concurrency() const PURE;
+  virtual std::string tunnelConcurrency() const PURE;
   virtual nighthawk::client::Verbosity::VerbosityOptions verbosity() const PURE;
   virtual nighthawk::client::OutputFormat::OutputFormatOptions outputFormat() const PURE;
   virtual bool prefetchConnections() const PURE;
