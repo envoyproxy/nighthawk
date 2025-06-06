@@ -1,4 +1,4 @@
-# Last updated 2025-04-18
+# Last updated 2025-05-30
 apipkg
 attrs
 certifi
@@ -22,7 +22,7 @@ requests
 # We can unpin this dependency when Envoy (and therefore Nighthawk) migrate to Bazel 7, which will allow us to use the experimental flag,
 # experimental_inprocess_symlink_creation, which allows spaces in filenames.
 # See https://bazel.build/reference/command-line-reference#flag--experimental_inprocess_symlink_creation.
-setuptools<=70.3.0
+setuptools<=78.1.1
 six
 urllib3
 yapf

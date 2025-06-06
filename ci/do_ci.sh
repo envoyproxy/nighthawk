@@ -126,6 +126,10 @@ function do_clang_tidy() {
 function do_unit_test_coverage() {
     export TEST_TARGETS="//test/... -//test:python_test"
     # TODO(https://github.com/envoyproxy/nighthawk/issues/747): Increase back to 93.2 when coverage flakiness address
+    ENVOY_GENHTML_ARGS=(
+            --ignore-errors "category,corrupt,inconsistent")
+        GENHTML_ARGS="${ENVOY_GENHTML_ARGS[*]}"
+    export GENHTML_ARGS
     export COVERAGE_THRESHOLD=91.5
     echo "bazel coverage build with tests ${TEST_TARGETS}"
     test/run_nighthawk_bazel_coverage.sh ${TEST_TARGETS}
@@ -134,6 +138,10 @@ function do_unit_test_coverage() {
 
 function do_integration_test_coverage() {
     export TEST_TARGETS="//test:python_test"
+    ENVOY_GENHTML_ARGS=(
+            --ignore-errors "category,corrupt,inconsistent")
+        GENHTML_ARGS="${ENVOY_GENHTML_ARGS[*]}"
+    export GENHTML_ARGS
     # TODO(#830): Raise the integration test coverage.
     # TODO(dubious90): Raise this back up to at least 73.
     export COVERAGE_THRESHOLD=72.9
@@ -146,6 +154,8 @@ function setup_gcc_toolchain() {
     export CC=gcc
     export CXX=g++
     export BAZEL_COMPILER=gcc
+    BAZEL_BUILD_OPTIONS="$BAZEL_BUILD_OPTIONS --config=gcc"
+    BAZEL_TEST_OPTIONS="$BAZEL_TEST_OPTIONS --config=gcc"
     [[ "${NIGHTHAWK_BUILD_ARCH}" == "aarch64" ]] && BAZEL_BUILD_OPTIONS="$BAZEL_BUILD_OPTIONS --copt -march=armv8-a+crypto"
     [[ "${NIGHTHAWK_BUILD_ARCH}" == "aarch64" ]] && BAZEL_TEST_OPTIONS="$BAZEL_TEST_OPTIONS --copt -march=armv8-a+crypto"
     echo "$CC/$CXX toolchain configured"
@@ -184,8 +194,11 @@ function do_sanitizer() {
     cd "${SRCDIR}"
 
     # We build this in steps to avoid running out of memory in CI
-    run_on_build_parts "run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=$CONFIG --"
-    run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config="$CONFIG" -- //test/...
+    # The Envoy build system now uses hermetic SAN libraries that come with
+    # Bazel. Those are built with libc++ instead of the GCC libstdc++.
+    # Explicitly setting --config=libc++ to avoid duplicate symbols.
+    run_on_build_parts "run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=$CONFIG --config=libc++ --"
+    run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config="$CONFIG" --config=libc++ -- //test/...
 }
 
 function cleanup_benchmark_artifacts {
