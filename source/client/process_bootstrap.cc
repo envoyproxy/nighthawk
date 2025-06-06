@@ -299,7 +299,8 @@ absl::StatusOr<Bootstrap> createBootstrapConfiguration(
   return bootstrap;
 }
 
-absl::StatusOr<envoy::config::bootstrap::v3::Bootstrap> createEncapBootstrap(const Client::Options& options, UriImpl& tunnel_uri, Envoy::Event::Dispatcher& dispatcher, const Envoy::Network::DnsResolverSharedPtr& dns_resolver)
+absl::StatusOr<envoy::config::bootstrap::v3::Bootstrap> createEncapBootstrap(const Client::Options& options, UriImpl& tunnel_uri,
+  Envoy::Event::Dispatcher& dispatcher, const Envoy::Network::DnsResolverSharedPtr& dns_resolver)
 {
   envoy::config::bootstrap::v3::Bootstrap encap_bootstrap;
   encap_bootstrap.mutable_stats_server_version_override()->set_value(1);

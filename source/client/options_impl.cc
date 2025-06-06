@@ -176,6 +176,15 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
           concurrency_),
       false, "", "string", cmd);
 
+  TCLAP::ValueArg<std::string> tunnel_concurrency(
+      "", "tunnel-concurrency",
+      fmt::format(
+          "The number of concurrent event loops that should be used. Specify 'auto' to let "
+          "Nighthawk use half the threads specified via the concurrency flag for tunneling.",
+          "Default: auto",
+          tunnel_concurrency_),
+      false, "auto", "string", cmd);
+
   std::vector<std::string> log_levels = {"trace", "debug", "info", "warn", "error", "critical"};
   TCLAP::ValuesConstraint<std::string> verbosities_allowed(log_levels);
 
@@ -547,10 +556,11 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
     }
     tunnel_uri_ = tunnel_uri.getValue();
     encap_port_ = GetAvailablePort(/*udp=*/protocol_ == Protocol::HTTP3);
+    tunnel_concurrency_ = tunnel_concurrency.getValue();
 
   }
   else if (tunnel_uri.isSet() ||tunnel_http3_protocol_options.isSet()
-        || tunnel_tls_context.isSet()) {
+        || tunnel_tls_context.isSet() || tunnel_concurrency.isSet()) {
     throw MalformedArgvException("tunnel* flags require --tunnel-protocol");
   }
 
@@ -898,6 +908,7 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
     
     // we must find an available port for the encap listener
     encap_port_ = GetAvailablePort(/*is_udp=*/protocol_ == Protocol::HTTP3);
+    concurrency_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options.tunnel_options(), tunnel_concurrency, tunnel_concurrency_);
 
     if (options.tunnel_options().has_tunnel_http3_protocol_options()) {
       tunnel_http3_protocol_options_.emplace(Http3ProtocolOptions());
@@ -1017,6 +1028,7 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
 
 void OptionsImpl::setNonTrivialDefaults() {
   concurrency_ = "1";
+  tunnel_concurrency_ = "auto";
   // By default, we don't tolerate error status codes and connection failures, and will report
   // upon observing those.
   failure_predicates_["benchmark.http_4xx"] = 0;
@@ -1047,6 +1059,19 @@ void OptionsImpl::validate() const {
     }
     if (parsed_concurrency <= 0) {
       throw MalformedArgvException("Value for --concurrency should be greater then 0.");
+    }
+  }
+  if (tunnel_concurrency_ != "auto") {
+    int parsed_concurrency;
+    try {
+      parsed_concurrency = std::stoi(tunnel_concurrency_);
+    } catch (const std::invalid_argument& ia) {
+      throw MalformedArgvException("Invalid value for --tunnel-concurrency");
+    } catch (const std::out_of_range& oor) {
+      throw MalformedArgvException("Value out of range: --tunnel-concurrency");
+    }
+    if (parsed_concurrency <= 0) {
+      throw MalformedArgvException("Value for --tunnel-concurrency should be greater then 0.");
     }
   }
   if (request_source_ != "") {
