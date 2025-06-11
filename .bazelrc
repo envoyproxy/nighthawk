@@ -277,7 +277,7 @@ build:coverage --define=no_debug_info=1
 build:coverage --linkopt=-Wl,-s,--no-relax
 build:coverage --test_env=ENVOY_IP_TEST_VERSIONS=v4only
 build:coverage --define=dynamic_link_tests=false
-# Use custom report generator that also generates HTMLAdd commentMore actions
+# Use custom report generator that also generates HTML
 build:coverage --coverage_report_generator=@envoy//tools/coverage:report_generator
 
 build:test-coverage --test_arg="-l trace"
