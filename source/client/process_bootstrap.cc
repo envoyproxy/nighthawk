@@ -193,7 +193,7 @@ Cluster createNighthawkClusterForWorker(const Client::Options& options,
 absl::Status extractAndResolveUrisFromOptions(Envoy::Event::Dispatcher& dispatcher,
                                               const Client::Options& options,
                                               Envoy::Network::DnsResolver& dns_resolver,
-                                              UriPtr &encap_uri,
+                                              UriPtr* encap_uri,
                                               std::vector<UriPtr>* uris,
                                               UriPtr* request_source_uri) {
   try {
@@ -212,8 +212,8 @@ absl::Status extractAndResolveUrisFromOptions(Envoy::Event::Dispatcher& dispatch
                    Utility::translateFamilyOptionString(options.addressFamily()));
     }
     if(!options.tunnelUri().empty()){
-      encap_uri = std::make_unique<UriImpl>(fmt::format("https://localhost:{}", options.encapPort()));
-      encap_uri->resolve(dispatcher, dns_resolver,
+      *encap_uri = std::make_unique<UriImpl>(fmt::format("https://localhost:{}", options.encapPort()));
+      (*encap_uri)->resolve(dispatcher, dns_resolver,
                    Utility::translateFamilyOptionString(options.addressFamily()));
     }
     if (options.requestSource() != "") {
@@ -244,21 +244,21 @@ absl::StatusOr<Bootstrap> createBootstrapConfiguration(
     return dns_resolver.status();
   }
   // resolve targets and encapsulation 
-  std::vector<UriPtr> uris;
+  std::vector<UriPtr> uris, encap_uris;
   UriPtr request_source_uri, encap_uri;
   absl::Status uri_status = extractAndResolveUrisFromOptions(
-      dispatcher, options, *dns_resolver.value(), encap_uri ,&uris, &request_source_uri);
+      dispatcher, options, *dns_resolver.value(), &encap_uri ,&uris, &request_source_uri);
   if (!uri_status.ok()) {
     return uri_status;
   }
-
+  if(encap_uri != nullptr){
+    encap_uris.push_back(std::move(encap_uri));
+  }
   Bootstrap bootstrap;
   for (int worker_number = 0; worker_number < number_of_workers; worker_number++) {
     bool is_tunneling = !options.tunnelUri().empty();
     // if we're tunneling, redirect traffic to the encap listener
     // while maintaining the host value
-    std::vector<UriPtr> encap_uris;
-    encap_uris.push_back(std::move(encap_uri));
     if(is_tunneling && encap_uris.empty()){
       return absl::InvalidArgumentError("No encapsulation URI for tunneling");
     }
