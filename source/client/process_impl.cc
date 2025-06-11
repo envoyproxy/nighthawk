@@ -921,6 +921,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     else {
       uint64_t encap_concurrency;
       absl::SimpleAtoi(options_.tunnelConcurrency(),&encap_concurrency);
+      envoy_options.setConcurrency(encap_concurrency);
     }
 
     Envoy::Event::RealTimeSystem real_time_system;
