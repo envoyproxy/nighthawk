@@ -80,28 +80,9 @@ stages:
       parameters:
         ciTarget: $(CI_TARGET)
 
-- stage: coverage_unit
-  dependsOn: ["test"]
-  pool: "envoy-x64-large"
-  jobs:
-  - job: coverage_unit
-    displayName: "do_ci.sh"
-    strategy:
-      maxParallel: 1
-      matrix:
-        coverage:
-          CI_TARGET: "coverage"
-    timeoutInMinutes: 120
-    steps:
-    - template: bazel.yml
-      parameters:
-        ciTarget: $(CI_TARGET)
-    - task: PublishPipelineArtifact@1
-      condition: always()
-      displayName: 'Publish the line coverage report'
-      inputs:
-        targetPath: $(Build.SourcesDirectory)/coverage_html.zip
-        artifactName: UnitTestCoverageReport-$(System.JobAttempt)
+
+# coverage_unit stage was temporarily removed due to the issue
+# reported by https://github.com/envoyproxy/nighthawk/issues/1367
 
 # coverage_integration stage was temporarily removed due to the issue
 # reported by https://github.com/envoyproxy/nighthawk/issues/1006
@@ -109,7 +90,6 @@ stages:
   dependsOn:
   - "test_gcc"
   - "sanitizers"
-  - "coverage_unit"
   condition: eq(variables['PostSubmit'], true)
   pool: "envoy-x64-large"
   jobs:
