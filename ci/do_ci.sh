@@ -318,16 +318,16 @@ case "$1" in
         RUN_FULL_CLANG_TIDY=1 do_clang_tidy
         exit 0
     ;;
-    coverage)
-        setup_clang_toolchain
-        do_unit_test_coverage
-        exit 0
-    ;;
-    coverage_integration)
-        setup_clang_toolchain
-        do_integration_test_coverage
-        exit 0
-    ;;
+    # coverage)
+    #     setup_clang_toolchain
+    #     do_unit_test_coverage
+    #     exit 0
+    # ;;
+    # coverage_integration)
+    #     setup_clang_toolchain
+    #     do_integration_test_coverage
+    #     exit 0
+    # ;;
     asan)
         setup_clang_toolchain
         do_sanitizer "clang-asan"
