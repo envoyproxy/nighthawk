@@ -3,8 +3,8 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 ENVOY_COMMIT = "f6b019e9ec9866234fd596b9637daf0a7933d097"
 ENVOY_SHA = "6048ede44eb8ab8bfee3064838dc0475e93a1846a46094b5b1ad017421e3faee"
 
-HDR_HISTOGRAM_C_VERSION = "0.11.2"  # October 12th, 2020
-HDR_HISTOGRAM_C_SHA = "637f28b5f64de2e268131e4e34e6eef0b91cf5ff99167db447d9b2825eae6bad"
+HDR_HISTOGRAM_C_VERSION = "0.11.8"  # June 18th, 2025
+HDR_HISTOGRAM_C_SHA = "bb95351a6a8b242dc9be1f28562761a84d4cf0a874ffc90a9b630770a6468e94"
 
 def nighthawk_dependencies():
     http_archive(
@@ -25,6 +25,7 @@ cc_library(
         "src/hdr_histogram.c",
         "src/hdr_histogram_log.c",
         "src/hdr_interval_recorder.c",
+        "src/hdr_malloc.h",
         "src/hdr_thread.c",
         "src/hdr_time.c",
         "src/hdr_writer_reader_phaser.c",
@@ -33,14 +34,15 @@ cc_library(
         "src/hdr_atomic.h",
         "src/hdr_encoding.h",
         "src/hdr_endian.h",
-        "src/hdr_histogram.h",
-        "src/hdr_histogram_log.h",
-        "src/hdr_interval_recorder.h",
+        "include/hdr/hdr_histogram.h",
+        "include/hdr/hdr_histogram_log.h",
+        "include/hdr/hdr_interval_recorder.h",
+        "include/hdr/hdr_writer_reader_phaser.h",
         "src/hdr_tests.h",
-        "src/hdr_thread.h",
-        "src/hdr_time.h",
-        "src/hdr_writer_reader_phaser.h",
+        "include/hdr/hdr_thread.h",
+        "include/hdr/hdr_time.h",
     ],
+    includes = ["include"],
     copts = [
         "-std=gnu99",
         "-Wno-implicit-function-declaration",
