@@ -319,6 +319,9 @@ envoy_cc_test(
     size = "enormous",
     srcs = ["python_test.cc"],
     data = ["//test/integration:integration_test"],
+    exec_properties = {
+        "Pool": "linux_x64_large",
+    },
     repository = "@envoy",
     deps = [
         "//source/client:nighthawk_client_lib",

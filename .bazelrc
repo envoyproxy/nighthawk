@@ -75,6 +75,10 @@ test --experimental_ui_max_stdouterr_bytes=11712829 #default 1048576
 # Allow tags to influence execution requirements
 common --experimental_allow_tags_propagation
 
+# Test configuration flags  # unique
+# Enable stress tests (expensive tests that are skipped by default)  # unique
+test:stress --//test/config:run_stress_tests=True  # unique
+
 build:linux --copt=-fdebug-types-section
 # Enable position independent code (this is the default on macOS and Windows)
 # (Workaround for https://github.com/bazelbuild/rules_foreign_cc/issues/421)
@@ -448,6 +452,9 @@ build:docker-tsan --config=rbe-toolchain-tsan
 # CI configurations
 build:remote-ci --config=ci
 build:remote-ci --remote_download_minimal
+
+build:remote-ci-download --config=ci  # unique
+build:remote-ci-download --remote_download_toplevel  # unique
 
 # Note this config is used by mobile CI also.
 common:ci --noshow_progress
