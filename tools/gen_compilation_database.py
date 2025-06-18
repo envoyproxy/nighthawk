@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-# Except for the targets (search for # unique) this file is a 1:1 copy of Envoy's.          # unique
-
 import argparse
 import json
 import os
@@ -131,8 +129,8 @@ if __name__ == "__main__":
         'Use `clang++` instead of the bazel wrapper for commands. This may help if `clangd` cannot find/run the tools.'
     )
     parser.add_argument(
-        'bazel_targets',
-        nargs='*',
-        default=["//..."])  # unique
+        'bazel_targets', nargs='*', default=[
+            "//..." # unique - multiple targets from Envoy are omitted.
+        ])
     args = parser.parse_args()
     fix_compilation_database(args, generate_compilation_database(args))

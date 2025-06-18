@@ -557,7 +557,7 @@ public:
                 pool->transportSocketOptions())};
             return codec;
           },
-          protocols);
+          protocols, server_.overloadManager());
       h1_pool->setConnectionReuseStrategy(connection_reuse_strategy_);
       h1_pool->setPrefetchConnections(prefetch_connections_);
       return Envoy::Http::ConnectionPool::InstancePtr{h1_pool};
