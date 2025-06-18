@@ -75,9 +75,9 @@ test --experimental_ui_max_stdouterr_bytes=11712829 #default 1048576
 # Allow tags to influence execution requirements
 common --experimental_allow_tags_propagation
 
-# Test configuration flags
-# Enable stress tests (expensive tests that are skipped by default)
-test:stress --//test/config:run_stress_tests=True
+# Test configuration flags  # unique
+# Enable stress tests (expensive tests that are skipped by default)  # unique
+test:stress --//test/config:run_stress_tests=True  # unique
 
 build:linux --copt=-fdebug-types-section
 # Enable position independent code (this is the default on macOS and Windows)
