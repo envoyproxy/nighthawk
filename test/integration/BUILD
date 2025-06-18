@@ -163,6 +163,15 @@ py_binary(
         ],
         "//conditions:default": [],
     }),
+    # Pass the stress test config as env vars
+    env = select({
+        "//test/config:stress_tests_enabled": {
+            "NH_RUN_STRESS_TESTS": "true",
+        },
+        "//conditions:default": {
+            "NH_RUN_STRESS_TESTS": "false",
+        },
+    }),
     deps = [
         ":test_connection_management_lib",
         ":test_grpc_service_lib",
