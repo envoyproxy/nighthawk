@@ -5,7 +5,7 @@
 
 #include "nighthawk/common/statistic.h"
 
-#include "external/dep_hdrhistogram_c/src/hdr_histogram.h"
+#include "external/dep_hdrhistogram_c/include/hdr/hdr_histogram.h"
 #include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/stats/histogram_impl.h"
 

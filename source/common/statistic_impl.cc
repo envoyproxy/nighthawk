@@ -5,7 +5,7 @@
 #include <fstream>
 #include <sstream>
 
-#include "external/dep_hdrhistogram_c/src/hdr_histogram_log.h"
+#include "external/dep_hdrhistogram_c/include/hdr/hdr_histogram_log.h"
 #include "external/envoy/source/common/common/assert.h"
 #include "external/envoy/source/common/protobuf/utility.h"
 
