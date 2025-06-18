@@ -6,20 +6,26 @@ on:
   workflow_call:
     inputs:
       task:
-        description: 'CI task to run'
+        description: "CI task to run"
         required: true
         type: string
+      bazel-extra:
+        description: "Extra bazel args"
+        required: false
+        type: string
+        default: >-
+          --config=remote-ci
       docker-in-docker:
-        description: 'Enable Docker in Docker'
+        description: "Enable Docker in Docker"
         required: false
         type: boolean
         default: false
     secrets:
       dockerhub-username:
-        description: 'DockerHub username'
+        description: "DockerHub username"
         required: false
       dockerhub-password:
-        description: 'DockerHub password'
+        description: "DockerHub password"
         required: false
 
 jobs:
@@ -40,10 +46,10 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ github.token }}
         BAZEL_BUILD_EXTRA_OPTIONS: >-
-          --config=remote-ci
+          ${{ inputs.bazel-extra }}
           --config=remote-envoy-engflow
         GH_BRANCH: ${{ github.ref }}
         GH_SHA1: ${{ github.sha }}
-        ENVOY_DOCKER-IN-DOCKER: ${{ inputs.docker-in-docker && '1' || '' }}
+        ENVOY_DOCKER_IN_DOCKER: ${{ inputs.docker-in-docker && '1' || '' }}
         DOCKERHUB_USERNAME: ${{ secrets.dockerhub-username }}
         DOCKERHUB_PASSWORD: ${{ secrets.dockerhub-password }}

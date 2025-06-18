@@ -104,8 +104,18 @@ function do_build () {
 #   0 on success, exits with return code 1 on failure.
 #######################################
 function do_opt_build () {
-    bazel build $BAZEL_BUILD_OPTIONS -c opt --define tcmalloc=gperftools //:nighthawk
-    bazel build $BAZEL_BUILD_OPTIONS -c opt --define tcmalloc=gperftools //benchmarks:benchmarks
+    bazel build \
+          --remote_download_toplevel \
+          $BAZEL_BUILD_OPTIONS \
+          -c opt \
+          --define tcmalloc=gperftools \
+          //:nighthawk
+    bazel build \
+          --remote_download_toplevel \
+          $BAZEL_BUILD_OPTIONS \
+          -c opt \
+          --define tcmalloc=gperftools \
+          //benchmarks:benchmarks
     maybe_copy_binaries_to_directory
 }
 

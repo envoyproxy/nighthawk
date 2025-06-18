@@ -36,23 +36,10 @@ jobs:
       fail-fast: false
       matrix:
         target:
+        - asan
         - benchmark_with_own_binaries
         - test
         - test_gcc
-    uses: ./.github/workflows/_ci.yml
-    with:
-      task: ${{ matrix.target }}
-
-  sanitizers:
-    permissions:
-      contents: read
-      packages: read
-    needs: test
-    strategy:
-      fail-fast: false
-      matrix:
-        target:
-        - asan
         - tsan
     uses: ./.github/workflows/_ci.yml
     with:
@@ -73,8 +60,10 @@ jobs:
     permissions:
       contents: read
       packages: read
-    needs: sanitizers
+    needs: test
     uses: ./.github/workflows/_ci.yml
     with:
       task: docker
+      bazel-extra: >-
+        --config=remote-ci-download
       docker-in-docker: true

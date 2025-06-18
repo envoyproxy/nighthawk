@@ -47,14 +47,8 @@ The CI automatically enables stress tests when running on branches:
 - Pull requests and branch builds: `--//test/config:run_stress_tests=True`
 - Local development (no GH_BRANCH): `--//test/config:run_stress_tests=False`
 
-## Adding to .bazelrc
-
-You can also create configurations in your `.bazelrc`:
+## Using .bazelrc config
 
 ```bash
-# In .bazelrc or user.bazelrc
-build:stress --//test/config:run_stress_tests=True
-
-# Then use:
 bazel test --config=stress //test/...
 ```
