@@ -920,8 +920,11 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     }
     else {
       uint64_t encap_concurrency;
-      absl::SimpleAtoi(options_.tunnelConcurrency(),&encap_concurrency);
-      envoy_options.setConcurrency(encap_concurrency);
+      bool success = absl::SimpleAtoi(options_.tunnelConcurrency(),&encap_concurrency);
+      if(!success){
+        ENVOY_LOG(error, "Failed to parse tunnel concurrency: {}", options_.tunnelConcurrency());
+        return;
+      }
     }
 
     Envoy::Event::RealTimeSystem real_time_system;
