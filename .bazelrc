@@ -426,6 +426,8 @@ build:docker-tsan --config=tsan
 # CI configurations
 build:remote-ci --config=ci
 build:remote-ci --remote_download_minimal
+build:remote-ci-download --config=ci  # unique
+build:remote-ci-download --remote_download_toplevel  # unique
 
 # Note this config is used by mobile CI also.
 common:ci --noshow_progress
