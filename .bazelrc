@@ -2,8 +2,6 @@
 # This is necessary since this needs to be available before we can access                   # unique
 # the Envoy repository contents via Bazel.                                                  # unique
                                                                                             # unique
-build:clang-asan --test_timeout=900                                                         # unique
-build:clang-tsan --test_timeout=900                                                         # unique
 # See https://github.com/envoyproxy/nighthawk/issues/405                                    # unique
 build:macos --copt -UDEBUG                                                                  # unique
                                                                                             # unique
@@ -345,6 +343,7 @@ build:remote-windows --remote_download_toplevel
 build:remote-clang --config=remote
 build:remote-clang --config=rbe-toolchain-clang
 
+
 build:remote-arm64-clang --config=remote
 build:remote-arm64-clang --config=rbe-toolchain-arm64-clang
 
@@ -427,8 +426,6 @@ build:docker-tsan --config=tsan
 # CI configurations
 build:remote-ci --config=ci
 build:remote-ci --remote_download_minimal
-build:remote-ci-download --config=ci  # unique
-build:remote-ci-download --remote_download_toplevel  # unique
 
 # Note this config is used by mobile CI also.
 common:ci --noshow_progress
