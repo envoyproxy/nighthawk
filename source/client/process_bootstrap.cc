@@ -1,5 +1,6 @@
 #include "source/client/process_bootstrap.h"
 
+#include <semaphore>
 #include <string>
 #include <vector>
 
