@@ -594,11 +594,13 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
     }
   }
 
-  if(tunnel_protocol_ == Protocol::HTTP3 && protocol_ == Protocol::HTTP3){
-    throw MalformedArgvException("--protocol HTTP3 over --tunnel-protocol HTTP3 is not supported");
-  }
-  if(tunnel_protocol_ == Protocol::HTTP1 && protocol_ == Protocol::HTTP3){
-    throw MalformedArgvException("--protocol HTTP3 over --tunnel-protocol HTTP1 is not supported");
+  if(tunnel_protocol.isSet()){
+    if(tunnel_protocol_ == Protocol::HTTP3 && protocol_ == Protocol::HTTP3){
+      throw MalformedArgvException("--protocol HTTP3 over --tunnel-protocol HTTP3 is not supported");
+    }
+    if(tunnel_protocol_ == Protocol::HTTP1 && protocol_ == Protocol::HTTP3){
+      throw MalformedArgvException("--protocol HTTP3 over --tunnel-protocol HTTP1 is not supported");
+    }
   }
 
   if (verbosity.isSet()) {
