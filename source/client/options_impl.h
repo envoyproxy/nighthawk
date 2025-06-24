@@ -131,6 +131,7 @@ public:
   }
 
 private:
+  virtual uint16_t GetAvailablePort(bool udp);
   void parsePredicates(const TCLAP::MultiArg<std::string>& arg,
                        TerminationPredicateMap& predicates);
   void setNonTrivialDefaults();
