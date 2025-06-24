@@ -30,6 +30,7 @@ public:
   MOCK_METHOD(const absl::optional<envoy::config::core::v3::Http3ProtocolOptions>&,
   tunnelHttp3ProtocolOptions, (), (const PURE));
 
+  MOCK_METHOD(std::string, tunnelConcurrency, (), (const PURE));
   MOCK_METHOD(std::string, concurrency, (), (const, override));
   MOCK_METHOD(nighthawk::client::Verbosity::VerbosityOptions, verbosity, (), (const, override));
   MOCK_METHOD(nighthawk::client::OutputFormat::OutputFormatOptions, outputFormat, (),
