@@ -1214,7 +1214,7 @@ TEST_F(OptionsImplTest, TunnelModeHInvalidProtocolCombination) {
   
   std::string tls_context = "{sni:\"localhost\",common_tls_context:{validation_context:{trusted_ca:{filename:\"fakeRootCA.pem\"},trust_chain_verification:\"ACCEPT_UNTRUSTED\"}}}";
   
-    EXPECT_THROW_WITH_REGEX(
+  EXPECT_THROW_WITH_REGEX(
       TestUtility::createOptionsImpl(fmt::format(
           "{} {} --protocol http3 --tunnel-protocol http3 --tunnel-uri http://foo/ --tunnel-tls-context {}", client_name_, good_test_uri_, tls_context)),
       MalformedArgvException, "--protocol HTTP3 over --tunnel-protocol HTTP3 is not supported");
