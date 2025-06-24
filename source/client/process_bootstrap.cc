@@ -328,8 +328,6 @@ absl::StatusOr<envoy::config::bootstrap::v3::Bootstrap> createEncapBootstrap(con
     address->mutable_socket_address()->set_protocol(envoy::config::core::v3::SocketAddress::UDP);
     auto *filter = listener->add_listener_filters();
     filter->set_name("udp_proxy");
-    //type.googleapis.com/envoy.extensions.filters.listener.udp_proxy.v3.UdpProxy
-    //type.googleapis.com/envoy.extensions.filters.udp.udp_proxy.v3.UdpProxyConfig
     filter->mutable_typed_config()->set_type_url("type.googleapis.com/envoy.extensions.filters.udp.udp_proxy.v3.UdpProxyConfig");
     envoy::extensions::filters::udp::udp_proxy::v3::UdpProxyConfig udp_proxy_config;
     *udp_proxy_config.mutable_stat_prefix() = "udp_proxy";

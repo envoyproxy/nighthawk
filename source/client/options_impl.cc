@@ -33,15 +33,16 @@ using ::nighthawk::client::Protocol;
 
 // Obtains an available TCP or UDP port. Throws an exception if one cannot be
 // allocated.
-uint16_t GetAvailablePort(bool udp) {
-  int sock = socket(AF_INET, udp ? SOCK_DGRAM : SOCK_STREAM, 0);
+uint16_t OptionsImpl::GetAvailablePort(bool udp) {
+  int family = address_family_ == nighthawk::client::AddressFamily::V4 ? AF_INET : AF_INET6;
+  int sock = socket(family, udp ? SOCK_DGRAM : SOCK_STREAM, 0);
     if(sock < 0) {
       throw NighthawkException(absl::StrCat("could not create socket: ", strerror(errno)) );
       return 0;
     }
     struct sockaddr_in serv_addr;
     bzero(reinterpret_cast<char *>(&serv_addr), sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_family = family;
     serv_addr.sin_addr.s_addr = INADDR_ANY;
     serv_addr.sin_port = 0;
     if (bind(sock, reinterpret_cast<struct sockaddr *>(&serv_addr), sizeof(serv_addr)) < 0) {
@@ -545,64 +546,6 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
     }
   }
 
-
-  if (tunnel_protocol.isSet()) {
-    std::string upper_cased = tunnel_protocol.getValue();
-    absl::AsciiStrToUpper(&upper_cased);
-    RELEASE_ASSERT(nighthawk::client::Protocol::ProtocolOptions_Parse(upper_cased, &tunnel_protocol_),
-                   "Failed to parse tunnel protocol");
-    if(!tunnel_uri.isSet()){
-      throw MalformedArgvException("--tunnel-protocol requires --tunnel-uri");
-    }
-    tunnel_uri_ = tunnel_uri.getValue();
-    encap_port_ = GetAvailablePort(/*udp=*/protocol_ == Protocol::HTTP3);
-    tunnel_concurrency_ = tunnel_concurrency.getValue();
-
-  }
-  else if (tunnel_uri.isSet() ||tunnel_http3_protocol_options.isSet()
-        || tunnel_tls_context.isSet() || tunnel_concurrency.isSet()) {
-    throw MalformedArgvException("tunnel* flags require --tunnel-protocol");
-  }
-
-
-  if (!tunnel_tls_context.getValue().empty()) {
-    try {
-      tunnel_tls_context_.emplace(envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext());
-      Envoy::MessageUtil::loadFromJson(tunnel_tls_context.getValue(), tunnel_tls_context_.value(),
-                                       Envoy::ProtobufMessage::getStrictValidationVisitor());
-        } catch (const Envoy::EnvoyException& e) {
-      throw MalformedArgvException(e.what());
-    }
-  }
-  else if(tunnel_protocol_ == Protocol::HTTP3){
-    throw MalformedArgvException("--tunnel-tls-context is required to use --tunnel-protocol http3");
-  }
-
-  if (!tunnel_http3_protocol_options.getValue().empty()) {
-    if (tunnel_protocol_ != Protocol::HTTP3) {
-      throw MalformedArgvException(
-          "--tunnel-http3-protocol-options can only be used with --protocol http3");
-    }
-
-    try {
-      tunnel_http3_protocol_options_.emplace(Http3ProtocolOptions());
-      Envoy::MessageUtil::loadFromJson(tunnel_http3_protocol_options.getValue(),
-                                       tunnel_http3_protocol_options_.value(),
-                                       Envoy::ProtobufMessage::getStrictValidationVisitor());
-    } catch (const Envoy::EnvoyException& e) {
-      throw MalformedArgvException(e.what());
-    }
-  }
-
-  if(tunnel_protocol.isSet()){
-    if(tunnel_protocol_ == Protocol::HTTP3 && protocol_ == Protocol::HTTP3){
-      throw MalformedArgvException("--protocol HTTP3 over --tunnel-protocol HTTP3 is not supported");
-    }
-    if(tunnel_protocol_ == Protocol::HTTP1 && protocol_ == Protocol::HTTP3){
-      throw MalformedArgvException("--protocol HTTP3 over --tunnel-protocol HTTP1 is not supported");
-    }
-  }
-
   if (verbosity.isSet()) {
     std::string upper_cased = verbosity.getValue();
     absl::AsciiStrToUpper(&upper_cased);
@@ -825,6 +768,63 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
     }
   }
 
+  if (tunnel_protocol.isSet()) {
+    std::string upper_cased = tunnel_protocol.getValue();
+    absl::AsciiStrToUpper(&upper_cased);
+    RELEASE_ASSERT(nighthawk::client::Protocol::ProtocolOptions_Parse(upper_cased, &tunnel_protocol_),
+                   "Failed to parse tunnel protocol");
+    if(!tunnel_uri.isSet()){
+      throw MalformedArgvException("--tunnel-protocol requires --tunnel-uri");
+    }
+    tunnel_uri_ = tunnel_uri.getValue();
+    encap_port_ = GetAvailablePort(/*udp=*/protocol_ == Protocol::HTTP3);
+    tunnel_concurrency_ = tunnel_concurrency.getValue();
+
+  }
+  else if (tunnel_uri.isSet() ||tunnel_http3_protocol_options.isSet()
+        || tunnel_tls_context.isSet() || tunnel_concurrency.isSet()) {
+    throw MalformedArgvException("tunnel flags require --tunnel-protocol");
+  }
+
+
+  if (!tunnel_tls_context.getValue().empty()) {
+    try {
+      tunnel_tls_context_.emplace(envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext());
+      Envoy::MessageUtil::loadFromJson(tunnel_tls_context.getValue(), tunnel_tls_context_.value(),
+                                       Envoy::ProtobufMessage::getStrictValidationVisitor());
+        } catch (const Envoy::EnvoyException& e) {
+      throw MalformedArgvException(e.what());
+    }
+  }
+  else if(tunnel_protocol_ == Protocol::HTTP3){
+    throw MalformedArgvException("--tunnel-tls-context is required to use --tunnel-protocol http3");
+  }
+
+  if (!tunnel_http3_protocol_options.getValue().empty()) {
+    if (tunnel_protocol_ != Protocol::HTTP3) {
+      throw MalformedArgvException(
+          "--tunnel-http3-protocol-options can only be used with --protocol http3");
+    }
+
+    try {
+      tunnel_http3_protocol_options_.emplace(Http3ProtocolOptions());
+      Envoy::MessageUtil::loadFromJson(tunnel_http3_protocol_options.getValue(),
+                                       tunnel_http3_protocol_options_.value(),
+                                       Envoy::ProtobufMessage::getStrictValidationVisitor());
+    } catch (const Envoy::EnvoyException& e) {
+      throw MalformedArgvException(e.what());
+    }
+  }
+
+  if(tunnel_protocol.isSet()){
+    if(tunnel_protocol_ == Protocol::HTTP3 && protocol_ == Protocol::HTTP3){
+      throw MalformedArgvException("--protocol HTTP3 over --tunnel-protocol HTTP3 is not supported");
+    }
+    if(tunnel_protocol_ == Protocol::HTTP1 && protocol_ == Protocol::HTTP3){
+      throw MalformedArgvException("--protocol HTTP3 over --tunnel-protocol HTTP1 is not supported");
+    }
+  }
+
   validate();
 }
 
@@ -904,6 +904,15 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
     http3_protocol_options_.value().MergeFrom(options.http3_protocol_options());
   }
 
+  concurrency_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, concurrency, concurrency_);
+  verbosity_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, verbosity, verbosity_);
+  output_format_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, output_format, output_format_);
+  prefetch_connections_ =
+      PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, prefetch_connections, prefetch_connections_);
+  burst_size_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, burst_size, burst_size_);
+  address_family_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, address_family, address_family_);
+
+
   if(options.has_tunnel_options()) {
     tunnel_protocol_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options.tunnel_options(), tunnel_protocol, tunnel_protocol_);
     tunnel_uri_ = options.tunnel_options().tunnel_uri();
@@ -918,14 +927,6 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
     }
     tunnel_tls_context_->MergeFrom(options.tunnel_options().tunnel_tls_context());
   }
-
-  concurrency_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, concurrency, concurrency_);
-  verbosity_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, verbosity, verbosity_);
-  output_format_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, output_format, output_format_);
-  prefetch_connections_ =
-      PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, prefetch_connections, prefetch_connections_);
-  burst_size_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, burst_size, burst_size_);
-  address_family_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, address_family, address_family_);
 
   if (options.has_request_options()) {
     const auto& request_options = options.request_options();

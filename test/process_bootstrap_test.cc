@@ -3,6 +3,8 @@
 
 #include "nighthawk/common/uri.h"
 
+#include "absl/strings/substitute.h"
+
 #include "external/envoy/source/common/common/statusor.h"
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"
@@ -1950,6 +1952,206 @@ TEST_F(CreateBootstrapConfigurationTest, DnsResolverFactoryError) {
       createBootstrapConfiguration(mock_dispatcher_, api, *options, mock_dns_resolver_factory_,
                                    typed_dns_resolver_config_, number_of_workers_);
   ASSERT_THAT(bootstrap, StatusIs(absl::StatusCode::kInternal));
+}
+
+
+TEST_F(CreateBootstrapConfigurationTest, CreateEncapBootstrap) {
+  setupUriResolutionExpectations();
+
+  std::unique_ptr<Client::OptionsImpl> options =
+      Client::TestUtility::createOptionsImpl("nighthawk_client http://www.example.org --address-family v4 --tunnel-protocol http2 --tunnel-uri http://www.example.org");
+  UriImpl tunnel_uri("www.example.org");
+  tunnel_uri.resolve(mock_dispatcher_, *mock_resolver_, Envoy::Network::DnsLookupFamily::V4Only);
+  auto encap_bootstrap = createEncapBootstrap(*options, tunnel_uri, mock_dispatcher_, mock_resolver_);
+  ASSERT_THAT(encap_bootstrap, StatusIs(absl::StatusCode::kOk));
+  
+  uint16_t encap_port = options->encapPort();
+  absl::StatusOr<Bootstrap> expected_bootstrap = parseBootstrapFromText(absl::Substitute(R"pb(
+static_resources {
+  listeners {
+    name: "encap_listener"
+    address {
+      socket_address {
+        address: "127.0.0.1"
+        port_value: $0
+      }
+    }
+    filter_chains {
+      filters {
+        name: "envoy.filters.network.tcp_proxy"
+        typed_config {
+          [type.googleapis.com/envoy.extensions.filters.network.tcp_proxy.v3.TcpProxy] {
+            stat_prefix: "tcp_proxy"
+            cluster: "cluster_0"
+            tunneling_config {
+              hostname: "host.com:443"
+              headers_to_add {
+                header {
+                  key: "original_dst_port"
+                  value: "%DOWNSTREAM_LOCAL_PORT%"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  clusters {
+    name: "cluster_0"
+    connect_timeout {
+      seconds: 5
+    }
+    load_assignment {
+      cluster_name: "cluster_0"
+      endpoints {
+        lb_endpoints {
+          endpoint {
+            address {
+              socket_address {
+                address: "127.0.0.1"
+                port_value: 80
+              }
+            }
+          }
+        }
+      }
+    }
+    typed_extension_protocol_options {
+      key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+      value {
+        [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+          explicit_http_config {
+            http2_protocol_options {
+            }
+          }
+        }
+      }
+    }
+  }
+}
+stats_server_version_override {
+  value: 1
+}
+)pb", encap_port));
+ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
+EXPECT_THAT(*encap_bootstrap, EqualsProto(*expected_bootstrap));
+}
+
+TEST_F(CreateBootstrapConfigurationTest, CreateEncapBootstrapWithCustomTLSContextH3Options) {
+  setupUriResolutionExpectations();
+
+  std::unique_ptr<Client::OptionsImpl> options =
+      Client::TestUtility::createOptionsImpl(
+          "nighthawk_client http://www.example.org --address-family v4"
+          " --tunnel-protocol http3 --tunnel-uri http://www.example.org --tunnel-tls-context"
+      " {sni:\"localhost\",common_tls_context:{validation_context:"
+      "{trusted_ca:{filename:\"fakeRootCA.pem\"},trust_chain_verification:\"ACCEPT_UNTRUSTED\"}}}"
+      " --tunnel-http3-protocol-options {quic_protocol_options:{max_concurrent_streams:1}}"
+          
+          );
+  
+  uint16_t encap_port = options->encapPort();
+  UriImpl tunnel_uri("www.example.org");
+  tunnel_uri.resolve(mock_dispatcher_, *mock_resolver_, Envoy::Network::DnsLookupFamily::V4Only);
+  auto encap_bootstrap = createEncapBootstrap(*options, tunnel_uri, mock_dispatcher_, mock_resolver_);
+  ASSERT_THAT(encap_bootstrap, StatusIs(absl::StatusCode::kOk));
+    
+  
+  absl::StatusOr<Bootstrap> expected_bootstrap = parseBootstrapFromText(
+      absl::Substitute(R"pb(
+static_resources {
+  listeners {
+    name: "encap_listener"
+    address {
+      socket_address {
+        address: "127.0.0.1"
+        port_value: $0
+      }
+    }
+    filter_chains {
+      filters {
+        name: "envoy.filters.network.tcp_proxy"
+        typed_config {
+          [type.googleapis.com/envoy.extensions.filters.network.tcp_proxy.v3.TcpProxy] {
+            stat_prefix: "tcp_proxy"
+            cluster: "cluster_0"
+            tunneling_config {
+              hostname: "host.com:443"
+              headers_to_add {
+                header {
+                  key: "original_dst_port"
+                  value: "%DOWNSTREAM_LOCAL_PORT%"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  clusters {
+    name: "cluster_0"
+    connect_timeout {
+      seconds: 5
+    }
+    transport_socket {
+      name: "envoy.transport_sockets.quic"
+      typed_config {
+        [type.googleapis.com/envoy.extensions.transport_sockets.quic.v3.QuicUpstreamTransport] {
+          upstream_tls_context {
+            common_tls_context {
+              validation_context {
+                trusted_ca {
+                  filename: "fakeRootCA.pem"
+                }
+                trust_chain_verification: ACCEPT_UNTRUSTED
+              }
+            }
+            sni: "localhost"
+          }
+        }
+      }
+    }
+    load_assignment {
+      cluster_name: "cluster_0"
+      endpoints {
+        lb_endpoints {
+          endpoint {
+            address {
+              socket_address {
+                address: "127.0.0.1"
+                port_value: 80
+              }
+            }
+          }
+        }
+      }
+    }
+    typed_extension_protocol_options {
+      key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+      value {
+        [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+          explicit_http_config {
+            http3_protocol_options {
+              quic_protocol_options {
+                max_concurrent_streams {
+                  value: 1
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+stats_server_version_override {
+  value: 1
+}
+)pb", encap_port));
+  ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
+  EXPECT_THAT(*encap_bootstrap, EqualsProto(*expected_bootstrap));
 }
 
 } // namespace
