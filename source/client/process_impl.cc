@@ -294,7 +294,8 @@ public:
         http_server_properties_cache_manager_(
             server_factory_context_, Envoy::ProtobufMessage::getStrictValidationVisitor(), tls),
         xds_manager_(dispatcher, api, store, local_info, validation_context_, *this),
-        secret_manager_(secret_manager) {}
+        secret_manager_(secret_manager),
+	null_overload_manager_(std::make_unique<Envoy::Server::NullOverloadManager>(tls, false)) {}
 
   void run() override { PANIC("NighthawkServerInstance::run not implemented"); }
   Envoy::OptRef<Envoy::Server::Admin> admin() override { return admin_; }
@@ -340,12 +341,8 @@ public:
   Envoy::MutexTracer* mutexTracer() override {
     PANIC("NighthawkServerInstance::mutexTracer not implemented");
   }
-  Envoy::Server::OverloadManager& overloadManager() override {
-    PANIC("NighthawkServerInstance::overloadManager not implemented");
-  }
-  Envoy::Server::OverloadManager& nullOverloadManager() override {
-    PANIC("NighthawkServerInstance::nullOverloadManager not implemented");
-  }
+  Envoy::Server::OverloadManager& overloadManager() override { return *null_overload_manager_; }
+  Envoy::Server::OverloadManager& nullOverloadManager() override { return *null_overload_manager_; }
   Envoy::Secret::SecretManager& secretManager() override { return secret_manager_; }
   const Envoy::Server::Options& options() override { return options_; }
   Envoy::Runtime::Loader& runtime() override { return runtime_; }
@@ -427,6 +424,8 @@ private:
   Envoy::Config::XdsManagerImpl xds_manager_;
   NighthawkLifecycleNotifierImpl lifecycle_notifier_; // A no-op object that lives here.
   Envoy::Secret::SecretManagerImpl& secret_manager_;
+  std::unique_ptr<Envoy::Server::OverloadManager>
+      null_overload_manager_; // Created in the constructor.
 };
 
 /**
@@ -557,7 +556,7 @@ public:
                 pool->transportSocketOptions())};
             return codec;
           },
-          protocols);
+          protocols, server_.overloadManager());
       h1_pool->setConnectionReuseStrategy(connection_reuse_strategy_);
       h1_pool->setPrefetchConnections(prefetch_connections_);
       return Envoy::Http::ConnectionPool::InstancePtr{h1_pool};
