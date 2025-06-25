@@ -448,7 +448,6 @@ absl::Status RunWithSubprocess(std::function<void()> nigthawk_fn, std::function<
   }
   if (pid == 0) {
     envoy_fn(*nighthawk_control_sem);
-    std::cout << " " << std::endl; 
 
     exit(0);
   }
@@ -457,7 +456,6 @@ absl::Status RunWithSubprocess(std::function<void()> nigthawk_fn, std::function<
     sem_wait(nighthawk_control_sem);
     // start nighthawk
     nigthawk_fn();
-    std::cout << " " << std::endl; 
     // signal envoy to shutdown
     
     if(kill(pid, SIGTERM) == -1 && errno != ESRCH){
