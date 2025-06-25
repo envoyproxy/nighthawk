@@ -902,7 +902,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     encap_bootstrap = *status_or_bootstrap;
   }
 
-  std::function<void(sem_t&, sem_t&)> envoy_routine = [this, &encap_main_common, &encap_bootstrap](sem_t& envoy_control_sem, sem_t& nighthawk_control_sem) {
+  std::function<void(sem_t&)> envoy_routine = [this, &encap_main_common, &encap_bootstrap](sem_t& nighthawk_control_sem) {
       
     const Envoy::OptionsImpl::HotRestartVersionCb hot_restart_version_cb =
     [](bool) { return "disabled"; };
@@ -943,17 +943,12 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
        auto startup_envoy_thread_ptr = encap_main_common->server()->lifecycleNotifier().registerCallback(NighthawkLifecycleNotifierImpl::Stage::PostInit, [&nighthawk_control_sem](){
               // signal nighthawk to start
               sem_post(&nighthawk_control_sem); 
+              std::cout <<"signal nughthawk to start" <<std::endl;
             });
-            std::function<void()> shutdown_envoy_thread = [&envoy_control_sem, &encap_main_common](){
-              // wait for nighthawk to finish
-              sem_wait(&envoy_control_sem); 
-              encap_main_common->server()->shutdown();
-            };
-            auto shutdown_envoy_thread_ptr = createThread(shutdown_envoy_thread);
             encap_main_common->run();
-            shutdown_envoy_thread_ptr->join();
       }
       catch (const Envoy::EnvoyException ex) {
+        std::cout << "error caught by envoy " << ex.what() << std::endl;
         ENVOY_LOG(error, ex.what());
         return;
       }
