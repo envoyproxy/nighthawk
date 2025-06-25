@@ -1,0 +1,79 @@
+admin:
+  # access_log:
+  #   - name: envoy.access_loggers.file
+  #     typed_config:
+  #       '@type': type.googleapis.com/envoy.extensions.access_loggers.file.v3.FileAccessLog
+  #       path: $tmpdir/terminating-envoy.log
+  address:
+    socket_address: { address: $server_ip, port_value: 0 }
+static_resources:
+  listeners:
+  - name: listener_0
+    address:
+      socket_address:
+        protocol: UDP
+        address: $server_ip
+        port_value: 0
+    udp_listener_config:
+      quic_options: {}
+      downstream_socket_config:
+        prefer_gro: true
+    filter_chains:
+    - transport_socket:
+        name: envoy.transport_sockets.quic
+        typed_config:
+          '@type': type.googleapis.com/envoy.extensions.transport_sockets.quic.v3.QuicDownstreamTransport
+          downstream_tls_context:
+            common_tls_context:
+              tls_certificates:
+                - certificate_chain:
+                      inline_string: |
+                        @inject-runfile:nighthawk/external/envoy/test/config/integration/certs/servercert.pem
+                  private_key:
+                      inline_string: |
+                        @inject-runfile:nighthawk/external/envoy/test/config/integration/certs/serverkey.pem
+      filters:
+      - name: envoy.filters.network.http_connection_manager
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          codec_type: HTTP3
+          stat_prefix: ingress_http
+          route_config:
+            name: local_route
+            virtual_hosts:
+            - name: local_service
+              domains:
+              - "*"
+              routes:
+              - match:
+                  connect_matcher:
+                    {}
+                route:
+                  cluster: service_google
+                  upgrade_configs:
+                  - upgrade_type: CONNECT
+                    connect_config:
+                      {}
+          http_filters:
+          - name: envoy.filters.http.router
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+          http3_protocol_options:
+            allow_extended_connect: true
+          upgrade_configs:
+          - upgrade_type: CONNECT
+  clusters:
+  - name: service_google
+    type: LOGICAL_DNS
+    # Comment out the following line to test on v6 networks
+    dns_lookup_family: V4_ONLY
+    lb_policy: ROUND_ROBIN
+    load_assignment:
+      cluster_name: service_google
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: www.google.com
+                port_value: 443

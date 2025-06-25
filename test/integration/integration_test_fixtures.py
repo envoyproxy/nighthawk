@@ -379,6 +379,55 @@ class QuicIntegrationTestBase(HttpsIntegrationTestBase):
     # Quic tests require specific IP rather than "all IPs" as the target.
     self.server_ip = "::1" if self.ip_version == IpVersion.IPV6 else "127.0.0.1"
 
+class TunnelingConnectIntegrationTestBase(HttpIntegrationTestBase):
+  """Base class for HTTP CONNECT based tunneling."""
+
+  def __init__(self, request, server_config, terminating_proxy_config):
+    """See base class."""
+    super(TunnelingConnectIntegrationTestBase, self).__init__(request, server_config)
+    self.server_ip = "::1" if self.ip_version == IpVersion.IPV6 else "127.0.0.1"
+    self._terminating_proxy_config_path = terminating_proxy_config
+    self._envoy_exe_path = "external/envoy/source/exe/envoy-static"
+
+  def getTunnelProtocol(self):
+    return self._tunnel_protocol
+
+  
+  def getTunnelUri(self, https=False):
+    """Get the http://host:port/ for envoy to query the server we started in setUp()."""
+    uri_host = self.server_ip
+    if self.ip_version == IpVersion.IPV6:
+      uri_host = "[%s]" % self.server_ip
+
+    uri = "%s://%s:%s/" % ("https" if https else "http", uri_host, self._terminating_envoy.server_port)
+
+  def getTestServerRootUri(self):
+    """See base class."""
+    return super(TunnelingConnectIntegrationTestBase, self).getTestServerRootUri(False)
+
+
+  def _tryStartTerminatingEnvoy(self):
+    self._terminating_envoy = NighthawkTestServer(self._envoy_exe_path,
+                                      self._terminating_proxy_config_path,
+                                      self.server_ip,
+                                      self.ip_version,
+                                      self.request,
+                                      #parameters=self.parameters,
+                                      tag=self.tag)
+    if not self._terminating_envoy.start():
+      return False
+    return True
+
+
+  def setUp(self):
+    assert self._tryStartTerminatingEnvoy(), "Tunneling envoy failed to start"
+    super(TunnelingConnectIntegrationTestBase,self).setUp()
+
+  
+  def tearDown(self, caplog):
+    #TODO Tunneling specific teardown
+    super(TunnelingConnectIntegrationTestBase,self).tearDown()
+
 
 class SniIntegrationTestBase(HttpsIntegrationTestBase):
   """Base for https/sni tests against the Nighthawk test server."""
@@ -428,6 +477,15 @@ def server_config_quic():
   yield "nighthawk/test/integration/configurations/nighthawk_https_origin_quic.yaml"
 
 
+@pytest.fixture()
+def terminating_proxy_config():
+  """Fixture which yields the path to an envoy terminating proxy configuration
+  Yields:
+      String: Path to the proxy configuration.
+  """
+  yield "nighthawk/test/integration/configurations/terminating_http1_connect_envoy.yaml"
+
+
 @pytest.fixture(params=determineIpVersionsFromEnvironment())
 def http_test_server_fixture(request, server_config, caplog):
   """Fixture for setting up a test environment with the stock http server configuration.
@@ -462,6 +520,21 @@ def quic_test_server_fixture(request, server_config_quic, caplog):
       QuicIntegrationTestBase: A fully set up instance. Tear down will happen automatically.
   """
   f = QuicIntegrationTestBase(request, server_config_quic)
+  f.setUp()
+  yield f
+  f.tearDown(caplog)
+
+
+
+@pytest.fixture(params=determineIpVersionsFromEnvironment())
+def tunneling_connect_test_server_fixture(request, server_config, terminating_proxy_config, caplog):
+  """Fixture for setting up a test environment with the stock https server configuration and
+  a CONNECT terminating proxy.
+
+  Yields:
+      TunnelingConnectIntegrationTestBase: A fully set up instance. Tear down will happen automatically.
+  """
+  f = TunnelingConnectIntegrationTestBase(request, server_config, terminating_proxy_config)
   f.setUp()
   yield f
   f.tearDown(caplog)

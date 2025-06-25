@@ -14,7 +14,7 @@ from test.integration.common import IpVersion
 from test.integration.integration_test_fixtures import (
     http_test_server_fixture, https_test_server_fixture, https_test_server_fixture,
     multi_http_test_server_fixture, multi_https_test_server_fixture, quic_test_server_fixture,
-    server_config, server_config_quic)
+    server_config, server_config_quic, tunneling_connect_test_server_fixture)
 from test.integration import asserts
 from test.integration import utility
 
@@ -183,6 +183,35 @@ def test_http_h2(http_test_server_fixture):
       "100", "--termination-predicate", "benchmark.http_2xx:24", "--rps", "100"
   ])
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
+  asserts.assertCounterEqual(counters, "benchmark.http_2xx", 25)
+  asserts.assertCounterEqual(counters, "upstream_cx_http2_total", 1)
+  asserts.assertCounterGreaterEqual(counters, "upstream_cx_rx_bytes_total", 900)
+  asserts.assertCounterEqual(counters, "upstream_cx_total", 1)
+  asserts.assertCounterGreaterEqual(counters, "upstream_cx_tx_bytes_total", 403)
+  asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 1)
+  asserts.assertCounterEqual(counters, "upstream_rq_total", 25)
+  asserts.assertCounterEqual(counters, "default.total_match_count", 1)
+  asserts.assertGreaterEqual(len(counters), 12)
+
+
+
+@pytest.mark.parametrize('terminating_proxy_config, tunnel_protocol',
+                         [("nighthawk/test/integration/configurations/terminating_http1_connect_envoy.yaml","http1"),
+                         ("nighthawk/test/integration/configurations/terminating_http2_connect_envoy.yaml","http2"),
+                         ("nighthawk/test/integration/configurations/terminating_http3_connect_envoy.yaml","http3")])
+def test_connect_tunneling(tunneling_connect_test_server_fixture, tunnel_protocol):
+  """Test h2 over h1/2/3 CONNECT tunnels.
+
+  Runs the CLI configured to use h2c against our test server, and sanity
+  checks statistics from both client and server.
+  """
+  parsed_json, _ = tunneling_connect_test_server_fixture.runNighthawkClient([
+      "--h2","--tunnel-uri", tunneling_connect_test_server_fixture.getTunnelUri() ,"--tunnel-protocol",tunnel_protocol,
+      tunneling_connect_test_server_fixture.getTestServerRootUri(), "--max-active-requests", "1", "--duration",
+      "100", "--termination-predicate", "benchmark.http_2xx:24", "--rps", "100"
+  ])
+
+  counters = tunneling_connect_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   asserts.assertCounterEqual(counters, "benchmark.http_2xx", 25)
   asserts.assertCounterEqual(counters, "upstream_cx_http2_total", 1)
   asserts.assertCounterGreaterEqual(counters, "upstream_cx_rx_bytes_total", 900)
@@ -996,3 +1025,6 @@ def test_drain(https_test_server_fixture):
   asserts.assertNotIn("benchmark.http_2xx", counters)
   asserts.assertIn("Wait for the connection pool drain timed out, proceeding to hard shutdown",
                    logs)
+
+
+#TODO add tunneling logic tests here
