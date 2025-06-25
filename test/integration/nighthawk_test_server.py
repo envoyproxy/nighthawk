@@ -275,7 +275,7 @@ class TestServerBase(SubprocessMixin):
 
 
 class NighthawkTestServer(TestServerBase):
-  """Run the Nighthawk test server in a separate process.
+  """Run the Nighthawk test server or envoy in a separate process.
 
   Passes in the right cli-arg to point it to its
   configuration. For, say, NGINX this would be '-c' instead.
@@ -289,7 +289,7 @@ class NighthawkTestServer(TestServerBase):
                request,
                parameters=dict(),
                tag=""):
-    """Initialize a NighthawkTestServer instance.
+    """Initialize a NighthawkTestServer instance or an envoy instance.
 
     Args:
         server_binary_path (String): Path to the nighthawk test server binary.

@@ -39,6 +39,7 @@ py_library(
         "//test/user_defined_output/fake_plugin:fake_user_defined_output",
         "//test/user_defined_output/fake_plugin:fake_user_defined_output_proto_py_proto",
         "@envoy//test/config/integration/certs",
+        "@envoy//source/exe:envoy-static"
     ],
     deps = [
         ":integration_test_base_lean",
