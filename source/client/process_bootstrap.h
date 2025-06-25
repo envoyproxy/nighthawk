@@ -65,7 +65,7 @@ absl::StatusOr<envoy::config::bootstrap::v3::Bootstrap> createEncapBootstrap(con
  *
  * @return error status for processes
  */
-absl::Status RunWithSubprocess(std::function<void()> nighthawk_runner, std::function<void(sem_t&, sem_t&)> encap_envoy_runner);
+absl::Status RunWithSubprocess(std::function<void()> nighthawk_runner, std::function<void(sem_t&)> encap_envoy_runner);
 
 
 /**

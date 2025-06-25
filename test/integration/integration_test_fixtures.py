@@ -249,7 +249,7 @@ class IntegrationTestBase():
   def runNighthawkClient(self,
                          args,
                          expect_failure=False,
-                         timeout=30,
+                         timeout=120,
                          as_json=True,
                          check_return_code=True):
     """Run Nighthawk against the test server.

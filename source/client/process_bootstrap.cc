@@ -430,23 +430,14 @@ absl::StatusOr<envoy::config::bootstrap::v3::Bootstrap> createEncapBootstrap(con
   return encap_bootstrap;
 }
 
-absl::Status RunWithSubprocess(std::function<void()> nigthawk_fn, std::function<void(sem_t&, sem_t&)> envoy_fn) {
-    
-  sem_t* envoy_control_sem
-  
-  = static_cast<sem_t*>(mmap(NULL, sizeof(sem_t), PROT_READ |PROT_WRITE,MAP_SHARED|MAP_ANONYMOUS, -1, 0));
+absl::Status RunWithSubprocess(std::function<void()> nigthawk_fn, std::function<void(sem_t&)> envoy_fn) {
+      
   sem_t* nighthawk_control_sem
   
   = static_cast<sem_t*>(mmap(NULL, sizeof(sem_t), PROT_READ |PROT_WRITE,MAP_SHARED|MAP_ANONYMOUS, -1, 0));
 
-  // create blocked semaphore for envoy
-  int ret = sem_init(envoy_control_sem, /*pshared=*/1, /*count=*/0); 
-  if (ret != 0) {
-    return absl::InternalError("sem_init failed");
-  }
-  
   // create blocked semaphore for nighthawk
-  ret = sem_init(nighthawk_control_sem, /*pshared=*/1, /*count=*/0);
+  int ret = sem_init(nighthawk_control_sem, /*pshared=*/1, /*count=*/0);
   if (ret != 0) {
     return absl::InternalError("sem_init failed");
   }
@@ -456,7 +447,9 @@ absl::Status RunWithSubprocess(std::function<void()> nigthawk_fn, std::function<
     return absl::InternalError("fork failed");
   }
   if (pid == 0) {
-    envoy_fn(*envoy_control_sem, *nighthawk_control_sem);
+    envoy_fn(*nighthawk_control_sem);
+    std::cout << " " << std::endl; 
+
     exit(0);
   }
   else{
@@ -464,15 +457,16 @@ absl::Status RunWithSubprocess(std::function<void()> nigthawk_fn, std::function<
     sem_wait(nighthawk_control_sem);
     // start nighthawk
     nigthawk_fn();
+    std::cout << " " << std::endl; 
     // signal envoy to shutdown
-    sem_post(envoy_control_sem);
+    
+    if(kill(pid, SIGTERM) == -1 && errno != ESRCH){
+        exit(-1); 
+    }
   }
   
   int status;
   waitpid(pid, &status, 0);
-  
-  sem_destroy(envoy_control_sem);
-  munmap(envoy_control_sem, sizeof(sem_t));
   
   sem_destroy(nighthawk_control_sem);
   munmap(nighthawk_control_sem, sizeof(sem_t));
