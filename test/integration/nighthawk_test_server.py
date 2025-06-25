@@ -220,6 +220,7 @@ class TestServerBase(SubprocessMixin):
     try:
       listeners = self.fetchJsonFromAdminInterface("/listeners?format=json")
       # We assume the listeners all use the same address.
+
       for listener in listeners["listener_statuses"]:
         port = listener["local_address"]["socket_address"]["port_value"]
         self.server_ports.append(port)
