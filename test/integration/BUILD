@@ -1,6 +1,7 @@
 load(
     "@envoy//bazel:envoy_build_system.bzl",
     "envoy_package",
+    "envoy_cc_binary"
 )
 load("@nh_pip3//:requirements.bzl", "requirement")
 load("@rules_python//python:defs.bzl", "py_binary", "py_library")
@@ -28,6 +29,22 @@ py_library(
     ],
 )
 
+# envoy binary with Logical DNS support 
+envoy_cc_binary(
+    name = "envoy-static-testonly",
+    linkopts = [
+        "-latomic",
+        "-lrt",
+    ],
+    repository = "@envoy",
+    deps = [
+        "@envoy//source/exe:envoy_main_entry_lib",
+        "@envoy//source/extensions/clusters/logical_dns:logical_dns_cluster_lib",
+        "@envoy//source/extensions/clusters/original_dst:original_dst_cluster_lib",
+        "@envoy//source/extensions/load_balancing_policies/cluster_provided:config"
+    ],
+)
+
 py_library(
     name = "integration_test_base",
     data = [
@@ -39,7 +56,7 @@ py_library(
         "//test/user_defined_output/fake_plugin:fake_user_defined_output",
         "//test/user_defined_output/fake_plugin:fake_user_defined_output_proto_py_proto",
         "@envoy//test/config/integration/certs",
-        "@envoy//source/exe:envoy-static"
+        ":envoy-static-testonly"
     ],
     deps = [
         ":integration_test_base_lean",

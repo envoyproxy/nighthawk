@@ -387,7 +387,7 @@ class TunnelingConnectIntegrationTestBase(HttpIntegrationTestBase):
     super(TunnelingConnectIntegrationTestBase, self).__init__(request, server_config)
     self.server_ip = "::1" if self.ip_version == IpVersion.IPV6 else "127.0.0.1"
     self._terminating_proxy_config_path = terminating_proxy_config
-    self._envoy_exe_path = "external/envoy/source/exe/envoy-static"
+    self._envoy_exe_path = "test/integration/envoy-static-testonly"
 
   def getTunnelProtocol(self):
     return self._tunnel_protocol
@@ -403,7 +403,7 @@ class TunnelingConnectIntegrationTestBase(HttpIntegrationTestBase):
 
   def getTestServerRootUri(self):
     """See base class."""
-    return super(TunnelingConnectIntegrationTestBase, self).getTestServerRootUri(False)
+    return super(TunnelingConnectIntegrationTestBase, self).getTestServerRootUri()
 
 
   def _tryStartTerminatingEnvoy(self):
@@ -412,8 +412,8 @@ class TunnelingConnectIntegrationTestBase(HttpIntegrationTestBase):
                                       self.server_ip,
                                       self.ip_version,
                                       self.request,
-                                      #parameters=self.parameters,
-                                      tag=self.tag)
+                                      parameters=self.parameters,
+                                      tag=self.tag+"envoy")
     if not self._terminating_envoy.start():
       return False
     return True
@@ -422,11 +422,6 @@ class TunnelingConnectIntegrationTestBase(HttpIntegrationTestBase):
   def setUp(self):
     assert self._tryStartTerminatingEnvoy(), "Tunneling envoy failed to start"
     super(TunnelingConnectIntegrationTestBase,self).setUp()
-
-  
-  def tearDown(self, caplog):
-    #TODO Tunneling specific teardown
-    super(TunnelingConnectIntegrationTestBase,self).tearDown()
 
 
 class SniIntegrationTestBase(HttpsIntegrationTestBase):
