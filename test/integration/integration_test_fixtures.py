@@ -398,8 +398,8 @@ class TunnelingConnectIntegrationTestBase(HttpIntegrationTestBase):
     uri_host = self.server_ip
     if self.ip_version == IpVersion.IPV6:
       uri_host = "[%s]" % self.server_ip
-
     uri = "%s://%s:%s/" % ("https" if https else "http", uri_host, self._terminating_envoy.server_port)
+    return uri
 
   def getTestServerRootUri(self):
     """See base class."""
