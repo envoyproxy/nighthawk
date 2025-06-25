@@ -206,11 +206,10 @@ def test_connect_tunneling(tunneling_connect_test_server_fixture, tunnel_protoco
   checks statistics from both client and server.
   """
   parsed_json, _ = tunneling_connect_test_server_fixture.runNighthawkClient([
-      "--h2","--tunnel-uri", tunneling_connect_test_server_fixture.getTunnelUri() ,"--tunnel-protocol",tunnel_protocol,
+      "--protocol http2","--tunnel-uri", tunneling_connect_test_server_fixture.getTunnelUri() ,"--tunnel-protocol",tunnel_protocol,
       tunneling_connect_test_server_fixture.getTestServerRootUri(), "--max-active-requests", "1", "--duration",
       "100", "--termination-predicate", "benchmark.http_2xx:24", "--rps", "100"
   ])
-
   counters = tunneling_connect_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   asserts.assertCounterEqual(counters, "benchmark.http_2xx", 25)
   asserts.assertCounterEqual(counters, "upstream_cx_http2_total", 1)
@@ -1026,5 +1025,3 @@ def test_drain(https_test_server_fixture):
   asserts.assertIn("Wait for the connection pool drain timed out, proceeding to hard shutdown",
                    logs)
 
-
-#TODO add tunneling logic tests here
