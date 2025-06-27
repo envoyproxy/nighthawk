@@ -1,9 +1,4 @@
 admin:
-  # access_log:
-  #   - name: envoy.access_loggers.file
-  #     typed_config:
-  #       '@type': type.googleapis.com/envoy.extensions.access_loggers.file.v3.FileAccessLog
-  #       path: $tmpdir/terminating-envoy.log
   address:
     socket_address: { address: $server_ip, port_value: 0 }
 static_resources:
@@ -28,10 +23,10 @@ static_resources:
               tls_certificates:
                 - certificate_chain:
                       inline_string: |
-                        @inject-runfile:nighthawk/external/envoy/test/config/integration/certs/servercert.pem
+                        @inject-runfile:nighthawk/external/envoy/test/config/integration/certs/upstreamlocalhostcert.pem
                   private_key:
                       inline_string: |
-                        @inject-runfile:nighthawk/external/envoy/test/config/integration/certs/serverkey.pem
+                        @inject-runfile:nighthawk/external/envoy/test/config/integration/certs/upstreamlocalhostkey.pem
       filters:
       - name: envoy.filters.network.http_connection_manager
         typed_config:
@@ -49,7 +44,7 @@ static_resources:
                   connect_matcher:
                     {}
                 route:
-                  cluster: service_google
+                  cluster: localhost_routing
                   upgrade_configs:
                   - upgrade_type: CONNECT
                     connect_config:
@@ -63,10 +58,10 @@ static_resources:
           upgrade_configs:
           - upgrade_type: CONNECT
   clusters:
-  - name: service_google
+  - name: localhost_routing
     type: LOGICAL_DNS
     # Comment out the following line to test on v6 networks
-    dns_lookup_family: V4_ONLY
+    dns_lookup_family: AUTO
     lb_policy: ROUND_ROBIN
     load_assignment:
       cluster_name: service_google
@@ -75,5 +70,5 @@ static_resources:
         - endpoint:
             address:
               socket_address:
-                address: www.google.com
-                port_value: 443
+                address: $server_ip
+                port_value: $target_server_port
