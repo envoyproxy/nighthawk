@@ -228,17 +228,19 @@ def test_http_h2(http_test_server_fixture):
 #   asserts.assertGreaterEqual(len(counters), 12)
 
 
+@pytest.mark.serial
 @pytest.mark.parametrize('terminating_proxy_config, tunnel_protocol',
                          [
-                          #  ("nighthawk/test/integration/configurations/terminating_http1_connect_envoy.yaml","http1"),
+                        ("nighthawk/test/integration/configurations/terminating_http1_connect_envoy.yaml","http1"),
                          ("nighthawk/test/integration/configurations/terminating_http2_connect_envoy.yaml","http2"),
                         ])
 def test_connect_tunneling(tunneling_connect_test_server_fixture, tunnel_protocol):
-  """Test h2 over h1/2/3 CONNECT tunnels.
+  """Test h1, h2 over h1/2/3 CONNECT tunnels.
 
   Runs the CLI configured to use h2c against our test server, and sanity
   checks statistics from both client and server.
   """
+  # H2 as underlying protocol
   parsed_json, _ = tunneling_connect_test_server_fixture.runNighthawkClient([
       "--protocol http2","--tunnel-uri", 
       tunneling_connect_test_server_fixture.getTunnelUri(),
@@ -256,6 +258,53 @@ def test_connect_tunneling(tunneling_connect_test_server_fixture, tunnel_protoco
   asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   asserts.assertCounterEqual(counters, "upstream_rq_total", 25)
   asserts.assertCounterEqual(counters, "default.total_match_count", 1)
+  asserts.assertGreaterEqual(len(counters), 12)
+
+  # Do H1 as underlying protocol
+  parsed_json, _ = tunneling_connect_test_server_fixture.runNighthawkClient([
+      
+      "--protocol http1","--tunnel-uri", 
+      tunneling_connect_test_server_fixture.getTunnelUri(),
+      "--tunnel-protocol",tunnel_protocol,
+      tunneling_connect_test_server_fixture.getTestServerRootUri(),
+        "--duration", "100",
+      "--termination-predicate", "benchmark.http_2xx:24"
+  ])
+
+  counters = tunneling_connect_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
+  asserts.assertCounterEqual(counters, "benchmark.http_2xx", 25)
+  asserts.assertCounterEqual(counters, "upstream_cx_rx_bytes_total", 3400)
+  # It is possible that the # of upstream_cx > # of backend connections for H1
+  # as new connections will spawn if the existing clients cannot keep up with the RPS.
+  asserts.assertCounterGreaterEqual(counters, "upstream_cx_http1_total", 1)
+  asserts.assertCounterGreaterEqual(counters, "upstream_cx_total", 1)
+  asserts.assertCounterGreaterEqual(counters, "upstream_cx_tx_bytes_total", 500)
+  asserts.assertCounterGreaterEqual(counters, "upstream_rq_pending_total", 1)
+  asserts.assertCounterEqual(counters, "upstream_rq_total", 25)
+  asserts.assertCounterEqual(counters, "default.total_match_count", 1)
+
+  global_histograms = tunneling_connect_test_server_fixture.getNighthawkGlobalHistogramsbyIdFromJson(parsed_json)
+  asserts.assertEqual(int(global_histograms["benchmark_http_client.response_body_size"]["count"]),
+                      25)
+  asserts.assertEqual(int(global_histograms["benchmark_http_client.response_header_size"]["count"]),
+                      25)
+  asserts.assertEqual(
+      int(global_histograms["benchmark_http_client.response_body_size"]["raw_mean"]), 10)
+  asserts.assertEqual(
+      int(global_histograms["benchmark_http_client.response_header_size"]["raw_mean"]), 97)
+  asserts.assertEqual(int(global_histograms["benchmark_http_client.response_body_size"]["raw_min"]),
+                      10)
+  asserts.assertEqual(
+      int(global_histograms["benchmark_http_client.response_header_size"]["raw_min"]), 97)
+  asserts.assertEqual(int(global_histograms["benchmark_http_client.response_body_size"]["raw_max"]),
+                      10)
+  asserts.assertEqual(
+      int(global_histograms["benchmark_http_client.response_header_size"]["raw_max"]), 97)
+  asserts.assertEqual(
+      int(global_histograms["benchmark_http_client.response_body_size"]["raw_pstdev"]), 0)
+  asserts.assertEqual(
+      int(global_histograms["benchmark_http_client.response_header_size"]["raw_pstdev"]), 0)
+
   asserts.assertGreaterEqual(len(counters), 12)
 
 
