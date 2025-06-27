@@ -13,3 +13,8 @@ config_setting(
         ":run_stress_tests": "True",
     },
 )
+
+config_setting(
+    name = "github_ci_build",
+    define_values = {"build_type": "github_ci"},
+)

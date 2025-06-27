@@ -124,11 +124,13 @@ function do_test() {
     # E.g. test_http_h1_mini_stress_test_open_loop.
     if [[ -n "${GH_BRANCH:-}" ]]; then
         STRESS_TEST_FLAG="--//test/config:run_stress_tests=True"
+        BUILD_TYPE_FLAG="--define build_type=github_ci"
     else
         STRESS_TEST_FLAG="--//test/config:run_stress_tests=False"
+        BUILD_TYPE_FLAG=""
     fi
-    run_on_build_parts "bazel build -c dbg $BAZEL_BUILD_OPTIONS $STRESS_TEST_FLAG"
-    bazel test -c dbg $BAZEL_TEST_OPTIONS $STRESS_TEST_FLAG //test/...
+    run_on_build_parts "bazel build -c dbg $BAZEL_BUILD_OPTIONS $STRESS_TEST_FLAG $BUILD_TYPE_FLAG"
+    bazel test -c dbg $BAZEL_TEST_OPTIONS $STRESS_TEST_FLAG $BUILD_TYPE_FLAG //test/...
 }
 
 function do_clang_tidy() {
