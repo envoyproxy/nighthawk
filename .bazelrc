@@ -32,6 +32,7 @@ build --incompatible_strict_action_env
 build --java_runtime_version=remotejdk_11
 build --tool_java_runtime_version=remotejdk_11
 # build --platform_mappings=""                                                              # unique
+build --tool_java_language_version=11
 # silence absl logspam.
 build --copt=-DABSL_MIN_LOG_LEVEL=4
 # Global C++ standard and common warning suppressions
@@ -81,7 +82,6 @@ common --experimental_allow_tags_propagation
 # Test configuration flags                                                                  # unique
 # Enable stress tests (expensive tests that are skipped by default)                         # unique
 test:stress --//test/config:run_stress_tests=True                                           # unique
-
 build:linux --copt=-fdebug-types-section
 # Enable position independent code (this is the default on macOS and Windows)
 # (Workaround for https://github.com/bazelbuild/rules_foreign_cc/issues/421)
@@ -431,7 +431,6 @@ build:remote-ci --remote_download_minimal
 
 build:remote-ci-download --config=ci                                                        # unique
 build:remote-ci-download --remote_download_toplevel                                         # unique
-
 # Note this config is used by mobile CI also.
 common:ci --noshow_progress
 common:ci --noshow_loading_progress

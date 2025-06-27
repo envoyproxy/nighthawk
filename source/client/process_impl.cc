@@ -184,7 +184,7 @@ public:
 
   Envoy::Stats::Scope& serverScope() override { return *server_scope_; };
 
-  Envoy::ThreadLocal::SlotAllocator& threadLocal() override { return server_.threadLocal(); }
+  Envoy::ThreadLocal::Instance& threadLocal() override { return server_.threadLocal(); }
 
   Envoy::Upstream::ClusterManager& clusterManager() override {
     if (cluster_manager_ != nullptr) {
