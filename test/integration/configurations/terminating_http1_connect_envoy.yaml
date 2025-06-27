@@ -1,11 +1,9 @@
 admin:
-  # access_log:
-  #   - name: envoy.access_loggers.file
-  #     typed_config:
-  #       '@type': type.googleapis.com/envoy.extensions.access_loggers.file.v3.FileAccessLog
-  #       path: $tmpdir/terminating-envoy.log
   address:
-    socket_address: { address: $server_ip, port_value: 0 }
+    socket_address:
+      protocol: TCP
+      address: $server_ip
+      port_value: 0
 static_resources:
   listeners:
   - name: listener_0
@@ -30,21 +28,8 @@ static_resources:
               - match:
                   connect_matcher:
                     {}
-                  headers:
-                  - name: foo
-                    string_match:
-                      exact: bar
                 route:
-                  cluster: local_original_dst
-                  upgrade_configs:
-                  - upgrade_type: CONNECT
-                    connect_config:
-                      {}
-              - match:
-                  connect_matcher:
-                    {}
-                route:
-                  cluster: service_google
+                  cluster: localhost_routing
                   upgrade_configs:
                   - upgrade_type: CONNECT
                     connect_config:
@@ -57,10 +42,10 @@ static_resources:
           upgrade_configs:
           - upgrade_type: CONNECT
   clusters:
-  - name: service_google
+  - name: localhost_routing
     connect_timeout: 0.25s
     type: LOGICAL_DNS
-    dns_lookup_family: V4_ONLY
+    dns_lookup_family: AUTO
     lb_policy: ROUND_ROBIN
     load_assignment:
       cluster_name: service_google
@@ -69,12 +54,5 @@ static_resources:
         - endpoint:
             address:
               socket_address:
-                address: www.google.com
-                port_value: 443
-  - name: local_original_dst
-    connect_timeout: 0.25s
-    type: ORIGINAL_DST
-    lb_policy: CLUSTER_PROVIDED
-    original_dst_lb_config:
-      use_http_header: true
-      http_header_name: ":authority"
+                address: $server_ip
+                port_value: $target_server_port
