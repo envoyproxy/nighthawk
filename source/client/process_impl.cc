@@ -943,7 +943,6 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
        auto startup_envoy_thread_ptr = encap_main_common->server()->lifecycleNotifier().registerCallback(NighthawkLifecycleNotifierImpl::Stage::PostInit, [&nighthawk_control_sem](){
               // signal nighthawk to start
               sem_post(&nighthawk_control_sem); 
-              std::cout <<"signal nughthawk to start" <<std::endl;
             });
             encap_main_common->run();
       }

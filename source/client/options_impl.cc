@@ -34,7 +34,7 @@ using ::nighthawk::client::Protocol;
 // Obtains an available TCP or UDP port. Throws an exception if one cannot be
 // allocated.
 uint16_t OptionsImpl::GetAvailablePort(bool udp) {
-  int family = address_family_ == nighthawk::client::AddressFamily::V4 ? AF_INET : AF_INET6;
+  int family = (address_family_ == nighthawk::client::AddressFamily::V4) ? AF_INET : AF_INET6;
   int sock = socket(family, udp ? SOCK_DGRAM : SOCK_STREAM, udp ? 0 : IPPROTO_TCP);
   if(sock < 0) {
     throw NighthawkException(absl::StrCat("could not create socket: ", strerror(errno)) );
@@ -46,28 +46,29 @@ uint16_t OptionsImpl::GetAvailablePort(bool udp) {
   if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) < 0) {
     throw NighthawkException(absl::StrCat("setsockopt: ", strerror(errno)));
     close(sock);
-    return false;
+    return 0;
   }
-  sockaddr_storage storage;
+  union {
+    struct sockaddr_in sin;
+    struct sockaddr_in6 sin6;
+  } addr;
   size_t size;
   if(family ==  AF_INET){
-    sockaddr_in* addr = reinterpret_cast<sockaddr_in*>(&storage);
     size = sizeof(sockaddr_in);
-    memset(addr, 0, size);
-    addr->sin_family = AF_INET;
-    addr->sin_addr.s_addr = INADDR_ANY;
-    addr->sin_port = 0;
+    memset(&addr, 0, size);
+    addr.sin.sin_family = AF_INET;
+    addr.sin.sin_addr.s_addr = INADDR_ANY;
+    addr.sin.sin_port = 0;
     }
   else {
-    sockaddr_in6* addr = reinterpret_cast<sockaddr_in6*>(&storage);
     size = sizeof(sockaddr_in6);
     memset(&addr, 0, size);
-    addr->sin6_family = AF_INET6;
-    addr->sin6_addr = in6addr_any;
-    addr->sin6_port = 0;  
+    addr.sin6.sin6_family = AF_INET6;
+    addr.sin6.sin6_addr = in6addr_any;
+    addr.sin6.sin6_port = 0;  
   }
 
-  if (bind(sock, reinterpret_cast<struct sockaddr *>(&storage), size) < 0) {
+  if (bind(sock, reinterpret_cast<struct sockaddr *>(&addr), size) < 0) {
       if(errno == EADDRINUSE) {
           throw NighthawkException(absl::StrCat("Port allocated already in use"));
       } else {     
@@ -77,13 +78,14 @@ uint16_t OptionsImpl::GetAvailablePort(bool udp) {
   }
 
   socklen_t len = size;
-  if (getsockname(sock, reinterpret_cast<struct sockaddr *>(&storage), &len) == -1) {
+  if (getsockname(sock, reinterpret_cast<struct sockaddr *>(&addr), &len) == -1) {
       throw NighthawkException(absl::StrCat("Could not get sock name: ", strerror(errno)) );
       return 0;
   }
 
-  uint16_t port = ntohs(family ==  AF_INET ? reinterpret_cast<struct sockaddr_in *>(&storage)->sin_port
-  : reinterpret_cast<struct sockaddr_in6 *>(&storage)->sin6_port);
+  uint16_t port = ntohs(family ==  AF_INET 
+  ? reinterpret_cast<struct sockaddr_in *>(&addr)->sin_port
+  : reinterpret_cast<struct sockaddr_in6 *>(&addr)->sin6_port);
 
   // close the socket, freeing the port to be used later.
   if (close (sock) < 0 ) {
@@ -809,7 +811,6 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
         || tunnel_tls_context.isSet() || tunnel_concurrency.isSet()) {
     throw MalformedArgvException("tunnel flags require --tunnel-protocol");
   }
-
 
   if (!tunnel_tls_context.getValue().empty()) {
     try {
