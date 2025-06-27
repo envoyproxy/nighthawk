@@ -42,6 +42,8 @@ if __name__ == '__main__':
           "no:cacheprovider",  # Avoid a bunch of warnings on readonly filesystems
           "-k",
           test_selection_arg,  # Passed in via BUILD/py_test()
+         "-m"
+         "not serial",
           "-x",
           path,
           "-n",

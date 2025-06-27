@@ -233,6 +233,7 @@ def test_http_h2(http_test_server_fixture):
                          [
                         ("nighthawk/test/integration/configurations/terminating_http1_connect_envoy.yaml","http1"),
                          ("nighthawk/test/integration/configurations/terminating_http2_connect_envoy.yaml","http2"),
+                         #("nighthawk/test/integration/configurations/terminating_http3_connect_envoy.yaml","http3")
                         ])
 def test_connect_tunneling(tunneling_connect_test_server_fixture, tunnel_protocol):
   """Test h1, h2 over h1/2/3 CONNECT tunnels.
@@ -240,15 +241,16 @@ def test_connect_tunneling(tunneling_connect_test_server_fixture, tunnel_protoco
   Runs the CLI configured to use h2c against our test server, and sanity
   checks statistics from both client and server.
   """
-  # H2 as underlying protocol
-  parsed_json, _ = tunneling_connect_test_server_fixture.runNighthawkClient([
-      "--protocol http2","--tunnel-uri", 
+  client_params = ["--tunnel-uri", 
       tunneling_connect_test_server_fixture.getTunnelUri(),
       "--tunnel-protocol",tunnel_protocol,
       tunneling_connect_test_server_fixture.getTestServerRootUri(), 
       "--max-active-requests", "1", "--duration",
       "100", "--termination-predicate", "benchmark.http_2xx:24", "--rps", "100"
-  ])
+  ]
+  # H2 as underlying protocol
+  parsed_json, _ = tunneling_connect_test_server_fixture.runNighthawkClient(client_params + [
+      "--protocol http2"])
   counters = tunneling_connect_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   asserts.assertCounterEqual(counters, "benchmark.http_2xx", 25)
   asserts.assertCounterEqual(counters, "upstream_cx_http2_total", 1)
@@ -261,16 +263,9 @@ def test_connect_tunneling(tunneling_connect_test_server_fixture, tunnel_protoco
   asserts.assertGreaterEqual(len(counters), 12)
 
   # Do H1 as underlying protocol
-  parsed_json, _ = tunneling_connect_test_server_fixture.runNighthawkClient([
-      
-      "--protocol http1","--tunnel-uri", 
-      tunneling_connect_test_server_fixture.getTunnelUri(),
-      "--tunnel-protocol",tunnel_protocol,
-      tunneling_connect_test_server_fixture.getTestServerRootUri(),
-        "--duration", "100",
-      "--termination-predicate", "benchmark.http_2xx:24"
-  ])
 
+  parsed_json, _ = tunneling_connect_test_server_fixture.runNighthawkClient(client_params + [
+      "--protocol http1"])
   counters = tunneling_connect_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   asserts.assertCounterEqual(counters, "benchmark.http_2xx", 25)
   asserts.assertCounterEqual(counters, "upstream_cx_rx_bytes_total", 3400)
