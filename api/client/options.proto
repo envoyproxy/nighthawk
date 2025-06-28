@@ -162,7 +162,7 @@ message CommandLineOptions {
     Protocol protocol = 107;
   }
 
-  // Options for routing requests via a proxy. if set, requests 
+  // Options for routing requests via a proxy. if set, requests
   // are encapsulated and forwarded to a terminating proxy running at
   // tunnel_uri.
   // When the oneof_protocol field is set to H1 or H2, an HTTP CONNECT
@@ -185,7 +185,7 @@ message CommandLineOptions {
     // auto is recommended to avoid bottlenecking nighthawk with encapsulation
     // Default: auto.
     google.protobuf.StringValue tunnel_concurrency =
-    119; // [(validate.rules).string = {pattern: "^([0-9]*|auto)$"}];
+        119; // [(validate.rules).string = {pattern: "^([0-9]*|auto)$"}];
   }
 
   TunnelOptions tunnel_options = 114;

@@ -5,13 +5,14 @@
 
 #include "nighthawk/client/options.h"
 #include "nighthawk/common/uri.h"
-#include "source/common/uri_impl.h"
 
+#include "external/envoy/source/common/common/posix/thread_impl.h"
 #include "external/envoy/source/common/common/statusor.h"
 #include "external/envoy/source/common/event/dispatcher_impl.h"
 #include "external/envoy/source/common/network/dns_resolver/dns_factory_util.h"
 #include "external/envoy_api/envoy/config/bootstrap/v3/bootstrap.pb.h"
-#include "external/envoy/source/common/common/posix/thread_impl.h"
+
+#include "source/common/uri_impl.h"
 
 namespace Nighthawk {
 
@@ -39,12 +40,11 @@ absl::StatusOr<envoy::config::bootstrap::v3::Bootstrap> createBootstrapConfigura
     const envoy::config::core::v3::TypedExtensionConfig& typed_dns_resolver_config,
     int number_of_workers);
 
-
 /**
  * Creates Encapsulation envoy bootstrap configuration.
  *
  * This envoy receives traffic and encapsulates it HTTP
- *  
+ *
  * @param options are the options this Nighthawk execution was triggered with.
  * @param tunnel_uri URI to the terminating proxy.
  * @param dispatcher is used when resolving hostnames to IP addresses in the
@@ -53,20 +53,22 @@ absl::StatusOr<envoy::config::bootstrap::v3::Bootstrap> createBootstrapConfigura
  *
  * @return the created bootstrap configuration.
  */
-absl::StatusOr<envoy::config::bootstrap::v3::Bootstrap> createEncapBootstrap(const Client::Options& options, UriImpl& tunnel_uri,
-    Envoy::Event::Dispatcher& dispatcher, const Envoy::Network::DnsResolverSharedPtr& resolver);
-
+absl::StatusOr<envoy::config::bootstrap::v3::Bootstrap>
+createEncapBootstrap(const Client::Options& options, UriImpl& tunnel_uri,
+                     Envoy::Event::Dispatcher& dispatcher,
+                     const Envoy::Network::DnsResolverSharedPtr& resolver);
 
 /**
- * Forks a separate process for Envoy. Both nighthawk and envoy are required to be their own processes
+ * Forks a separate process for Envoy. Both nighthawk and envoy are required to be their own
+ * processes
  *
  * @param nighthawk_runner executes nighthawk's workers
  * @param encap_envoy_runner starts up Encapsulation Envoy
  *
  * @return error status for processes
  */
-absl::Status RunWithSubprocess(std::function<void()> nighthawk_runner, std::function<void(sem_t&)> encap_envoy_runner);
-
+absl::Status RunWithSubprocess(std::function<void()> nighthawk_runner,
+                               std::function<void(sem_t&)> encap_envoy_runner);
 
 /**
  * Spins function into thread
