@@ -1,9 +1,4 @@
 admin:
-  # access_log:
-  #   - name: envoy.access_loggers.file
-  #     typed_config:
-  #       '@type': type.googleapis.com/envoy.extensions.access_loggers.file.v3.FileAccessLog
-  #       path: $tmpdir/terminating-envoy.log
   address:
     socket_address: { address: $server_ip, port_value: 0 }
 static_resources:
@@ -31,7 +26,7 @@ static_resources:
                   connect_matcher:
                     {}
                 route:
-                  cluster: service_google
+                  cluster: localhost_routing
                   upgrade_configs:
                   - upgrade_type: CONNECT-UDP
                     connect_config:
@@ -45,17 +40,17 @@ static_resources:
           upgrade_configs:
           - upgrade_type: CONNECT-UDP
   clusters:
-  - name: service_google
+  - name: localhost_routing
     connect_timeout: 0.25s
     type: LOGICAL_DNS
-    dns_lookup_family: V4_ONLY
+    dns_lookup_family: AUTO
     lb_policy: ROUND_ROBIN
     load_assignment:
-      cluster_name: service_google
+      cluster_name: localhost_routing
       endpoints:
       - lb_endpoints:
         - endpoint:
             address:
               socket_address:
-                address: www.google.com
-                port_value: 443
+                address: $server_ip
+                port_value: $target_server_port
