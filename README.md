@@ -195,11 +195,17 @@ bazel-bin/nighthawk_client  [--user-defined-plugin-config <string>] ...
 <trace|debug|info|warn|error|critical>]
 [--concurrency <string>]
 [--http3-protocol-options <string>] [-p
-<http1|http2|http3>] [--h2] [--timeout
-<uint32_t>] [--duration <uint32_t>]
+<http1|http2|http3>] [--h2] 
+[--tunnel-protocol <http1|http2|http3>]
+[--tunnel-uri <uri format>]
+[--tunnel-http3-protocol-options <string>]
+[--tunnel-tls-context <string>]
+[--tunnel-concurrency <string>]
+[--timeout <uint32_t>]
+[--duration <uint32_t>]
 [--connections <uint32_t>] [--rps
-<uint32_t>] [--] [--version] [-h] <uri
-format>
+<uint32_t>] [--] [--version] [-h]
+<uri format>
 
 
 Where:
@@ -395,7 +401,12 @@ The number of concurrent event loops that should be used. Specify
 'auto' to let Nighthawk leverage all vCPUs that have affinity to the
 Nighthawk process. Note that increasing this results in an effective
 load multiplier combined with the configured --rps and --connections
-values. Default: 1.
+values. When concurrency is greater than 1 and When tunneling is
+enabled via --tunnel* flags and tunnel-concurrency is not specified
+or set to auto, half the vCPUs are allocated to the encapsulation
+process, and remaining half to event loops, adjusting said load
+multiplier to half.
+Default: 1.
 
 --http3-protocol-options <string>
 HTTP3 protocol options (envoy::config::core::v3::Http3ProtocolOptions)
@@ -414,6 +425,36 @@ http2, http3]. The default protocol is 'http1' when neither of --h2 or
 DEPRECATED, use --protocol instead. Encapsulate requests in HTTP/2.
 Mutually exclusive with --protocol. Requests are encapsulated in
 HTTP/1 by default when neither of --h2 or --protocol is used.
+
+--tunnel-protocol <http1|http2|http3>
+The protocol under which --protocol requests are encapsulated
+in a CONNECT or CONNECT-UDP tunnel. CONNECT or CONNECT-UDP are determined
+by the use of -p=<http1|http2> or -p=<http3> respectively. CONNECT-UDP
+is only supported for tunnel-protocol http3.
+
+--tunnel-http3-protocol-options <string>
+HTTP3 protocol options (envoy::config::core::v3::Http3ProtocolOptions)
+in json specific to when using --tunnel-protocol=http3 tunneling.
+
+--tunnel-concurrency <string>
+The number of concurrent event loops that should be used specifically
+for tunneling. Specify 'auto' to let Nighthawk divide half the threads
+specified in --concurrency to be given to the tunnel. If --concurrency
+is 1 and --tunnel-concurrency is auto, tunnel concurrency is also set
+to 1.
+Default: auto
+
+
+--tunnel-tls-context <string>
+TlS context configuration in json for tunneling encapsulation within
+nighthawk. Required when using --tunnel-protocol <http3> or optionally
+when the terminating proxy specified via --tunnel-uri is using TLS
+Example (json):
+{common_tls_context:{tls_params:{cipher_suites:["-ALL:ECDHE-RSA-AES128
+-SHA"]}}}
+
+--tunnel-uri
+URI of the terminating CONNECT/CONNECT-UDP proxy
 
 --timeout <uint32_t>
 Connection connect timeout period in seconds. Default: 30.
@@ -443,6 +484,7 @@ URI to benchmark. http:// and https:// are supported, but in case of
 https no certificates are validated. Provide a URI when you need to
 benchmark a single endpoint. For multiple endpoints, set
 --multi-target-* instead.
+
 
 
 L7 (HTTP/HTTPS/HTTP2) performance characterization tool.
