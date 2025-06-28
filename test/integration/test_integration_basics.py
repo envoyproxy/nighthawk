@@ -193,47 +193,12 @@ def test_http_h2(http_test_server_fixture):
   asserts.assertCounterEqual(counters, "default.total_match_count", 1)
   asserts.assertGreaterEqual(len(counters), 12)
 
-
-
-# @pytest.mark.parametrize('terminating_proxy_config, tunnel_protocol',
-#                          [
-#                          ("nighthawk/test/integration/configurations/terminating_http3_connect_envoy.yaml","http3")
-#                         ])
-# def test_connect_tunneling_h3(tunneling_connect_test_server_fixture, tunnel_protocol):
-#   """Test h2 over h1/2/3 CONNECT tunnels.
-
-#   Runs the CLI configured to use h2c against our test server, and sanity
-#   checks statistics from both client and server.
-#   """
-#   parsed_json, _ = tunneling_connect_test_server_fixture.runNighthawkClient([
-#       "--protocol http2","--tunnel-uri", 
-#       tunneling_connect_test_server_fixture.getTunnelUri(),
-#       "--tunnel-protocol",tunnel_protocol,
-#       tunneling_connect_test_server_fixture.getTestServerRootUri(), 
-#       "--max-active-requests", "1", "--duration",
-#       "100", "--termination-predicate", "benchmark.http_2xx:24", "--rps", "100",
-#       "--tunnel-tls-context",
-#       "{common_tls_context:{validation_context:{trusted_ca:{filename:\"nighthawk/external/envoy/test/config/integration/certs/upstreamcacert.pem\"},trust_chain_verification:\"ACCEPT_UNTRUSTED\"} } }"
-#   ])
-  
-#   counters = tunneling_connect_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-#   asserts.assertCounterEqual(counters, "benchmark.http_2xx", 25)
-#   asserts.assertCounterEqual(counters, "upstream_cx_http2_total", 1)
-#   asserts.assertCounterGreaterEqual(counters, "upstream_cx_rx_bytes_total", 900)
-#   asserts.assertCounterEqual(counters, "upstream_cx_total", 1)
-#   asserts.assertCounterGreaterEqual(counters, "upstream_cx_tx_bytes_total", 403)
-#   asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 1)
-#   asserts.assertCounterEqual(counters, "upstream_rq_total", 25)
-#   asserts.assertCounterEqual(counters, "default.total_match_count", 1)
-#   asserts.assertGreaterEqual(len(counters), 12)
-
-
 @pytest.mark.serial
 @pytest.mark.parametrize('terminating_proxy_config, tunnel_protocol',
                          [
                         ("nighthawk/test/integration/configurations/terminating_http1_connect_envoy.yaml","http1"),
                          ("nighthawk/test/integration/configurations/terminating_http2_connect_envoy.yaml","http2"),
-                         #("nighthawk/test/integration/configurations/terminating_http3_connect_envoy.yaml","http3")
+                         ("nighthawk/test/integration/configurations/terminating_http3_connect_envoy.yaml","http3"),
                         ])
 def test_connect_tunneling(tunneling_connect_test_server_fixture, tunnel_protocol):
   """Test h1, h2 over h1/2/3 CONNECT tunnels.
@@ -248,6 +213,14 @@ def test_connect_tunneling(tunneling_connect_test_server_fixture, tunnel_protoco
       "--max-active-requests", "1", "--duration",
       "100", "--termination-predicate", "benchmark.http_2xx:24", "--rps", "100"
   ]
+  path = os.path.join(os.environ["TEST_SRCDIR"], os.environ["TEST_WORKSPACE"], "external/envoy/test/config/integration/certs/upstreamcacert.pem")
+  if(tunnel_protocol == "http3"):
+    client_params = client_params + ["--tunnel-tls-context",
+                                     "{common_tls_context:{validation_context:{trusted_ca:{filename:\""
+                                     + path
+                                     +"\"},trust_chain_verification:\"ACCEPT_UNTRUSTED\"} },"
+                                     "sni:\"localhost\"}"
+                                     ]
   # H2 as underlying protocol
   parsed_json, _ = tunneling_connect_test_server_fixture.runNighthawkClient(client_params + [
       "--protocol http2"])
