@@ -14,7 +14,8 @@ from test.integration.common import IpVersion
 from test.integration.integration_test_fixtures import (
     http_test_server_fixture, https_test_server_fixture, https_test_server_fixture,
     multi_http_test_server_fixture, multi_https_test_server_fixture, quic_test_server_fixture,
-    server_config, server_config_quic, tunneling_connect_test_server_fixture)
+    server_config, server_config_quic, tunneling_connect_test_server_fixture,
+    tunneling_connect_udp_test_server_fixture)
 from test.integration import asserts
 from test.integration import utility
 
@@ -274,6 +275,51 @@ def test_connect_tunneling(tunneling_connect_test_server_fixture, tunnel_protoco
       int(global_histograms["benchmark_http_client.response_header_size"]["raw_pstdev"]), 0)
 
   asserts.assertGreaterEqual(len(counters), 12)
+
+@pytest.mark.serial
+@pytest.mark.parametrize('terminating_proxy_config',
+                         [
+                        ("nighthawk/test/integration/configurations/terminating_http2_connect_udp_envoy.yaml"),
+                        ])
+def test_connect_udp_tunneling(tunneling_connect_udp_test_server_fixture):
+  """Test h3 quic over h2 CONNECT-UDP tunnel.
+
+  Runs the CLI configured to use HTTP/3 Quic against our test server, and sanity
+  checks statistics from both client and server.
+  """
+
+  client_params = [
+      "--protocol http3",
+      tunneling_connect_udp_test_server_fixture.getTestServerRootUri(),
+      "--rps",
+      "100",
+      "--duration",
+      "100",
+      "--termination-predicate",
+      "benchmark.http_2xx:24",
+      "--max-active-requests",
+      "1",
+      # Envoy doesn't support disabling certificate verification on Quic
+      # connections, so the host in our requests has to match the hostname in
+      # the leaf certificate.
+      "--request-header",
+      "Host:www.lyft.com",
+      "--tunnel-protocol",
+      "http2",
+      "--tunnel-uri",
+      tunneling_connect_udp_test_server_fixture.getTunnelUri(),
+  ]
+  parsed_json, _ = tunneling_connect_udp_test_server_fixture.runNighthawkClient(client_params)
+
+  counters = tunneling_connect_udp_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
+  asserts.assertCounterEqual(counters, "benchmark.http_2xx", 25)
+  asserts.assertCounterEqual(counters, "upstream_cx_http3_total", 1)
+  asserts.assertCounterEqual(counters, "upstream_cx_total", 1)
+  asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 1)
+  asserts.assertCounterEqual(counters, "upstream_rq_total", 25)
+  asserts.assertCounterEqual(counters, "default.total_match_count", 1)
+
+  return
 
 
 def test_http_concurrency(http_test_server_fixture):
