@@ -48,7 +48,7 @@ static_resources:
     dns_lookup_family: AUTO
     lb_policy: ROUND_ROBIN
     load_assignment:
-      cluster_name: service_google
+      cluster_name: localhost_routing
       endpoints:
       - lb_endpoints:
         - endpoint:
