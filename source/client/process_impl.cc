@@ -38,9 +38,9 @@
 #include "external/envoy/source/common/singleton/manager_impl.h"
 #include "external/envoy/source/common/stats/tag_producer_impl.h"
 #include "external/envoy/source/common/thread_local/thread_local_impl.h"
+#include "external/envoy/source/exe/main_common.h"
 #include "external/envoy/source/server/server.h"
 #include "external/envoy_api/envoy/config/core/v3/resolver.pb.h"
-#include "external/envoy/source/exe/main_common.h"
 
 #include "source/client/process_bootstrap.h"
 
@@ -94,10 +94,10 @@ public:
     // affinity is set / we don't have affinity with all cores, we should default to autoscale.
     // (e.g. we are called via taskset).
     uint32_t concurrency = autoscale ? cpu_cores_with_affinity : std::stoi(options.concurrency());
-    if(!options.tunnelUri().empty() && options.tunnelConcurrency() == "auto"){
+    if (!options.tunnelUri().empty() && options.tunnelConcurrency() == "auto") {
       // Divide concurrency in half
-      concurrency = concurrency/2;
-      if(concurrency == 0){
+      concurrency = concurrency / 2;
+      if (concurrency == 0) {
         concurrency = 1;
       }
     }
@@ -888,40 +888,40 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
 
   Bootstrap encap_bootstrap;
 
-  if(!options_.tunnelUri().empty()){
+  if (!options_.tunnelUri().empty()) {
     // Spin up an envoy for tunnel encapsulation.
-    
+
     UriImpl tunnel_uri(options_.tunnelUri());
-    
-    auto status_or_bootstrap = createEncapBootstrap(options_, tunnel_uri, *dispatcher_.get(),
-      dns_resolver);
-    if(!status_or_bootstrap.ok()){
+
+    auto status_or_bootstrap =
+        createEncapBootstrap(options_, tunnel_uri, *dispatcher_.get(), dns_resolver);
+    if (!status_or_bootstrap.ok()) {
       ENVOY_LOG(error, status_or_bootstrap.status().ToString());
       return false;
     }
     encap_bootstrap = *status_or_bootstrap;
   }
 
-  std::function<void(sem_t&)> envoy_routine = [this, &encap_main_common, &encap_bootstrap](sem_t& nighthawk_control_sem) {
-      
-    const Envoy::OptionsImpl::HotRestartVersionCb hot_restart_version_cb =
-    [](bool) { return "disabled"; };
-    
+  std::function<void(sem_t&)> envoy_routine = [this, &encap_main_common,
+                                               &encap_bootstrap](sem_t& nighthawk_control_sem) {
+    const Envoy::OptionsImpl::HotRestartVersionCb hot_restart_version_cb = [](bool) {
+      return "disabled";
+    };
+
     std::string lower = absl::AsciiStrToLower(
-      nighthawk::client::Verbosity::VerbosityOptions_Name(options_.verbosity()));
+        nighthawk::client::Verbosity::VerbosityOptions_Name(options_.verbosity()));
 
-    Envoy::OptionsImpl envoy_options ({"encap_envoy"}, hot_restart_version_cb, spdlog::level::from_str(lower));
-
+    Envoy::OptionsImpl envoy_options({"encap_envoy"}, hot_restart_version_cb,
+                                     spdlog::level::from_str(lower));
 
     ENVOY_LOG(error, encap_bootstrap.DebugString());
     envoy_options.setConfigProto(encap_bootstrap);
-    if(options_.tunnelConcurrency() == "auto"){
+    if (options_.tunnelConcurrency() == "auto") {
       envoy_options.setConcurrency(number_of_workers_);
-    }
-    else {
+    } else {
       uint64_t encap_concurrency;
-      bool success = absl::SimpleAtoi(options_.tunnelConcurrency(),&encap_concurrency);
-      if(!success){
+      bool success = absl::SimpleAtoi(options_.tunnelConcurrency(), &encap_concurrency);
+      if (!success) {
         ENVOY_LOG(error, "Failed to parse tunnel concurrency: {}", options_.tunnelConcurrency());
         return;
       }
@@ -931,35 +931,34 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     Envoy::ProdComponentFactory prod_component_factory;
     auto listener_test_hooks = std::make_unique<Envoy::DefaultListenerHooks>();
 
-    if(!options_.tunnelUri().empty()){
+    if (!options_.tunnelUri().empty()) {
       // Spin up an envoy for tunnel encapsulation.
-      try{
+      try {
         encap_main_common = std::make_shared<Envoy::MainCommonBase>(
-          envoy_options, real_time_system, *listener_test_hooks, prod_component_factory,
+            envoy_options, real_time_system, *listener_test_hooks, prod_component_factory,
             std::make_unique<Envoy::PlatformImpl>(),
             std::make_unique<Envoy::Random::RandomGeneratorImpl>(), nullptr);
-        
-        //spin up envoy thread that first manages envoy
-       auto startup_envoy_thread_ptr = encap_main_common->server()->lifecycleNotifier().registerCallback(NighthawkLifecycleNotifierImpl::Stage::PostInit, [&nighthawk_control_sem](){
-              // signal nighthawk to start
-              sem_post(&nighthawk_control_sem); 
-            });
-            encap_main_common->run();
-      }
-      catch (const Envoy::EnvoyException ex) {
+
+        // spin up envoy thread that first manages envoy
+        auto startup_envoy_thread_ptr =
+            encap_main_common->server()->lifecycleNotifier().registerCallback(
+                NighthawkLifecycleNotifierImpl::Stage::PostInit, [&nighthawk_control_sem]() {
+                  // signal nighthawk to start
+                  sem_post(&nighthawk_control_sem);
+                });
+        encap_main_common->run();
+      } catch (const Envoy::EnvoyException ex) {
         std::cout << "error caught by envoy " << ex.what() << std::endl;
         ENVOY_LOG(error, ex.what());
         return;
       }
-  }
-    else{
+    } else {
       // let nighthawk start and close envoy process
-      sem_post(&nighthawk_control_sem); 
+      sem_post(&nighthawk_control_sem);
     }
-    };
+  };
 
-
-      std::function<void()> nigthawk_fn = [this, &dns_resolver, &scheduled_start, &tracing_uri]() {
+  std::function<void()> nigthawk_fn = [this, &dns_resolver, &scheduled_start, &tracing_uri]() {
     {
       auto guard = std::make_unique<Envoy::Thread::LockGuard>(workers_lock_);
       if (cancelled_) {
@@ -967,12 +966,12 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
       }
       shutdown_ = false;
 
-      // Needs to happen as early as possible (before createWorkers()) in the instantiation to preempt
-      // the objects that require stats.
+      // Needs to happen as early as possible (before createWorkers()) in the instantiation to
+      // preempt the objects that require stats.
       if (!options_.statsSinks().empty()) {
         absl::StatusOr<Envoy::Stats::TagProducerPtr> producer_or_error =
             Envoy::Stats::TagProducerImpl::createTagProducer(bootstrap_.stats_config(),
-                                                            envoy_options_.statsTags());
+                                                             envoy_options_.statsTags());
         if (!producer_or_error.ok()) {
           ENVOY_LOG(error, "createTagProducer failed. Received bad status: {}",
                     producer_or_error.status());
@@ -1071,7 +1070,6 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     for (auto& w : workers_) {
       w->waitForCompletion();
     }
-
   };
   auto status = RunWithSubprocess(nigthawk_fn, envoy_routine);
 

@@ -25,10 +25,11 @@ public:
   MOCK_METHOD(Envoy::Http::Protocol, tunnelProtocol, (), (const, override));
   MOCK_METHOD(std::string, tunnelUri, (), (const PURE));
   MOCK_METHOD(uint32_t, encapPort, (), (const PURE));
-  MOCK_METHOD(const absl::optional<envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext>,
-  tunnelTlsContext, (), (const PURE));
+  MOCK_METHOD(
+      const absl::optional<envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext>,
+      tunnelTlsContext, (), (const PURE));
   MOCK_METHOD(const absl::optional<envoy::config::core::v3::Http3ProtocolOptions>&,
-  tunnelHttp3ProtocolOptions, (), (const PURE));
+              tunnelHttp3ProtocolOptions, (), (const PURE));
 
   MOCK_METHOD(std::string, tunnelConcurrency, (), (const PURE));
   MOCK_METHOD(std::string, concurrency, (), (const, override));

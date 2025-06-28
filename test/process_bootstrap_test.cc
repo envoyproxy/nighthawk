@@ -3,8 +3,6 @@
 
 #include "nighthawk/common/uri.h"
 
-#include "absl/strings/substitute.h"
-
 #include "external/envoy/source/common/common/statusor.h"
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"
@@ -24,6 +22,7 @@
 #include "test/client/utility.h"
 #include "test/test_common/proto_matchers.h"
 
+#include "absl/strings/substitute.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -1954,19 +1953,21 @@ TEST_F(CreateBootstrapConfigurationTest, DnsResolverFactoryError) {
   ASSERT_THAT(bootstrap, StatusIs(absl::StatusCode::kInternal));
 }
 
-
 TEST_F(CreateBootstrapConfigurationTest, CreateEncapBootstrap) {
   setupUriResolutionExpectations();
 
-  std::unique_ptr<Client::OptionsImpl> options =
-      Client::TestUtility::createOptionsImpl("nighthawk_client http://www.example.org --address-family v4 --tunnel-protocol http2 --tunnel-uri http://www.example.org");
+  std::unique_ptr<Client::OptionsImpl> options = Client::TestUtility::createOptionsImpl(
+      "nighthawk_client http://www.example.org --address-family v4 --tunnel-protocol http2 "
+      "--tunnel-uri http://www.example.org");
   UriImpl tunnel_uri("www.example.org");
   tunnel_uri.resolve(mock_dispatcher_, *mock_resolver_, Envoy::Network::DnsLookupFamily::V4Only);
-  auto encap_bootstrap = createEncapBootstrap(*options, tunnel_uri, mock_dispatcher_, mock_resolver_);
+  auto encap_bootstrap =
+      createEncapBootstrap(*options, tunnel_uri, mock_dispatcher_, mock_resolver_);
   ASSERT_THAT(encap_bootstrap, StatusIs(absl::StatusCode::kOk));
-  
+
   uint16_t encap_port = options->encapPort();
-  absl::StatusOr<Bootstrap> expected_bootstrap = parseBootstrapFromText(absl::Substitute(R"pb(
+  absl::StatusOr<Bootstrap> expected_bootstrap =
+      parseBootstrapFromText(absl::Substitute(R"pb(
 static_resources {
   listeners {
     name: "encap_listener"
@@ -2033,33 +2034,33 @@ static_resources {
 stats_server_version_override {
   value: 1
 }
-)pb", encap_port));
-ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
-EXPECT_THAT(*encap_bootstrap, EqualsProto(*expected_bootstrap));
+)pb",
+                                              encap_port));
+  ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
+  EXPECT_THAT(*encap_bootstrap, EqualsProto(*expected_bootstrap));
 }
 
 TEST_F(CreateBootstrapConfigurationTest, CreateEncapBootstrapWithCustomTLSContextH3Options) {
   setupUriResolutionExpectations();
 
-  std::unique_ptr<Client::OptionsImpl> options =
-      Client::TestUtility::createOptionsImpl(
-          "nighthawk_client http://www.example.org --address-family v4"
-          " --tunnel-protocol http3 --tunnel-uri http://www.example.org --tunnel-tls-context"
+  std::unique_ptr<Client::OptionsImpl> options = Client::TestUtility::createOptionsImpl(
+      "nighthawk_client http://www.example.org --address-family v4"
+      " --tunnel-protocol http3 --tunnel-uri http://www.example.org --tunnel-tls-context"
       " {sni:\"localhost\",common_tls_context:{validation_context:"
       "{trusted_ca:{filename:\"fakeRootCA.pem\"},trust_chain_verification:\"ACCEPT_UNTRUSTED\"}}}"
       " --tunnel-http3-protocol-options {quic_protocol_options:{max_concurrent_streams:1}}"
-          
-          );
-  
+
+  );
+
   uint16_t encap_port = options->encapPort();
   UriImpl tunnel_uri("www.example.org");
   tunnel_uri.resolve(mock_dispatcher_, *mock_resolver_, Envoy::Network::DnsLookupFamily::V4Only);
-  auto encap_bootstrap = createEncapBootstrap(*options, tunnel_uri, mock_dispatcher_, mock_resolver_);
+  auto encap_bootstrap =
+      createEncapBootstrap(*options, tunnel_uri, mock_dispatcher_, mock_resolver_);
   ASSERT_THAT(encap_bootstrap, StatusIs(absl::StatusCode::kOk));
-    
-  
-  absl::StatusOr<Bootstrap> expected_bootstrap = parseBootstrapFromText(
-      absl::Substitute(R"pb(
+
+  absl::StatusOr<Bootstrap> expected_bootstrap =
+      parseBootstrapFromText(absl::Substitute(R"pb(
 static_resources {
   listeners {
     name: "encap_listener"
@@ -2149,7 +2150,8 @@ static_resources {
 stats_server_version_override {
   value: 1
 }
-)pb", encap_port));
+)pb",
+                                              encap_port));
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
   EXPECT_THAT(*encap_bootstrap, EqualsProto(*expected_bootstrap));
 }
