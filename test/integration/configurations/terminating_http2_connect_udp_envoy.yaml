@@ -1,0 +1,56 @@
+admin:
+  address:
+    socket_address: { address: $server_ip, port_value: 0 }
+static_resources:
+  listeners:
+  - name: listener_0
+    address:
+      socket_address:
+        protocol: TCP
+        address: $server_ip
+        port_value: 0
+    filter_chains:
+    - filters:
+      - name: envoy.filters.network.http_connection_manager
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          stat_prefix: ingress_http
+          route_config:
+            name: local_route
+            virtual_hosts:
+            - name: local_service
+              domains:
+              - "*"
+              routes:
+              - match:
+                  connect_matcher:
+                    {}
+                route:
+                  cluster: localhost_routing
+                  upgrade_configs:
+                  - upgrade_type: CONNECT-UDP
+                    connect_config:
+                      {}
+          http_filters:
+          - name: envoy.filters.http.router
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+          http2_protocol_options:
+            allow_connect: true
+          upgrade_configs:
+          - upgrade_type: CONNECT-UDP
+  clusters:
+  - name: localhost_routing
+    connect_timeout: 0.25s
+    type: LOGICAL_DNS
+    dns_lookup_family: AUTO
+    lb_policy: ROUND_ROBIN
+    load_assignment:
+      cluster_name: localhost_routing
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: $server_ip
+                port_value: $target_server_port
