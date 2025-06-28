@@ -104,21 +104,37 @@ function do_build () {
 #   0 on success, exits with return code 1 on failure.
 #######################################
 function do_opt_build () {
-    bazel build $BAZEL_BUILD_OPTIONS -c opt --define tcmalloc=gperftools //:nighthawk
-    bazel build $BAZEL_BUILD_OPTIONS -c opt --define tcmalloc=gperftools //benchmarks:benchmarks
+    bazel build \
+          --remote_download_toplevel \
+          $BAZEL_BUILD_OPTIONS \
+          -c opt \
+          --define tcmalloc=gperftools \
+          //:nighthawk
+    bazel build \
+          --remote_download_toplevel \
+          $BAZEL_BUILD_OPTIONS \
+          -c opt \
+          --define tcmalloc=gperftools \
+          //benchmarks:benchmarks
     maybe_copy_binaries_to_directory
 }
 
 function do_test() {
-    # The environment variable AZP_BRANCH is used to determine if some expensive
-    # tests that cannot run locally should be executed.
+    # Determine if we should run stress tests based on the branch
     # E.g. test_http_h1_mini_stress_test_open_loop.
-    run_on_build_parts "bazel build -c dbg $BAZEL_BUILD_OPTIONS --action_env=AZP_BRANCH"
-    bazel test -c dbg $BAZEL_TEST_OPTIONS --test_output=all --action_env=AZP_BRANCH //test/...
+    if [[ -n "${GH_BRANCH:-}" ]]; then
+        STRESS_TEST_FLAG="--//test/config:run_stress_tests=True"
+        BUILD_TYPE_FLAG="--define build_type=github_ci"
+    else
+        STRESS_TEST_FLAG="--//test/config:run_stress_tests=False"
+        BUILD_TYPE_FLAG=""
+    fi
+    run_on_build_parts "bazel build -c dbg $BAZEL_BUILD_OPTIONS $STRESS_TEST_FLAG $BUILD_TYPE_FLAG"
+    bazel test -c dbg $BAZEL_TEST_OPTIONS $STRESS_TEST_FLAG $BUILD_TYPE_FLAG //test/...
 }
 
 function do_clang_tidy() {
-    # clang-tidy will warn on standard library issues with libc++    
+    # clang-tidy will warn on standard library issues with libc++
     BAZEL_BUILD_OPTIONS=("--config=clang" "${BAZEL_BUILD_OPTIONS[@]}")
     BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS[*]}" ci/run_clang_tidy.sh
 }
@@ -126,6 +142,10 @@ function do_clang_tidy() {
 function do_unit_test_coverage() {
     export TEST_TARGETS="//test/... -//test:python_test"
     # TODO(https://github.com/envoyproxy/nighthawk/issues/747): Increase back to 93.2 when coverage flakiness address
+    ENVOY_GENHTML_ARGS=(
+            --ignore-errors "category,corrupt,inconsistent")
+        GENHTML_ARGS="${ENVOY_GENHTML_ARGS[*]}"
+    export GENHTML_ARGS
     export COVERAGE_THRESHOLD=91.5
     echo "bazel coverage build with tests ${TEST_TARGETS}"
     test/run_nighthawk_bazel_coverage.sh ${TEST_TARGETS}
@@ -134,6 +154,10 @@ function do_unit_test_coverage() {
 
 function do_integration_test_coverage() {
     export TEST_TARGETS="//test:python_test"
+    ENVOY_GENHTML_ARGS=(
+            --ignore-errors "category,corrupt,inconsistent")
+        GENHTML_ARGS="${ENVOY_GENHTML_ARGS[*]}"
+    export GENHTML_ARGS
     # TODO(#830): Raise the integration test coverage.
     # TODO(dubious90): Raise this back up to at least 73.
     export COVERAGE_THRESHOLD=72.9
@@ -146,6 +170,8 @@ function setup_gcc_toolchain() {
     export CC=gcc
     export CXX=g++
     export BAZEL_COMPILER=gcc
+    BAZEL_BUILD_OPTIONS="$BAZEL_BUILD_OPTIONS --config=gcc"
+    BAZEL_TEST_OPTIONS="$BAZEL_TEST_OPTIONS --config=gcc"
     [[ "${NIGHTHAWK_BUILD_ARCH}" == "aarch64" ]] && BAZEL_BUILD_OPTIONS="$BAZEL_BUILD_OPTIONS --copt -march=armv8-a+crypto"
     [[ "${NIGHTHAWK_BUILD_ARCH}" == "aarch64" ]] && BAZEL_TEST_OPTIONS="$BAZEL_TEST_OPTIONS --copt -march=armv8-a+crypto"
     echo "$CC/$CXX toolchain configured"
@@ -184,8 +210,11 @@ function do_sanitizer() {
     cd "${SRCDIR}"
 
     # We build this in steps to avoid running out of memory in CI
-    run_on_build_parts "run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=$CONFIG --"
-    run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config="$CONFIG" -- //test/...
+    # The Envoy build system now uses hermetic SAN libraries that come with
+    # Bazel. Those are built with libc++ instead of the GCC libstdc++.
+    # Explicitly setting --config=libc++ to avoid duplicate symbols.
+    run_on_build_parts "run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=$CONFIG --config=libc++ --"
+    run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config="$CONFIG" --config=libc++ -- //test/...
 }
 
 function cleanup_benchmark_artifacts {
@@ -250,14 +279,6 @@ function do_fix_format() {
 }
 
 if grep 'docker\|lxc' /proc/1/cgroup; then
-    # Create a fake home. Python site libs tries to do getpwuid(3) if we don't and the CI
-    # Docker image gets confused as it has no passwd entry when running non-root
-    # unless we do this.
-    FAKE_HOME=/tmp/fake_home
-    mkdir -p "${FAKE_HOME}"
-    export HOME="${FAKE_HOME}"
-    export PYTHONUSERBASE="${FAKE_HOME}"
-
     export BUILD_DIR=/build
     echo "Running in Docker, built binaries will be copied into ${BUILD_DIR}."
     if [[ ! -d "${BUILD_DIR}" ]]
@@ -267,26 +288,19 @@ if grep 'docker\|lxc' /proc/1/cgroup; then
     fi
 
     # Environment setup.
-    export USER=bazel
-    export TEST_TMPDIR=/build/tmp
     export BAZEL="bazel"
-fi
-
-if [ -n "${BAZEL_REMOTE_CACHE}" ]; then
-  export BAZEL_BUILD_EXTRA_OPTIONS="${BAZEL_BUILD_EXTRA_OPTIONS} --remote_cache=${BAZEL_REMOTE_CACHE}"
 fi
 
 export BAZEL_EXTRA_TEST_OPTIONS="--test_env=ENVOY_IP_TEST_VERSIONS=v4only ${BAZEL_EXTRA_TEST_OPTIONS}"
 export BAZEL_BUILD_OPTIONS=" \
---verbose_failures ${BAZEL_OPTIONS} --action_env=HOME --action_env=PYTHONUSERBASE \
---noincompatible_sandbox_hermetic_tmp \
+--verbose_failures ${BAZEL_OPTIONS} \
 --experimental_generate_json_trace_profile ${BAZEL_BUILD_EXTRA_OPTIONS}"
 
 echo "Running with ${NUM_CPUS} cpus and BAZEL_BUILD_OPTIONS: ${BAZEL_BUILD_OPTIONS}"
 
-export BAZEL_TEST_OPTIONS="${BAZEL_BUILD_OPTIONS} --test_env=HOME --test_env=PYTHONUSERBASE \
+export BAZEL_TEST_OPTIONS="${BAZEL_BUILD_OPTIONS} \
 --test_env=UBSAN_OPTIONS=print_stacktrace=1 \
---cache_test_results=no --test_output=all ${BAZEL_EXTRA_TEST_OPTIONS}"
+--cache_test_results=no --test_output=errors ${BAZEL_EXTRA_TEST_OPTIONS}"
 
 case "$1" in
     build)
@@ -321,12 +335,12 @@ case "$1" in
     ;;
     asan)
         setup_clang_toolchain
-        do_sanitizer "clang-asan"
+        do_sanitizer "asan"
         exit 0
     ;;
     tsan)
         setup_clang_toolchain
-        do_sanitizer "clang-tsan"
+        do_sanitizer "tsan"
         exit 0
     ;;
     docker)

@@ -4,22 +4,26 @@
 set -e
 set +x
 
-# This is how AZP identifies the branch, see the Build.SourceBranch variable in:
-# https://docs.microsoft.com/en-us/azure/devops/pipelines/build/variables?view=azure-devops&tabs=yaml#build-variables-devops-services
+# GitHub Actions uses full refs like "refs/heads/main"
 MAIN_BRANCH="refs/heads/main"
 
 DOCKER_IMAGE_PREFIX="${DOCKER_IMAGE_PREFIX:-envoyproxy/nighthawk}"
 
-echo "Running docker_azp_push.sh for DOCKER_IMAGE_PREFIX=${DOCKER_IMAGE_PREFIX}, AZP_BRANCH=${AZP_BRANCH} and AZP_SHA1=${AZP_SHA1}."
+echo "Running docker_push.sh for DOCKER_IMAGE_PREFIX=${DOCKER_IMAGE_PREFIX}, BRANCH=${GH_BRANCH} and SHA1=${GH_SHA1}."
 
 # Only push images for main builds.
-if [[ "${AZP_BRANCH}" != "${MAIN_BRANCH}" ]]; then
+if [[ "${GH_BRANCH}" != "${MAIN_BRANCH}" ]]; then
   echo 'Ignoring non-main branch or tag for docker push.'
   exit 0
+fi
+
+if [[ -z "${DOCKERHUB_USERNAME}" || -z "${DOCKERHUB_PASSWORD}" ]]; then
+    echo "DOCKERHUB_ credentials not set, unable to push" >&2
+    exit 1
 fi
 
 docker login -u "$DOCKERHUB_USERNAME" -p "$DOCKERHUB_PASSWORD"
 
 docker push "${DOCKER_IMAGE_PREFIX}-dev:latest"
 docker tag "${DOCKER_IMAGE_PREFIX}-dev:latest" \
-  "${DOCKER_IMAGE_PREFIX}-dev:${AZP_SHA1}"
+  "${DOCKER_IMAGE_PREFIX}-dev:${GH_SHA1}"
