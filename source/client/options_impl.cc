@@ -38,14 +38,14 @@ uint16_t OptionsImpl::GetAvailablePort(bool udp) {
   int family = (address_family_ == nighthawk::client::AddressFamily::V4) ? AF_INET : AF_INET6;
   int sock = socket(family, udp ? SOCK_DGRAM : SOCK_STREAM, udp ? 0 : IPPROTO_TCP);
   if (sock < 0) {
-    throw NighthawkException(absl::StrCat("could not create socket: ", strerror(errno)));
+    throw NighthawkException(absl::StrCat("could not create socket: ", Envoy::errorDetails(errno)));
     return 0;
   }
 
   // Reuseaddr lets us start up a server immediately after it exits
   int one = 1;
   if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) < 0) {
-    throw NighthawkException(absl::StrCat("setsockopt: ", strerror(errno)));
+    throw NighthawkException(absl::StrCat("setsockopt: ", Envoy::errorDetails(errno)));
     close(sock);
     return 0;
   }
@@ -72,14 +72,15 @@ uint16_t OptionsImpl::GetAvailablePort(bool udp) {
     if (errno == EADDRINUSE) {
       throw NighthawkException(absl::StrCat("Port allocated already in use"));
     } else {
-      throw NighthawkException(absl::StrCat("Could not bind to process: ", strerror(errno)));
+      throw NighthawkException(
+          absl::StrCat("Could not bind to process: ", Envoy::errorDetails(errno)));
     }
     return 0;
   }
 
   socklen_t len = size;
   if (getsockname(sock, reinterpret_cast<struct sockaddr*>(&addr), &len) == -1) {
-    throw NighthawkException(absl::StrCat("Could not get sock name: ", strerror(errno)));
+    throw NighthawkException(absl::StrCat("Could not get sock name: ", Envoy::errorDetails(errno)));
     return 0;
   }
 
@@ -89,7 +90,7 @@ uint16_t OptionsImpl::GetAvailablePort(bool udp) {
 
   // close the socket, freeing the port to be used later.
   if (close(sock) < 0) {
-    throw NighthawkException(absl::StrCat("Could not close socket: ", strerror(errno)));
+    throw NighthawkException(absl::StrCat("Could not close socket: ", Envoy::errorDetails(errno)));
     return 0;
   }
 
