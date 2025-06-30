@@ -194,37 +194,36 @@ def test_http_h2(http_test_server_fixture):
   asserts.assertCounterEqual(counters, "default.total_match_count", 1)
   asserts.assertGreaterEqual(len(counters), 12)
 
+
 @pytest.mark.serial
-@pytest.mark.parametrize('terminating_proxy_config, tunnel_protocol',
-                         [
-                        ("nighthawk/test/integration/configurations/terminating_http1_connect_envoy.yaml","http1"),
-                         ("nighthawk/test/integration/configurations/terminating_http2_connect_envoy.yaml","http2"),
-                         ("nighthawk/test/integration/configurations/terminating_http3_connect_envoy.yaml","http3"),
-                        ])
+@pytest.mark.parametrize('terminating_proxy_config, tunnel_protocol', [
+    ("nighthawk/test/integration/configurations/terminating_http1_connect_envoy.yaml", "http1"),
+    ("nighthawk/test/integration/configurations/terminating_http2_connect_envoy.yaml", "http2"),
+    ("nighthawk/test/integration/configurations/terminating_http3_connect_envoy.yaml", "http3"),
+])
 def test_connect_tunneling(tunneling_connect_test_server_fixture, tunnel_protocol):
   """Test h1, h2 over h1/2/3 CONNECT tunnels.
 
   Runs the CLI configured to use h2c against our test server, and sanity
   checks statistics from both client and server.
   """
-  client_params = ["--tunnel-uri", 
-      tunneling_connect_test_server_fixture.getTunnelUri(),
-      "--tunnel-protocol",tunnel_protocol,
-      tunneling_connect_test_server_fixture.getTestServerRootUri(), 
-      "--max-active-requests", "1", "--duration",
-      "100", "--termination-predicate", "benchmark.http_2xx:24", "--rps", "100"
+  client_params = [
+      "--tunnel-uri",
+      tunneling_connect_test_server_fixture.getTunnelUri(), "--tunnel-protocol", tunnel_protocol,
+      tunneling_connect_test_server_fixture.getTestServerRootUri(), "--max-active-requests", "1",
+      "--duration", "100", "--termination-predicate", "benchmark.http_2xx:24", "--rps", "100"
   ]
-  path = os.path.join(os.environ["TEST_SRCDIR"], os.environ["TEST_WORKSPACE"], "external/envoy/test/config/integration/certs/upstreamcacert.pem")
-  if(tunnel_protocol == "http3"):
-    client_params = client_params + ["--tunnel-tls-context",
-                                     "{common_tls_context:{validation_context:{trusted_ca:{filename:\""
-                                     + path
-                                     +"\"},trust_chain_verification:\"ACCEPT_UNTRUSTED\"} },"
-                                     "sni:\"localhost\"}"
-                                     ]
+  path = os.path.join(os.environ["TEST_SRCDIR"], os.environ["TEST_WORKSPACE"],
+                      "external/envoy/test/config/integration/certs/upstreamcacert.pem")
+  if (tunnel_protocol == "http3"):
+    client_params = client_params + [
+        "--tunnel-tls-context", "{common_tls_context:{validation_context:{trusted_ca:{filename:\"" +
+        path + "\"},trust_chain_verification:\"ACCEPT_UNTRUSTED\"} },"
+        "sni:\"localhost\"}"
+    ]
   # H2 as underlying protocol
-  parsed_json, _ = tunneling_connect_test_server_fixture.runNighthawkClient(client_params + [
-      "--protocol http2"])
+  parsed_json, _ = tunneling_connect_test_server_fixture.runNighthawkClient(client_params +
+                                                                            ["--protocol http2"])
   counters = tunneling_connect_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   asserts.assertCounterEqual(counters, "benchmark.http_2xx", 25)
   asserts.assertCounterEqual(counters, "upstream_cx_http2_total", 1)
@@ -238,8 +237,8 @@ def test_connect_tunneling(tunneling_connect_test_server_fixture, tunnel_protoco
 
   # Do H1 as underlying protocol
 
-  parsed_json, _ = tunneling_connect_test_server_fixture.runNighthawkClient(client_params + [
-      "--protocol http1"])
+  parsed_json, _ = tunneling_connect_test_server_fixture.runNighthawkClient(client_params +
+                                                                            ["--protocol http1"])
   counters = tunneling_connect_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   asserts.assertCounterEqual(counters, "benchmark.http_2xx", 25)
   asserts.assertCounterEqual(counters, "upstream_cx_rx_bytes_total", 3400)
@@ -252,7 +251,8 @@ def test_connect_tunneling(tunneling_connect_test_server_fixture, tunnel_protoco
   asserts.assertCounterEqual(counters, "upstream_rq_total", 25)
   asserts.assertCounterEqual(counters, "default.total_match_count", 1)
 
-  global_histograms = tunneling_connect_test_server_fixture.getNighthawkGlobalHistogramsbyIdFromJson(parsed_json)
+  global_histograms = tunneling_connect_test_server_fixture.getNighthawkGlobalHistogramsbyIdFromJson(
+      parsed_json)
   asserts.assertEqual(int(global_histograms["benchmark_http_client.response_body_size"]["count"]),
                       25)
   asserts.assertEqual(int(global_histograms["benchmark_http_client.response_header_size"]["count"]),
@@ -276,18 +276,17 @@ def test_connect_tunneling(tunneling_connect_test_server_fixture, tunnel_protoco
 
   asserts.assertGreaterEqual(len(counters), 12)
 
+
 @pytest.mark.serial
-@pytest.mark.parametrize('terminating_proxy_config',
-                         [
-                        ("nighthawk/test/integration/configurations/terminating_http2_connect_udp_envoy.yaml"),
-                        ])
+@pytest.mark.parametrize('terminating_proxy_config', [
+    ("nighthawk/test/integration/configurations/terminating_http2_connect_udp_envoy.yaml"),
+])
 def test_connect_udp_tunneling(tunneling_connect_udp_test_server_fixture):
   """Test h3 quic over h2 CONNECT-UDP tunnel.
 
   Runs the CLI configured to use HTTP/3 Quic against our test server, and sanity
   checks statistics from both client and server.
   """
-
   client_params = [
       "--protocol http3",
       tunneling_connect_udp_test_server_fixture.getTestServerRootUri(),
@@ -1124,4 +1123,3 @@ def test_drain(https_test_server_fixture):
   asserts.assertNotIn("benchmark.http_2xx", counters)
   asserts.assertIn("Wait for the connection pool drain timed out, proceeding to hard shutdown",
                    logs)
-

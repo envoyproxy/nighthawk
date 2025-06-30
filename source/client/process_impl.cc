@@ -927,7 +927,6 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
       }
     }
 
-    Envoy::Event::RealTimeSystem real_time_system;
     Envoy::ProdComponentFactory prod_component_factory;
     auto listener_test_hooks = std::make_unique<Envoy::DefaultListenerHooks>();
 
@@ -935,15 +934,15 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
       // Spin up an envoy for tunnel encapsulation.
       try {
         encap_main_common = std::make_shared<Envoy::MainCommonBase>(
-            envoy_options, real_time_system, *listener_test_hooks, prod_component_factory,
+            envoy_options, time_system_, *listener_test_hooks, prod_component_factory,
             std::make_unique<Envoy::PlatformImpl>(),
             std::make_unique<Envoy::Random::RandomGeneratorImpl>(), nullptr);
 
-        // spin up envoy thread that first manages envoy
+        // spin up envoy thread that first manages envoy.
         auto startup_envoy_thread_ptr =
             encap_main_common->server()->lifecycleNotifier().registerCallback(
                 NighthawkLifecycleNotifierImpl::Stage::PostInit, [&nighthawk_control_sem]() {
-                  // signal nighthawk to start
+                  // signal nighthawk to start.
                   sem_post(&nighthawk_control_sem);
                 });
         encap_main_common->run();

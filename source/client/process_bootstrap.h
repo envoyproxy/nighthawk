@@ -1,6 +1,7 @@
 #pragma once
 
-#include <semaphore>
+#include <semaphore.h>
+
 #include <vector>
 
 #include "nighthawk/client/options.h"

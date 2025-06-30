@@ -33,7 +33,7 @@ if __name__ == '__main__':
           "INFO",
       ],
       plugins=["xdist"])
-  if(r != 0):
+  if (r != 0):
     exit(r)
   r = pytest.main(
       [
@@ -44,8 +44,8 @@ if __name__ == '__main__':
           "no:cacheprovider",  # Avoid a bunch of warnings on readonly filesystems
           "-k",
           test_selection_arg,  # Passed in via BUILD/py_test()
-         "-m"
-         "not serial",
+          "-m"
+          "not serial",
           "-x",
           path,
           "-n",
