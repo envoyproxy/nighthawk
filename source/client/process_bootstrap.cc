@@ -446,72 +446,26 @@ createEncapBootstrap(const Client::Options& options, UriImpl& tunnel_uri,
   return encap_bootstrap;
 }
 
-absl::Status RunWithSubprocess(std::function<void()> nigthawk_fn,
-                               std::function<void(sem_t&)> envoy_fn) {
+absl::Status
+EncapsulationSubProcessRunner::RunWithSubprocess(std::function<void()> nigthawk_fn,
+                                                 std::function<void(sem_t&)> envoy_fn) {
 
-  sem_t* nighthawk_control_sem
-
-      = static_cast<sem_t*>(
-          mmap(NULL, sizeof(sem_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0));
-
-  // create blocked semaphore for nighthawk
-  int ret = sem_init(nighthawk_control_sem, /*pshared=*/1, /*count=*/0);
-  if (ret != 0) {
-    return absl::InternalError("sem_init failed");
-  }
-
-  pid_t pid = fork();
-  if (pid == -1) {
+  pid_t pid_ = fork();
+  if (pid_ == -1) {
     return absl::InternalError("fork failed");
   }
-  if (pid == 0) {
-    envoy_fn(*nighthawk_control_sem);
-
+  if (pid_ == 0) {
+    envoy_fn(*nighthawk_control_sem_);
     exit(0);
   } else {
     // wait for envoy to start and signal nighthawk to start
-    sem_wait(nighthawk_control_sem);
+    sem_wait(nighthawk_control_sem_);
     // start nighthawk
     nigthawk_fn();
     // signal envoy to shutdown
-
-    if (kill(pid, SIGTERM) == -1 && errno != ESRCH) {
-      exit(-1);
-    }
+    return TerminateEncapSubProcess();
   }
-
-  int status;
-  waitpid(pid, &status, 0);
-
-  sem_destroy(nighthawk_control_sem);
-  munmap(nighthawk_control_sem, sizeof(sem_t));
-  if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
-    // Child process did not crash.
-    return absl::OkStatus();
-  }
-  // Child process crashed.
-  return absl::InternalError(absl::StrCat("Execution crashed ", status));
-}
-
-Envoy::Thread::PosixThreadPtr createThread(std::function<void()> thread_routine) {
-
-  Envoy::Thread::Options options;
-
-  auto thread_handle = new Envoy::Thread::ThreadHandle(thread_routine, options.priority_);
-  const int rc = pthread_create(
-      &thread_handle->handle(), nullptr,
-      [](void* arg) -> void* {
-        auto* handle = static_cast<Envoy::Thread::ThreadHandle*>(arg);
-        handle->routine()();
-        return nullptr;
-      },
-      reinterpret_cast<void*>(thread_handle));
-  if (rc != 0) {
-    delete thread_handle;
-    IS_ENVOY_BUG(fmt::format("Unable to create a thread with return code: {}", rc));
-    return nullptr;
-  }
-  return std::make_unique<Envoy::Thread::PosixThread>(thread_handle, options);
+  return absl::OkStatus();
 }
 
 } // namespace Nighthawk

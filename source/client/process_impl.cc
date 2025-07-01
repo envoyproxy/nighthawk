@@ -698,6 +698,13 @@ bool ProcessImpl::requestExecutionCancellation() {
   for (auto& worker : workers_) {
     worker->requestExecutionCancellation();
   }
+  if (encap_runner_ != nullptr) {
+    auto status = encap_runner_->TerminateEncapSubProcess();
+    if (status != absl::OkStatus()) {
+      ENVOY_LOG(error, status);
+      return false;
+    }
+  }
   cancelled_ = true;
   return true;
 }
@@ -774,7 +781,10 @@ ProcessImpl::mergeWorkerStatistics(const std::vector<ClientWorkerPtr>& workers) 
   // (We always have at least one worker, and all workers have the same number of Statistic
   // instances associated to them, in the same order).
   std::vector<StatisticPtr> merged_statistics;
-  StatisticPtrMap w0_statistics = workers[0]->statistics();
+  StatisticPtrMap w0_statistics;
+  if (!workers.empty()) {
+    w0_statistics = workers[0]->statistics();
+  }
   for (const auto& w0_statistic : w0_statistics) {
     auto new_statistic = w0_statistic.second->createNewInstanceOfSameType();
     new_statistic->setId(w0_statistic.first);
@@ -914,7 +924,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     Envoy::OptionsImpl envoy_options({"encap_envoy"}, hot_restart_version_cb,
                                      spdlog::level::from_str(lower));
 
-    ENVOY_LOG(error, encap_bootstrap.DebugString());
+    ENVOY_LOG(info, encap_bootstrap.DebugString());
     envoy_options.setConfigProto(encap_bootstrap);
     if (options_.tunnelConcurrency() == "auto") {
       envoy_options.setConcurrency(number_of_workers_);
@@ -957,7 +967,9 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     }
   };
 
-  std::function<void()> nigthawk_fn = [this, &dns_resolver, &scheduled_start, &tracing_uri]() {
+  bool result = true;
+  std::function<void()> nigthawk_fn = [this, &result, &dns_resolver, &scheduled_start,
+                                       &tracing_uri]() {
     {
       auto guard = std::make_unique<Envoy::Thread::LockGuard>(workers_lock_);
       if (cancelled_) {
@@ -974,6 +986,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
         if (!producer_or_error.ok()) {
           ENVOY_LOG(error, "createTagProducer failed. Received bad status: {}",
                     producer_or_error.status());
+          result = false;
           return;
         }
         store_root_.setTagProducer(std::move(producer_or_error.value()));
@@ -982,6 +995,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
       absl::Status workers_status = createWorkers(number_of_workers_, scheduled_start);
       if (!workers_status.ok()) {
         ENVOY_LOG(error, "createWorkers failed. Received bad status: {}", workers_status.message());
+        result = false;
         return;
       }
       tls_.registerThread(*dispatcher_, true);
@@ -993,6 +1007,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
 
       if (!loader.ok()) {
         ENVOY_LOG(error, "create runtime loader failed. Received bad status: {}", loader.status());
+        result = false;
         return;
       }
 
@@ -1026,6 +1041,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
       if (!cluster_manager.ok()) {
         ENVOY_LOG(error, "clusterManagerFromProto failed. Received bad status: {}",
                   cluster_manager.status().message());
+        result = false;
         return;
       }
       cluster_manager_ = std::move(*cluster_manager);
@@ -1035,6 +1051,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
       if (!status.ok()) {
         ENVOY_LOG(error, "cluster_manager initialize failed. Received bad status: {}",
                   status.message());
+        result = false;
         return;
       }
       maybeCreateTracingDriver(bootstrap_.tracing());
@@ -1045,6 +1062,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
       if (!initialize_status.ok()) {
         ENVOY_LOG(error, "runtime_loader initialize failed. Received bad status: {}",
                   initialize_status.message());
+        result = false;
         return;
       }
 
@@ -1070,7 +1088,17 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
       w->waitForCompletion();
     }
   };
-  auto status = RunWithSubprocess(nigthawk_fn, envoy_routine);
+  encap_runner_ = std::make_shared<EncapsulationSubProcessRunner>(nigthawk_fn, envoy_routine);
+  auto status = encap_runner_->Run();
+
+  if (!result) {
+    return result;
+  }
+
+  if (!status.ok()) {
+    ENVOY_LOG(error, status);
+    return false;
+  }
 
   if (!options_.statsSinks().empty() && flush_worker_ != nullptr) {
     // Stop the running dispatcher in flush_worker_. Needs to be called after all
@@ -1123,9 +1151,11 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
   std::vector<nighthawk::client::UserDefinedOutput> global_user_defined_outputs =
       compileGlobalUserDefinedPluginOutputs(user_defined_outputs_by_plugin,
                                             user_defined_output_factories_);
-  collector.addResult("global", mergeWorkerStatistics(workers_), counters,
-                      total_execution_duration / workers_.size(), first_acquisition_time,
-                      global_user_defined_outputs);
+  if (workers_.size() > 0) {
+    collector.addResult("global", mergeWorkerStatistics(workers_), counters,
+                        total_execution_duration / workers_.size(), first_acquisition_time,
+                        global_user_defined_outputs);
+  }
   if (counters.find("sequencer.failed_terminations") == counters.end()) {
     return true;
   } else {
