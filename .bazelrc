@@ -32,6 +32,7 @@ build --incompatible_strict_action_env
 build --java_runtime_version=remotejdk_11
 build --tool_java_runtime_version=remotejdk_11
 # build --platform_mappings=""                                                              # unique
+build --tool_java_language_version=11
 # silence absl logspam.
 build --copt=-DABSL_MIN_LOG_LEVEL=4
 # Global C++ standard and common warning suppressions
@@ -348,6 +349,7 @@ build:remote-clang --config=rbe-toolchain-clang
 build:remote-arm64-clang --config=remote
 build:remote-arm64-clang --config=rbe-toolchain-arm64-clang
 
+
 build:remote-gcc --config=remote
 build:remote-gcc --config=gcc
 build:remote-gcc --config=rbe-toolchain-gcc
@@ -429,7 +431,6 @@ build:remote-ci --remote_download_minimal
 
 build:remote-ci-download --config=ci                                                        # unique
 build:remote-ci-download --remote_download_toplevel                                         # unique
-
 # Note this config is used by mobile CI also.
 common:ci --noshow_progress
 common:ci --noshow_loading_progress
