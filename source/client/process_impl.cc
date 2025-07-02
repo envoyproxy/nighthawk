@@ -956,7 +956,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
                   sem_post(&nighthawk_control_sem);
                 });
         encap_main_common->run();
-      } catch (const Envoy::EnvoyException &ex) {
+      } catch (const Envoy::EnvoyException& ex) {
         std::cout << "error caught by envoy " << ex.what() << std::endl;
         ENVOY_LOG(error, ex.what());
         return;
