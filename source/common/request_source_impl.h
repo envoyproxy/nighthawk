@@ -26,8 +26,8 @@ public:
   StaticRequestSourceImpl(Envoy::Http::RequestHeaderMapPtr&&,
                           const uint64_t max_yields = UINT64_MAX);
   RequestGenerator get() override;
-  void initOnThread() override{};
-  void destroyOnThread() override{};
+  void initOnThread() override {};
+  void destroyOnThread() override {};
 
 private:
   const HeaderMapPtr header_;

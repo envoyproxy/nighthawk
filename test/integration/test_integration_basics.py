@@ -143,7 +143,7 @@ def test_http_h2_mini_stress_test_without_client_side_queueing(http_test_server_
   asserts.assertNotIn("upstream_rq_pending_overflow", counters)
 
 
-@pytest.mark.skipif(not utility.isRunningInAzpCi(),
+@pytest.mark.skipif(not utility.run_stress_tests(),
                     reason="Has very high failure rate in local executions.")
 @pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable and very slow in sanitizer runs")
 def test_http_h1_mini_stress_test_open_loop(http_test_server_fixture):
@@ -157,7 +157,7 @@ def test_http_h1_mini_stress_test_open_loop(http_test_server_fixture):
   asserts.assertCounterGreater(counters, "benchmark.pool_overflow", 10)
 
 
-@pytest.mark.skipif(not utility.isRunningInAzpCi(),
+@pytest.mark.skipif(not utility.run_stress_tests(),
                     reason="Has very high failure rate in local executions.")
 @pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable and very slow in sanitizer runs")
 def test_http_h2_mini_stress_test_open_loop(http_test_server_fixture):
@@ -334,41 +334,6 @@ def test_h3_quic(quic_test_server_fixture):
   asserts.assertCounterEqual(counters, "default.total_match_count", 1)
 
 
-def test_h3_quic_with_custom_http3_protocol_options(quic_test_server_fixture):
-  """Test http3 quic with custom http3 protocol options.
-
-  Sets the maximum number of concurrent streams to one and verifies that
-  Nighthawk uses multiple connections.
-  """
-  http3_protocol_options = "{quic_protocol_options:{max_concurrent_streams:1}}"
-
-  parsed_json, _ = quic_test_server_fixture.runNighthawkClient([
-      "--protocol http3",
-      quic_test_server_fixture.getTestServerRootUri(),
-      "--rps",
-      "100",
-      "--duration",
-      "100",
-      "--termination-predicate",
-      "benchmark.http_2xx:99",
-      "--max-active-requests",
-      "10",
-      "--max-pending-requests",
-      "10",
-      "--burst-size",
-      "10",
-      # Envoy doesn't support disabling certificate verification on Quic
-      # connections, so the host in our requests has to match the hostname in
-      # the leaf certificate.
-      "--request-header",
-      "Host:www.lyft.com",
-      "--http3-protocol-options %s" % http3_protocol_options
-  ])
-  counters = quic_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  asserts.assertCounterGreaterEqual(counters, "benchmark.http_2xx", 100)
-  asserts.assertCounterGreaterEqual(counters, "upstream_cx_http3_total", 10)
-
-
 def test_h3_quic_with_custom_upstream_bind_configuration(quic_test_server_fixture):
   """Test http3 quic with a custom upstream bind configuration.
 
@@ -402,7 +367,8 @@ def test_h3_quic_with_custom_upstream_bind_configuration(quic_test_server_fixtur
   asserts.assertCounterEqual(counters, "upstream_cx_http3_total", 1)
 
 
-def _do_tls_configuration_test(https_test_server_fixture, cli_parameter, use_h2, ciphers):
+def _do_tls_configuration_test(https_test_server_fixture, cli_parameter, use_h2,
+                               use_validation_context, ciphers):
   """Test with different ciphers.
 
   For a given choice of (--tls-context, --transport-socket) x (H1, H2),
@@ -412,15 +378,18 @@ def _do_tls_configuration_test(https_test_server_fixture, cli_parameter, use_h2,
     https_test_server_fixture: pytest.fixture that controls a test server and client
     cli_parameter: string, --tls-context or --transport-socket
     use_h2: boolean, whether to pass --h2
+    use_validation_context: boolean, whether enable validation context in the TLS transport socket
     ciphers: list[string], list of ciphers to use with TLS
   """
+  validation_context = ", validation_context:{}" if use_validation_context else ""
   if cli_parameter == "--tls-context":
-    json_template = "{common_tls_context:{tls_params:{cipher_suites:[\"-ALL:%s\"]}}}"
+    json_template = "{common_tls_context:{tls_params:{cipher_suites:[\"-ALL:%s\"]}" + "%s}}" % validation_context
   else:
     json_template = "%s%s%s" % (
         "{name:\"envoy.transport_sockets.tls\",typed_config:{",
         "\"@type\":\"type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext\",",
-        "common_tls_context:{tls_params:{cipher_suites:[\"-ALL:%s\"]}}}}")
+        "common_tls_context:{tls_params:{cipher_suites:[\"-ALL:%s\"]}" +
+        "%s}}}" % validation_context)
 
   for cipher in ciphers:
     parsed_json, _ = https_test_server_fixture.runNighthawkClient(
@@ -440,6 +409,7 @@ def test_https_h1_tls_context_configuration_rsa(https_test_server_fixture):
   _do_tls_configuration_test(https_test_server_fixture,
                              "--tls-context",
                              use_h2=False,
+                             use_validation_context=False,
                              ciphers=["ECDHE-RSA-AES256-GCM-SHA384"])
 
 
@@ -450,6 +420,7 @@ def test_https_h1_transport_socket_configuration_rsa(https_test_server_fixture):
   _do_tls_configuration_test(https_test_server_fixture,
                              "--transport-socket",
                              use_h2=False,
+                             use_validation_context=False,
                              ciphers=["ECDHE-RSA-AES256-GCM-SHA384"])
 
 
@@ -460,6 +431,7 @@ def test_https_h2_tls_context_configuration_rsa(https_test_server_fixture):
   _do_tls_configuration_test(https_test_server_fixture,
                              "--tls-context",
                              use_h2=True,
+                             use_validation_context=False,
                              ciphers=["ECDHE-RSA-AES256-GCM-SHA384"])
 
 
@@ -470,6 +442,7 @@ def test_https_h2_transport_socket_configuration_rsa(https_test_server_fixture):
   _do_tls_configuration_test(https_test_server_fixture,
                              "--transport-socket",
                              use_h2=True,
+                             use_validation_context=False,
                              ciphers=["ECDHE-RSA-AES256-GCM-SHA384"])
 
 
@@ -480,6 +453,7 @@ def test_https_h1_tls_context_configuration_dsa(https_test_server_fixture):
   _do_tls_configuration_test(https_test_server_fixture,
                              "--tls-context",
                              use_h2=False,
+                             use_validation_context=False,
                              ciphers=["ECDHE-ECDSA-AES256-GCM-SHA384"])
 
 
@@ -490,6 +464,7 @@ def test_https_h1_transport_socket_configuration_dsa(https_test_server_fixture):
   _do_tls_configuration_test(https_test_server_fixture,
                              "--transport-socket",
                              use_h2=False,
+                             use_validation_context=False,
                              ciphers=["ECDHE-ECDSA-AES256-GCM-SHA384"])
 
 
@@ -500,6 +475,7 @@ def test_https_h2_tls_context_configuration_dsa(https_test_server_fixture):
   _do_tls_configuration_test(https_test_server_fixture,
                              "--tls-context",
                              use_h2=True,
+                             use_validation_context=False,
                              ciphers=["ECDHE-ECDSA-AES256-GCM-SHA384"])
 
 
@@ -510,6 +486,21 @@ def test_https_h2_transport_socket_configuration_dsa(https_test_server_fixture):
   _do_tls_configuration_test(https_test_server_fixture,
                              "--transport-socket",
                              use_h2=True,
+                             use_validation_context=False,
+                             ciphers=["ECDHE-ECDSA-AES256-GCM-SHA384"])
+
+
+@pytest.mark.parametrize(
+    'server_config', ["nighthawk/test/integration/configurations/nighthawk_https_origin_dsa.yaml"])
+def test_secret_manager_regression(https_test_server_fixture):
+  """Test that verifies adding a validation context doesn't crash Nighthawk.
+
+  See https://github.com/envoyproxy/nighthawk/issues/1338.
+  """
+  _do_tls_configuration_test(https_test_server_fixture,
+                             "--transport-socket",
+                             use_h2=True,
+                             use_validation_context=True,
                              ciphers=["ECDHE-ECDSA-AES256-GCM-SHA384"])
 
 

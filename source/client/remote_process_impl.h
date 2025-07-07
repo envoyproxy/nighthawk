@@ -33,7 +33,7 @@ public:
   /**
    * Shuts down the service, a no-op in this implementation.
    */
-  void shutdown() override{};
+  void shutdown() override {};
 
   bool requestExecutionCancellation() override;
 

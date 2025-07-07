@@ -81,7 +81,7 @@ public:
   ProcessTest()
       : loopback_address_(Envoy::Network::Test::getLoopbackAddressUrlString(GetParam())),
         options_(TestUtility::createOptionsImpl(
-            fmt::format("foo --duration 1 -v error --rps 10 https://{}/", loopback_address_))){};
+            fmt::format("foo --duration 1 -v error --rps 10 https://{}/", loopback_address_))) {};
 
   absl::Status runProcess(RunExpectation expectation, bool do_cancel = false,
                           bool terminate_right_away = false,
@@ -374,7 +374,7 @@ public:
   ProcessTestWithSimTime()
       : options_(TestUtility::createOptionsImpl(
             fmt::format("foo --duration 1 -v error --failure-predicate foo:0 --rps 10 https://{}/",
-                        Envoy::Network::Test::getLoopbackAddressUrlString(GetParam())))){};
+                        Envoy::Network::Test::getLoopbackAddressUrlString(GetParam())))) {};
 
 protected:
   absl::Status run(std::function<void(bool, const nighthawk::client::Output&)> verify_callback) {

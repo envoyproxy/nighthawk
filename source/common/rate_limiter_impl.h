@@ -24,7 +24,7 @@ namespace Nighthawk {
  */
 class RateLimiterBaseImpl : public RateLimiter {
 public:
-  RateLimiterBaseImpl(Envoy::TimeSource& time_source) : time_source_(time_source){};
+  RateLimiterBaseImpl(Envoy::TimeSource& time_source) : time_source_(time_source) {};
   Envoy::TimeSource& timeSource() override { return time_source_; }
   std::chrono::nanoseconds elapsed() override {
     // TODO(oschaaf): consider adding an explicit start() call to the interface.

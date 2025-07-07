@@ -2,6 +2,7 @@
 
 #include <memory>
 
+#include "external/envoy/source/common/http/header_map_impl.h"
 #include "external/envoy/source/common/http/http1/codec_impl.h"
 #include "external/envoy/source/common/http/utility.h"
 #include "external/envoy/source/common/network/address_impl.h"
@@ -86,7 +87,13 @@ void StreamDecoder::onComplete(bool success) {
   stream_info_.upstreamInfo()->upstreamTiming().onLastUpstreamRxByteReceived(time_source_);
   response_body_sizes_statistic_.addValue(stream_info_.bytesSent());
   stream_info_.onRequestComplete();
-  decoder_completion_callback_.onComplete(success, *response_headers_);
+  if (response_headers_ != nullptr) {
+    decoder_completion_callback_.onComplete(success, *response_headers_);
+  } else {
+    Envoy::Http::ResponseHeaderMapPtr empty_headers = Envoy::Http::ResponseHeaderMapImpl::create(
+        /* max_headers_kb = */ 0, /* max_headers_count = */ 0);
+    decoder_completion_callback_.onComplete(success, *empty_headers);
+  }
   finalizeActiveSpan();
   caller_completion_callback_(complete_, success);
   dispatcher_.deferredDelete(std::unique_ptr<StreamDecoder>(this));

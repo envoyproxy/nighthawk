@@ -124,8 +124,8 @@ docker run --rm \
        "${ENVOY_DOCKER_OPTIONS[@]}" \
        "${VOLUMES[@]}" \
        -e BUILD_DIR \
-       -e AZP_BRANCH `#unique` \
-       -e AZP_SHA1 `# unique` \
+       -e GH_BRANCH `#unique` \
+       -e GH_SHA1 `#unique` \
        -e HTTP_PROXY \
        -e HTTPS_PROXY \
        -e NO_PROXY \
@@ -141,7 +141,6 @@ docker run --rm \
        -e DOCKERHUB_USERNAME \
        -e DOCKERHUB_PASSWORD \
        -e ENVOY_DOCKER_SAVE_IMAGE \
-       -e ENVOY_STDLIB \
        -e BUILD_REASON \
        -e BAZEL_REMOTE_INSTANCE \
        -e GCP_SERVICE_ACCOUNT_KEY \
