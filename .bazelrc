@@ -32,6 +32,7 @@ build --incompatible_strict_action_env
 build --java_runtime_version=remotejdk_11
 build --tool_java_runtime_version=remotejdk_11
 # build --platform_mappings=""                                                              # unique
+build --java_language_version=11
 build --tool_java_language_version=11
 # silence absl logspam.
 build --copt=-DABSL_MIN_LOG_LEVEL=4
