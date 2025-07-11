@@ -39,12 +39,26 @@ public:
   absl::optional<std::string> uri() const override { return uri_; }
 
   Envoy::Http::Protocol protocol() const override;
+
+  Envoy::Http::Protocol tunnelProtocol() const override;
+  std::string tunnelUri() const override { return tunnel_uri_; }
+  uint32_t encapPort() const override { return encap_port_; }
+  virtual const absl::optional<envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext>
+  tunnelTlsContext() const override {
+    return tunnel_tls_context_;
+  }
+  virtual const absl::optional<envoy::config::core::v3::Http3ProtocolOptions>&
+  tunnelHttp3ProtocolOptions() const override {
+    return tunnel_http3_protocol_options_;
+  }
+
   const absl::optional<envoy::config::core::v3::Http3ProtocolOptions>&
   http3ProtocolOptions() const override {
     return http3_protocol_options_;
   }
 
   std::string concurrency() const override { return concurrency_; }
+  std::string tunnelConcurrency() const override { return tunnel_concurrency_; }
   nighthawk::client::Verbosity::VerbosityOptions verbosity() const override { return verbosity_; };
   nighthawk::client::OutputFormat::OutputFormatOptions outputFormat() const override {
     return output_format_;
@@ -121,6 +135,7 @@ public:
   }
 
 private:
+  virtual uint16_t GetAvailablePort(bool udp);
   void parsePredicates(const TCLAP::MultiArg<std::string>& arg,
                        TerminationPredicateMap& predicates);
   void setNonTrivialDefaults();
@@ -138,6 +153,16 @@ private:
   absl::optional<envoy::config::core::v3::Http3ProtocolOptions> http3_protocol_options_;
 
   std::string concurrency_;
+
+  // Tunnel related options.
+  nighthawk::client::Protocol::ProtocolOptions tunnel_protocol_{nighthawk::client::Protocol::HTTP1};
+  std::string tunnel_uri_;
+  uint32_t encap_port_{0};
+  std::string tunnel_concurrency_;
+  absl::optional<envoy::config::core::v3::Http3ProtocolOptions> tunnel_http3_protocol_options_;
+  absl::optional<envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext>
+      tunnel_tls_context_;
+
   nighthawk::client::Verbosity::VerbosityOptions verbosity_{nighthawk::client::Verbosity::WARN};
   nighthawk::client::OutputFormat::OutputFormatOptions output_format_{
       nighthawk::client::OutputFormat::JSON};
