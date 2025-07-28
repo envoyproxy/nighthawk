@@ -557,7 +557,7 @@ public:
                 pool->transportSocketOptions())};
             return codec;
           },
-          protocols, server_.overloadManager());
+          protocols, context_.overloadManager());
       h1_pool->setConnectionReuseStrategy(connection_reuse_strategy_);
       h1_pool->setPrefetchConnections(prefetch_connections_);
       return Envoy::Http::ConnectionPool::InstancePtr{h1_pool};
@@ -925,9 +925,13 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     dynamic_cast<NighthawkServerFactoryContext*>(&server_->serverFactoryContext())
         ->setSslContextManager(*ssl_context_manager_);
     cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
-        server_->serverFactoryContext(), store_root_, tls_, http_context_,
+        server_->serverFactoryContext(),
+        // store_root_, tls_, http_context_,
         [dns_resolver]() -> Envoy::Network::DnsResolverSharedPtr { return dns_resolver; },
-        *ssl_context_manager_, quic_stat_names_, *server_);
+        // *ssl_context_manager_,
+        quic_stat_names_
+        // , *server_
+    );
     cluster_manager_factory_->setConnectionReuseStrategy(
         options_.h1ConnectionReuseStrategy() == nighthawk::client::H1ConnectionReuseStrategy::LRU
             ? Http1PoolImpl::ConnectionReuseStrategy::LRU
