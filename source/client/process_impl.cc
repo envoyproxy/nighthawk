@@ -926,12 +926,8 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
         ->setSslContextManager(*ssl_context_manager_);
     cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
         server_->serverFactoryContext(),
-        // store_root_, tls_, http_context_,
         [dns_resolver]() -> Envoy::Network::DnsResolverSharedPtr { return dns_resolver; },
-        // *ssl_context_manager_,
-        quic_stat_names_
-        // , *server_
-    );
+        quic_stat_names_);
     cluster_manager_factory_->setConnectionReuseStrategy(
         options_.h1ConnectionReuseStrategy() == nighthawk::client::H1ConnectionReuseStrategy::LRU
             ? Http1PoolImpl::ConnectionReuseStrategy::LRU
