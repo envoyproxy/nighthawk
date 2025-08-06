@@ -6,6 +6,7 @@ ENVOY_SHA = "c89586b9d52964bc196b30b5a867072337d1a367d32edf58b9bd1f19eae6e961"
 HDR_HISTOGRAM_C_VERSION = "0.11.8"  # June 18th, 2025
 HDR_HISTOGRAM_C_SHA = "bb95351a6a8b242dc9be1f28562761a84d4cf0a874ffc90a9b630770a6468e94"
 
+
 def nighthawk_dependencies():
     http_archive(
         name = "envoy",
