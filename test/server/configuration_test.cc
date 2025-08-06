@@ -292,7 +292,8 @@ TEST(ApplyConfigToResponseHeaders, CrashesOnInvalidConfiguration) {
   configuration.add_v3_response_headers();
 
   TestResponseHeaderMapImpl header_map;
-  ASSERT_DEATH(applyConfigToResponseHeaders(header_map, configuration), HasSubstr("cannot specify both response_headers and v3_response_headers"));
+  ASSERT_DEATH(applyConfigToResponseHeaders(header_map, configuration),
+               HasSubstr("cannot specify both response_headers and v3_response_headers"));
 }
 
 TEST(ValidateResponseOptions, DoesNotCrashOnEmptyConfiguration) {
@@ -319,7 +320,8 @@ TEST(ValidateResponseOptions, CrashesWhenBothEnvoyApiV2AndV3ResponseHeadersAreSe
   nighthawk::server::ResponseOptions configuration;
   configuration.add_response_headers();
   configuration.add_v3_response_headers();
-  ASSERT_DEATH(validateResponseOptions(configuration), HasSubstr("cannot specify both response_headers and v3_response_headers"));
+  ASSERT_DEATH(validateResponseOptions(configuration),
+               HasSubstr("cannot specify both response_headers and v3_response_headers"));
 }
 
 } // namespace

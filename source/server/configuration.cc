@@ -72,9 +72,11 @@ envoy::config::core::v3::HeaderValueOption upgradeDeprecatedEnvoyV2HeaderValueOp
 }
 
 void validateResponseOptions(const nighthawk::server::ResponseOptions& response_options) {
-	RELEASE_ASSERT(!(response_options.response_headers_size() > 0 && response_options.v3_response_headers_size() > 0), absl::StrCat("invalid configuration in nighthawk::server::ResponseOptions ",
-                     "cannot specify both response_headers and v3_response_headers ",
-                     "configuration was: ", absl::StrCat(response_options)));
+  RELEASE_ASSERT(!(response_options.response_headers_size() > 0 &&
+                   response_options.v3_response_headers_size() > 0),
+                 absl::StrCat("invalid configuration in nighthawk::server::ResponseOptions ",
+                              "cannot specify both response_headers and v3_response_headers ",
+                              "configuration was: ", absl::StrCat(response_options)));
 }
 
 } // namespace Configuration
