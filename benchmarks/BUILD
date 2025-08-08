@@ -4,11 +4,8 @@ licenses(["notice"])  # Apache 2
 
 py_binary(
     name = "benchmarks",
-    srcs = [
-        "static_benchmarks.py",
-    ],
-    main = "static_benchmarks.py",
-    srcs_version = "PY2AND3",
+    srcs = ["static_benchmarks.py"],
+    main = ":static_benchmarks.py",
     deps = [
         ":benchmarks_envoy_proxy_lib",
         ":utilities_lib",
@@ -16,14 +13,26 @@ py_binary(
     ],
 )
 
+genrule(
+    name = "static_benchmarks_test",
+    srcs = ["static_benchmarks.py"],
+    outs = ["static_benchmarks_test.py"],
+    cmd = """
+    cat $(location :static_benchmarks.py) > $@
+    """,
+)
+
 py_test(
     name = "test_benchmarks",
+    size = "large",
     srcs = [
-        "static_benchmarks.py",
+        "static_benchmarks_test.py",
         "test/test_discovery.py",
     ],
-    main = "static_benchmarks.py",
-    srcs_version = "PY2AND3",
+    exec_properties = {
+        "Pool": "linux_x64_large",
+    },
+    main = "static_benchmarks_test.py",
     deps = [
         ":benchmarks_envoy_proxy_lib",
         ":utilities_lib",
@@ -64,14 +73,27 @@ py_library(
     ],
 )
 
+genrule(
+    name = "dynamic_benchmarks_test",
+    srcs = ["dynamic_benchmarks.py"],
+    outs = ["dynamic_benchmarks_test.py"],
+    cmd = """
+    cat $(location :dynamic_benchmarks.py) > $@
+    """,
+)
+
 py_test(
     name = "test_dynamic_benchmarks",
+    size = "large",
     srcs = [
-        "dynamic_benchmarks.py",
+        "dynamic_benchmarks_test.py",
         "dynamic_test/test_cds_churn_with_traffic.py",
         "dynamic_test/test_eds_churn_with_traffic.py",
     ],
-    main = "dynamic_benchmarks.py",
+    exec_properties = {
+        "Pool": "linux_x64_large",
+    },
+    main = "dynamic_benchmarks_test.py",
     srcs_version = "PY2AND3",
     deps = [
         ":benchmarks_dynamic_envoy_proxy_lib",

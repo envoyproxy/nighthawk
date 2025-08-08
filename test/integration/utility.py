@@ -101,16 +101,13 @@ def count_log_lines_with_substring(logs, substring):
   return len([line for line in logs.split(os.linesep) if substring in line])
 
 
-def isRunningInAzpCi():
-  """Determine if the current execution is running in the AZP CI.
-
-  Depends on the environment variable AZP_BRANCH which is set in
-  .azure-pipelines/bazel.yml.
+def run_stress_tests():
+  """Determine if the current execution should run benchmarking tests.
 
   Returns:
-      bool: True iff the current execution is running in the AZP CI.
+      bool: True iff the current execution if flag is set.
   """
-  return True if os.environ.get("AZP_BRANCH", "") else False
+  return os.environ.get("NH_RUN_STRESS_TESTS", "false") == "true"
 
 
 def substitute_yaml_values(runfiles_instance, obj: Union[dict, list, str], params: dict) -> str:

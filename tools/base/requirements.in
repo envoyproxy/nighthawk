@@ -1,4 +1,4 @@
-# Last updated 2025-05-30
+# Last updated 2025-07-07
 apipkg
 attrs
 certifi
@@ -17,12 +17,7 @@ pytest-dependency
 pytest-xdist
 pyyaml
 requests
-# Due to Bazel not supporting spaces in filenames, we have to pinsetuptools to a version earlier than 71.0.0
-# For an explanation as to why this became an issue as of 71.0.0, see https://github.com/pypa/setuptools/issues/4487#issuecomment-2259039157.
-# We can unpin this dependency when Envoy (and therefore Nighthawk) migrate to Bazel 7, which will allow us to use the experimental flag,
-# experimental_inprocess_symlink_creation, which allows spaces in filenames.
-# See https://bazel.build/reference/command-line-reference#flag--experimental_inprocess_symlink_creation.
-setuptools<=78.1.1
+setuptools
 six
 urllib3
 yapf
