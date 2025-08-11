@@ -12,6 +12,7 @@ rebase, and re-run the utility to proceed.
 import argparse
 import datetime
 import enum
+import os
 import pathlib
 import re
 import subprocess
@@ -31,10 +32,8 @@ shared_files: list[str] = [
 
 
 def _print_command(command: list[str], cwd: pathlib.Path | None = None):
-  raw_command = " ".join(command)
-  if cwd:
-    raw_command = f"pushd {cwd} && {raw_command} && popd"
-  print(f"$ {raw_command}")
+  cwd = cwd if cwd else pathlib.Path.cwd()
+  print(f"$ pushd {cwd} && {" ".join(command)} && popd")
 
 
 def _run_command(
@@ -295,6 +294,7 @@ class NighthawkEnvoyUpdateStep(enum.Enum):
 
   CHECK_NIGHTHAWK_DIR = enum.auto()
   CHECK_NIGHTHAWK_GIT_REPO = enum.auto()
+  CHECK_NIGHTHAWK_GIT_SIGNING = enum.auto()
   CHECK_NIGHTHAWK_GIT_STATUS = enum.auto()
   CHECK_NIGHTHAWK_UPSTREAM_REMOTE = enum.auto()
   CHECK_NIGHTHAWK_ORIGIN_REMOTE = enum.auto()
@@ -334,7 +334,7 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
     self.branch_name = branch_name
     self.envoy_clone_depth = envoy_clone_depth
     self._envoy_tmp_dir = tempfile.TemporaryDirectory()
-    self.envoy_dir = self._envoy_tmp_dir.name
+    self.envoy_dir = pathlib.Path(self._envoy_tmp_dir.name)
     self.current_envoy_commit = None
     self.latest_envoy_commit = None
     self.envoy_commits_current_to_latest = None
@@ -359,6 +359,10 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
         except subprocess.CalledProcessError as e:
           raise RuntimeError(f"Nighthawk directory {self.nighthawk_dir} is not a git"
                              " repository.") from e
+      case NighthawkEnvoyUpdateStep.CHECK_NIGHTHAWK_GIT_SIGNING:
+        _run_command(
+          ["cmp", "-s", "support/hooks/prepare-commit-msg", ".git/hooks/prepare-commit-msg"]
+        )
       case NighthawkEnvoyUpdateStep.CHECK_NIGHTHAWK_GIT_STATUS:
         if _run_command(["git", "status", "--porcelain"], cwd=self.nighthawk_dir):
           raise RuntimeError("Nighthawk has uncommitted changes. Please reset or commit them.")
@@ -515,10 +519,11 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
         _run_command(["git", "add", "."], cwd=self.nighthawk_dir)
         _run_command(
             [
-                "git",
-                "commit",
-                "-m",
-                f"Updating Envoy version to {self.best_envoy_commit}",
+              "git",
+              "commit",
+              "--gpg-sign",
+              "-m",
+              f"Updating Envoy version to {self.best_envoy_commit}"
             ],
             cwd=self.nighthawk_dir,
             interactive=True,
