@@ -12,7 +12,6 @@ rebase, and re-run the utility to proceed.
 import argparse
 import datetime
 import enum
-import os
 import pathlib
 import re
 import subprocess
@@ -33,7 +32,7 @@ shared_files: list[str] = [
 
 def _print_command(command: list[str], cwd: pathlib.Path | None = None):
   cwd = cwd if cwd else pathlib.Path.cwd()
-  print(f"$ pushd {cwd} && {" ".join(command)} && popd")
+  print(f'$ pushd {cwd} && {" ".join(command)} && popd')
 
 
 def _run_command(
@@ -361,8 +360,7 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
                              " repository.") from e
       case NighthawkEnvoyUpdateStep.CHECK_NIGHTHAWK_GIT_SIGNING:
         _run_command(
-          ["cmp", "-s", "support/hooks/prepare-commit-msg", ".git/hooks/prepare-commit-msg"]
-        )
+            ["cmp", "-s", "support/hooks/prepare-commit-msg", ".git/hooks/prepare-commit-msg"])
       case NighthawkEnvoyUpdateStep.CHECK_NIGHTHAWK_GIT_STATUS:
         if _run_command(["git", "status", "--porcelain"], cwd=self.nighthawk_dir):
           raise RuntimeError("Nighthawk has uncommitted changes. Please reset or commit them.")
@@ -519,11 +517,8 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
         _run_command(["git", "add", "."], cwd=self.nighthawk_dir)
         _run_command(
             [
-              "git",
-              "commit",
-              "--gpg-sign",
-              "-m",
-              f"Updating Envoy version to {self.best_envoy_commit}"
+                "git", "commit", "--gpg-sign", "-m",
+                f"Updating Envoy version to {self.best_envoy_commit}"
             ],
             cwd=self.nighthawk_dir,
             interactive=True,
