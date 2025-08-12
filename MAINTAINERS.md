@@ -62,39 +62,61 @@ You can customize the script's behavior using the following arguments:
 The script provides detailed output for each step it performs, prefixed with
 `NighthawkEnvoyUpdate:` or `....EnvoyCommitIntegration:` for sub-steps.
 
-### Success Scenarios
+The script is designed to be idempotent and can be re-run. If you encounter a
+manual step (like resolving merge conflicts):
 
-*   **Fully trivial update:** If the latest Envoy commit integrates without any
-    issues, the script will update the branch and push it to your `origin`
-    remote. It will print a link to create a pull request on GitHub.
-*   **Partial trivial update:** If the latest Envoy commit fails, but an older
-    commit between the current and latest integrates cleanly, the script will
-    use that older commit. It will push the branch and provide a PR link.
+1.  Follow the instructions provided by the script.
+2.  Commit your changes to the local Nighthawk branch.
+3.  Re-run the *same command* you used to start the script.
 
-### Failure Scenarios
+The script will detect the existing branch, rebase it on `origin/main` if
+necessary, and attempt to continue the update process.
 
-*   **Initial checks fail:** If prerequisites like the Nighthawk directory not
-    existing, not being a git repo, or having uncommitted changes, the script
-    will exit early with an error message.
-*   **Bisection finds a non-trivial merge:** The script updates your local
-    Nighthawk git repo to the latest trivial integration, if any (this is the
-    "partial trivial update" success scenario). It then applies as much of the
-    *next* commit after the last good one as possible before prompting the user
-    to resolve merge conflicts and address failing tests before proceeding. You
-    should:
-    1.  Resolve merge conflicts.
-    2.  Manually run tests and make code modifications until they pass:
-        `./ci/do_ci.sh test`
-    3.  **Commit** your new fixes.
-    4.  Re-run the updater script with the same arguments. It will proceed with
-        the bisection from the commit you just applied.
+### Outcomes
 
-**General Guidance on Failures:**
+*   **Initial checks fail:** A script prerequisite is violated, like the
+    Nighthawk directory not existing, not being a git repo, or having
+    uncommitted changes. The script assumes you've followed
+    [Building Nighthawk](https://github.com/envoyproxy/nighthawk/blob/main/README.md#building-nighthawk)
+    to set up your local Git repo.
 
-*   Look for `FAILED` in the output: it will print with an error message that
-    provides context.
-*   If `PATCH_SHARED_FILES` within `EnvoyCommitIntegration` fails, check for
-    `.rej` files in your Nighthawk directory and manually resolve the conflicts.
+    -   The script will exit early with an error message indicating which
+        prerequisite is not satisfied.
+
+    -   *Address the prerequisite and re-run the script with the same
+        arguments.*
+
+*   **Trivial update:** The latest Envoy commit integrates without any issues.
+
+    -   The script will update files to the latest Envoy commit, commit those
+        changes to your local Git repo, and push your update branch to your
+        `origin` remote. It will print a link to create a pull request on
+        GitHub.
+
+    -   *You're done!*
+
+*   **Non-trivial update:** The latest Envoy commit cannot be trivially
+    integrated. The script will use bisection to identify the most recent Envoy
+    commit that can be trivially integrated, and, its immediate successor, the
+    oldest Envoy commit that *cannot* be trivially integrated.
+
+    -   The script will update files to the most recent Envoy commit that can be
+        trivially integrated, commit those changes to your local Git repo, and
+        push your update branch to your `origin` remote. This brings your local
+        Git repo branch with a commit that captures the last-known good state of
+        the Nighthawk repo.
+
+    -   The script applies as much of oldest Envoy commit that *cannot* be
+        trivially integrated as it can.
+
+    -   *Manually address all script prompts (resolve merge conflicts, address
+        tooling failures, ensure tests pass, and commit these changes to the
+        local Git repo) and then re-run the script with the same arguments.*
+
+### General guidance to address Envoy commit integration failures
+
+*   Look for `FAILED` in the update script output: it will print with an error
+    message that provides context.
 *   If `TEST_NIGHTHAWK` fails, you'll need to debug the test failures in the
     Nighthawk code. The logs from `./ci/do_ci.sh test` will be important.
 

@@ -43,20 +43,28 @@ def _run_command(
     interactive: bool = False,
 ) -> str:
   """Run a shell command and return the standard output."""
-  _print_command(command=command, cwd=cwd)
   if interactive:
     print("\nThe current operation may require human attention to proceed.")
     input("Press enter and monitor for ~10 seconds for more prompts...")
-  result = subprocess.run(
-      command,
-      cwd=cwd,
-      input=input_str,
-      shell=shell,
-      capture_output=True,
-      text=True,
-      check=True,
-  )
-  return result.stdout.strip()
+  _print_command(command=command, cwd=cwd)
+  try:
+    result = subprocess.run(
+        command,
+        cwd=cwd,
+        input=input_str,
+        shell=shell,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return result.stdout.strip() if result.stdout else ""
+  except subprocess.CalledProcessError as e:
+    print(f"Command failed: {e}", file=sys.stderr)
+    if e.stdout:
+      print(f"STDOUT:\n{e.stdout.strip()}", file=sys.stderr)
+    if e.stderr:
+      print(f"STDERR:\n{e.stderr.strip()}", file=sys.stderr)
+    raise
 
 
 def _run_sed_replace(old_pattern: str, new_pattern: str, filename: str):
@@ -66,6 +74,54 @@ def _run_sed_replace(old_pattern: str, new_pattern: str, filename: str):
   )
   if changelog != new_pattern:
     raise RuntimeError("Failed to replace file contents.")
+
+
+def _non_trivial_merge_instructions(
+    envoy_commit: str, nighthawk_dir: str, branch_name: str
+):
+  return f"""Ran partial integration of Envoy commit {envoy_commit}.
+      
+      The Nighthawk repository branch {branch_name} has been left in a state
+      with the Envoy commit {envoy_commit} integration applied. This integration
+      introduced merge conflicts, returned tooling errors, or failed to build
+      and pass its tests. Please see error logs upstream for details.
+      
+      Please address any merge conflicts, tooling failures, and build or test
+      failures, then commit your manual changes using:
+      
+        git -C {nighthawk_dir} add . && \
+          git -C {nighthawk_dir} commit -m 'Updating Envoy to {envoy_commit}'
+      
+      Link to failing commit:
+      https://github.com/envoyproxy/envoy/commit/{envoy_commit}
+      """
+
+
+def _patch_merge_conflict_instructions(envoy_commit: str, nighthawk_dir: str):
+  return f"""New merge conflicts from integrating changes in shared files.
+
+      Nighthawk maintains separate copies of a subset of files from the Envoy
+      repository: {", ".join(shared_files)}      
+      
+      These files are used for configuring the automated build and test
+      environments and should be kept in-sync between the two repos. Nighthawk's
+      copies contain small modifications necessary for the testing environment
+      and marked inline with `# unique`.
+      
+      Integrating changes in shared files from commit {envoy_commit}
+      introduced merge conflicts because Envoy modified a lined marked by
+      `# unique`. These merge conflicts are recorded in the {nighthawk_dir} repo
+      as ".rej" files.
+      
+      For merge conflicts, you must manually inspect Nighthawk's copy and
+      combine the Envoy changes with the old Nighthawk version into an updated
+      Nighthawk-specific "# unique" line.
+      
+      Merge conflict markers `<<<<<<< ======= >>>>>>>` have been inserted
+      directly in Nighthawk's copy of the files. You can use a graphical
+      three-way merge tool such as code or follow instructions at
+      https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/addressing-merge-conflicts/resolving-a-merge-conflict-using-the-command-line?platform=linux
+"""
 
 
 class StepStatus(enum.Enum):
@@ -102,7 +158,8 @@ class StepHandler(Generic[TStep]):
         step: {
             "status": StepStatus.PENDING,
             "error": None,
-        } for step in self.steps
+        }
+        for step in self.steps
     }
 
   def _set_step_success(self, step: TStep):
@@ -239,8 +296,9 @@ class EnvoyCommitIntegration(StepHandler[EnvoyCommitIntegrationStep]):
         _run_command(
             [
                 "git diff"
-                f" {self.current_envoy_commit}..{self.target_envoy_commit} -- " +
-                " ".join(shared_files) + f" > {patch_file_name}"
+                f" {self.current_envoy_commit}..{self.target_envoy_commit} -- "
+                + " ".join(shared_files)
+                + f" > {patch_file_name}"
             ],
             cwd=self.envoy_dir,
             shell=True,
@@ -252,12 +310,14 @@ class EnvoyCommitIntegration(StepHandler[EnvoyCommitIntegrationStep]):
 
         try:
           _run_command(
-              ["git apply --ignore-whitespace --ignore-space-change"
-               f" < {patch_file_name}"],
+              [
+                  "git apply --ignore-whitespace --ignore-space-change"
+                  f" < {patch_file_name}"
+              ],
               cwd=self.nighthawk_dir,
               shell=True,
           )
-        except subprocess.CalledProcessError:
+        except subprocess.CalledProcessError as e:
           _run_command(
               [
                   "git apply --reject --ignore-whitespace --ignore-space-change"
@@ -266,6 +326,11 @@ class EnvoyCommitIntegration(StepHandler[EnvoyCommitIntegrationStep]):
               cwd=self.nighthawk_dir,
               shell=True,
           )
+          raise (
+              _patch_merge_conflict_instructions(
+                  self.target_envoy_commit, self.nighthawk_dir
+              )
+          ) from e
       case EnvoyCommitIntegrationStep.FIX_FORMAT:
         _run_command(["./ci/do_ci.sh", "fix_format"], cwd=self.nighthawk_dir)
       case EnvoyCommitIntegrationStep.BAZEL_UPDATE_REQUIREMENTS:
@@ -310,14 +375,14 @@ class NighthawkEnvoyUpdateStep(enum.Enum):
 
 
 class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
-  """Handles the overall process of updating the Envoy dependency in Nighthawk."""
+  """Handles the steps to update the Envoy dependency in Nighthawk."""
 
   def __init__(
       self,
       nighthawk_dir: pathlib.Path,
       branch_name: str,
-      sync_nighthawk_repo: bool,
       envoy_clone_depth: int,
+      sync_nighthawk_repo: bool,
   ):
     """Initialize the NighthawkEnvoyUpdate.
 
@@ -329,17 +394,20 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
     """
     super().__init__(NighthawkEnvoyUpdateStep)
     self.nighthawk_dir = nighthawk_dir.expanduser()
-    self.github_username = None
     self.branch_name = branch_name
     self.envoy_clone_depth = envoy_clone_depth
+
     self._envoy_tmp_dir = tempfile.TemporaryDirectory()
     self.envoy_dir = pathlib.Path(self._envoy_tmp_dir.name)
+
+    self.github_username = None
     self.current_envoy_commit = None
     self.latest_envoy_commit = None
     self.envoy_commits_current_to_latest = None
     self.best_envoy_commit = None
     self.first_non_trivial_commit = None
 
+    # The user can disable syncing the Nighthawk repo.
     if not sync_nighthawk_repo:
       self._set_step_not_planned(NighthawkEnvoyUpdateStep.SYNC_NIGHTHAWK_REPO)
 
@@ -348,7 +416,9 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
     match step:
       case NighthawkEnvoyUpdateStep.CHECK_NIGHTHAWK_DIR:
         if not self.nighthawk_dir.is_dir():
-          raise RuntimeError(f"Nighthawk directory not found: {self.nighthawk_dir}")
+          raise RuntimeError(
+              f"Nighthawk directory not found: {self.nighthawk_dir}"
+          )
       case NighthawkEnvoyUpdateStep.CHECK_NIGHTHAWK_GIT_REPO:
         try:
           _run_command(
@@ -356,36 +426,68 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
               cwd=self.nighthawk_dir,
           )
         except subprocess.CalledProcessError as e:
-          raise RuntimeError(f"Nighthawk directory {self.nighthawk_dir} is not a git"
-                             " repository.") from e
+          raise RuntimeError(
+              f"Nighthawk directory {self.nighthawk_dir} is not a git"
+              " repository."
+          ) from e
       case NighthawkEnvoyUpdateStep.CHECK_NIGHTHAWK_GIT_SIGNING:
-        _run_command(
-            ["cmp", "-s", "support/hooks/prepare-commit-msg", ".git/hooks/prepare-commit-msg"])
+        try:
+          _run_command(
+              [
+                  "cmp",
+                  "-s",
+                  "support/hooks/prepare-commit-msg",
+                  ".git/hooks/prepare-commit-msg",
+              ],
+              cwd=self.nighthawk_dir,
+          )
+        except subprocess.CalledProcessError as e:
+          raise RuntimeError(
+              f"Nighthawk directory {self.nighthawk_dir} is not configured to"
+              " use a signing key with commits."
+          ) from e
       case NighthawkEnvoyUpdateStep.CHECK_NIGHTHAWK_GIT_STATUS:
-        if _run_command(["git", "status", "--porcelain"], cwd=self.nighthawk_dir):
-          raise RuntimeError("Nighthawk has uncommitted changes. Please reset or commit them.")
+        if _run_command(
+            ["git", "status", "--porcelain"], cwd=self.nighthawk_dir
+        ):
+          raise RuntimeError(
+              "Nighthawk has uncommitted changes. Please reset or commit them."
+          )
       case NighthawkEnvoyUpdateStep.CHECK_NIGHTHAWK_UPSTREAM_REMOTE:
         expected_upstream = "https://github.com/envoyproxy/nighthawk"
         try:
-          upstream_url = _run_command(["git", "remote", "get-url", "upstream"],
-                                      cwd=self.nighthawk_dir)
+          upstream_url = _run_command(
+              ["git", "remote", "get-url", "upstream"], cwd=self.nighthawk_dir
+          )
           if upstream_url != expected_upstream:
-            raise RuntimeError(f"Nighthawk directory {self.nighthawk_dir} remote upstream is"
-                               f" not set to {expected_upstream}. Got: {upstream_url}")
+            raise RuntimeError(
+                f"Nighthawk directory {self.nighthawk_dir} remote upstream is"
+                f" not set to {expected_upstream}. Got: {upstream_url}"
+            )
         except subprocess.CalledProcessError as e:
-          raise RuntimeError(f"Nighthawk directory {self.nighthawk_dir} does not have a"
-                             f" remote named upstream set to {expected_upstream}.") from e
+          raise RuntimeError(
+              f"Nighthawk directory {self.nighthawk_dir} does not have a"
+              f" remote named upstream set to {expected_upstream}."
+          ) from e
       case NighthawkEnvoyUpdateStep.CHECK_NIGHTHAWK_ORIGIN_REMOTE:
         try:
-          origin_url = _run_command(["git", "remote", "get-url", "origin"], cwd=self.nighthawk_dir)
+          origin_url = _run_command(
+              ["git", "remote", "get-url", "origin"], cwd=self.nighthawk_dir
+          )
         except subprocess.CalledProcessError as e:
-          raise RuntimeError(f"Failed to get remote origin URL. Is {self.nighthawk_dir} a"
-                             " git repository with an origin remote configured?") from e
-        match = re.search(r"github.com[:/](.*?)/nighthawk(?:.git)?$", origin_url)
+          raise RuntimeError(
+              f"Failed to get remote origin URL. Is {self.nighthawk_dir} a"
+              " git repository with an origin remote configured?"
+          ) from e
+        match = re.search(
+            r"github.com[:/](.*?)/nighthawk(?:.git)?$", origin_url
+        )
         if match:
           self.github_username = match.group(1)
         else:
-          raise RuntimeError(f"Could not extract GitHub username from origin URL: {origin_url}")
+          raise RuntimeError(
+              f"Could not extract GitHub username from origin URL: {origin_url}"
+          )
       case NighthawkEnvoyUpdateStep.SYNC_NIGHTHAWK_REPO:
         _run_command(["git", "checkout", "main"], cwd=self.nighthawk_dir)
         _run_command(
@@ -403,7 +505,9 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
           )
         except subprocess.CalledProcessError:
           # Failed to create branch, attempting to checkout.
-          _run_command(["git", "checkout", self.branch_name], cwd=self.nighthawk_dir)
+          _run_command(
+              ["git", "checkout", self.branch_name], cwd=self.nighthawk_dir
+          )
           _run_command(["git", "rebase", "origin/main"], cwd=self.nighthawk_dir)
       case NighthawkEnvoyUpdateStep.GET_CURRENT_ENVOY_COMMIT:
         repo_file = self.nighthawk_dir / "bazel/repositories.bzl"
@@ -411,8 +515,13 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
             [r"""sed -nE 's/^ENVOY_COMMIT = "(.*)"$/\1/p' """ + str(repo_file)],
             shell=True,
         )
-        if (not self.current_envoy_commit or len(self.current_envoy_commit) != 40):
-          raise RuntimeError(f"Failed to extract current Envoy commit from {repo_file}")
+        if (
+            not self.current_envoy_commit
+            or len(self.current_envoy_commit) != 40
+        ):
+          raise RuntimeError(
+              f"Failed to extract current Envoy commit from {repo_file}"
+          )
       case NighthawkEnvoyUpdateStep.CLONE_ENVOY:
         _run_command(
             [
@@ -431,17 +540,20 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
               cwd=self.envoy_dir,
           )
         except subprocess.CalledProcessError as e:
-          raise RuntimeError(f"The current Envoy commit {self.current_envoy_commit} used in"
-                             " Nighthawk was not found in the cloned Envoy repository"
-                             " history. Please try again with a larger --envoy_clone_depth"
-                             f" value than {self.envoy_clone_depth}.") from e
+          raise RuntimeError(
+              f"The current Envoy commit {self.current_envoy_commit} used in"
+              " Nighthawk was not found in the cloned Envoy repository"
+              " history. Please try again with a larger --envoy_clone_depth"
+              f" value than {self.envoy_clone_depth}."
+          ) from e
       case NighthawkEnvoyUpdateStep.GET_LATEST_ENVOY_COMMIT:
-        self.latest_envoy_commit = _run_command(["git", "rev-parse", "main"], cwd=self.envoy_dir)
-      case NighthawkEnvoyUpdateStep.GET_ENVOY_COMMIT_RANGE:
+        self.latest_envoy_commit = _run_command(
+            ["git", "rev-parse", "main"], cwd=self.envoy_dir
+        )
         if self.current_envoy_commit == self.latest_envoy_commit:
-          print("Nighthawk is up-to-date, no new commits in Envoy repo.")
+          print("\n\nNighthawk is up-to-date, no new commits in Envoy repo.")
           sys.exit(0)
-
+      case NighthawkEnvoyUpdateStep.GET_ENVOY_COMMIT_RANGE:
         current_to_latest_raw = _run_command(
             [
                 "git",
@@ -453,7 +565,9 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
             cwd=self.envoy_dir,
         )
 
-        self.envoy_commits_current_to_latest = [c for c in current_to_latest_raw.splitlines() if c]
+        self.envoy_commits_current_to_latest = [
+            c for c in current_to_latest_raw.splitlines() if c
+        ]
       case NighthawkEnvoyUpdateStep.FIND_LATEST_TRIVIAL_MERGE:
         statuses = [" " * 8] * len(self.envoy_commits_current_to_latest)
 
@@ -465,25 +579,33 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
         index_to_test = high
 
         while low <= high:
-          target_envoy_commit = self.envoy_commits_current_to_latest[index_to_test]
+          target_envoy_commit = self.envoy_commits_current_to_latest[
+              index_to_test
+          ]
           statuses[index_to_test] = "----->"
 
           print("\nBisection status:")
           for i, commit in enumerate(self.envoy_commits_current_to_latest):
             status = statuses[i]
-            if (status.strip() or i == 0 or i == len(self.envoy_commits_current_to_latest) - 1):
-              print(f"[{status:^8}]"
-                    f" https://github.com/envoyproxy/envoy/commit/{commit}")
+            if (
+                status.strip()
+                or i == 0
+                or i == len(self.envoy_commits_current_to_latest) - 1
+            ):
+              print(
+                  f"[{status:^8}]"
+                  f" https://github.com/envoyproxy/envoy/commit/{commit}"
+              )
           print("")
 
-          clean_commit_integration = EnvoyCommitIntegration(
+          clean_integration = EnvoyCommitIntegration(
               nighthawk_dir=self.nighthawk_dir,
               envoy_dir=self.envoy_dir,
               current_envoy_commit=self.current_envoy_commit,
               target_envoy_commit=target_envoy_commit,
           ).run_envoy_commit_integration_steps()
 
-          if clean_commit_integration:
+          if clean_integration:
             statuses[index_to_test] = "PASSED"
             latest_passing_commit_index = index_to_test
             low = index_to_test + 1
@@ -497,28 +619,45 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
           # Bisecting failed to find an Envoy commit that can be trivially
           # integrated.
           self.best_envoy_commit = None
-          self.first_non_trivial_commit = self.envoy_commits_current_to_latest[0]
-          self._set_step_not_planned(NighthawkEnvoyUpdateStep.COMMIT_AND_PUSH_UPDATE_BRANCH)
-        elif (latest_passing_commit_index == len(self.envoy_commits_current_to_latest) - 1):
+          self.first_non_trivial_commit = self.envoy_commits_current_to_latest[
+              0
+          ]
+          self._set_step_not_planned(
+              NighthawkEnvoyUpdateStep.COMMIT_AND_PUSH_UPDATE_BRANCH
+          )
+        elif (
+            latest_passing_commit_index
+            == len(self.envoy_commits_current_to_latest) - 1
+        ):
           # The latest Envoy commit can be trivially integrated.
           self.best_envoy_commit = self.envoy_commits_current_to_latest[-1]
           self.first_non_trivial_commit = None
-          self._set_step_not_planned(NighthawkEnvoyUpdateStep.APPLY_PARTIAL_NON_TRIVIAL_MERGE)
+          self._set_step_not_planned(
+              NighthawkEnvoyUpdateStep.APPLY_PARTIAL_NON_TRIVIAL_MERGE
+          )
         else:
           # A trivially integrated Envoy commit was found and there are further
           # Envoy commits after it.
-          self.best_envoy_commit = self.envoy_commits_current_to_latest[latest_passing_commit_index]
+          self.best_envoy_commit = self.envoy_commits_current_to_latest[
+              latest_passing_commit_index
+          ]
           self.first_non_trivial_commit = self.envoy_commits_current_to_latest[
-              latest_passing_commit_index + 1]
+              latest_passing_commit_index + 1
+          ]
       case NighthawkEnvoyUpdateStep.COMMIT_AND_PUSH_UPDATE_BRANCH:
         if not self.best_envoy_commit:
-          raise RuntimeError("Nighthawk repo attempting to commit when no trivial Envoy"
-                             " merges were found.")
+          raise RuntimeError(
+              "Nighthawk repo attempting to commit when no trivial Envoy"
+              " merges were found."
+          )
         _run_command(["git", "add", "."], cwd=self.nighthawk_dir)
         _run_command(
             [
-                "git", "commit", "--gpg-sign", "-m",
-                f"Updating Envoy version to {self.best_envoy_commit}"
+                "git",
+                "commit",
+                "--gpg-sign",
+                "-m",
+                f"Updating Envoy version to {self.best_envoy_commit}",
             ],
             cwd=self.nighthawk_dir,
             interactive=True,
@@ -535,36 +674,29 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
             cwd=self.nighthawk_dir,
             interactive=True,
         )
-        print(
-            "\n\nPlease create a pull request on GitHub:\n "
-            f"  https://github.com/{self.github_username}/nighthawk/pull/new/{self.branch_name}\n\n"
-        )
+        print(f"""
+            Please create a pull request on GitHub:
+              https://github.com/{self.github_username}/nighthawk/pull/new/{self.branch_name}
+            """)
       case NighthawkEnvoyUpdateStep.APPLY_PARTIAL_NON_TRIVIAL_MERGE:
         if not self.first_non_trivial_commit:
-          raise RuntimeError("Nighthawk repo attempting to apply partial merge when"
-                             " first_non_trivial_commit is not set.")
-
+          raise RuntimeError(
+              "Nighthawk repo attempting to apply partial merge when"
+              " first_non_trivial_commit is not set."
+          )
         EnvoyCommitIntegration(
             nighthawk_dir=self.nighthawk_dir,
             envoy_dir=self.envoy_dir,
             current_envoy_commit=self.current_envoy_commit,
             target_envoy_commit=self.first_non_trivial_commit,
         ).run_envoy_commit_integration_steps()
-        raise RuntimeError("Ran partial integration of Envoy commit"
-                           f" {self.first_non_trivial_commit}.\n"
-                           f"The Nighthawk repository branch {self.branch_name} has been"
-                           " left in a state with the first non-trivial Envoy commit"
-                           f" {self.first_non_trivial_commit} merge applied.\n"
-                           "Please fix any patch conflicts, test failures, or tooling"
-                           " failures,  then commit the changes using:\n"
-                           "\n"
-                           f"git -C {self.nighthawk_dir} add . && git -C"
-                           f" {self.nighthawk_dir} commit -m 'Updating Envoy commit to"
-                           f" {self.first_non_trivial_commit}'\n"
-                           "\n"
-                           "Link to failing commit:"
-                           " https://github.com/envoyproxy/envoy/commit/"
-                           f"{self.first_non_trivial_commit}")
+        raise RuntimeError(
+            _non_trivial_merge_instructions(
+                envoy_commit=self.first_non_trivial_commit,
+                nighthawk_dir=self.nighthawk_dir,
+                branch_name=self.branch_name,
+            )
+        )
       case _:
         raise ValueError(f"{step} is not supported.")
 
@@ -575,7 +707,9 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
 
 def main() -> None:
   """Update Envoy version in Nighthawk."""
-  parser = argparse.ArgumentParser(description="Update Envoy version in Nighthawk.")
+  parser = argparse.ArgumentParser(
+      description="Update Envoy version in Nighthawk."
+  )
   parser.add_argument(
       "--nighthawk_dir",
       type=pathlib.Path,
@@ -589,18 +723,22 @@ def main() -> None:
       help="The depth to use when cloning the Envoy repository.",
   )
   parser.add_argument(
-      "--no_sync_nighthawk_repo",
-      action="store_false",
-      dest="sync_nighthawk_repo",
-      help=("If set, the script will not sync the local Nighthawk repository with"
-            " the upstream remote before starting the update process."),
-  )
-  parser.add_argument(
       "--branch_name",
       type=str,
       default=f"update-envoy-{datetime.datetime.now().strftime('%Y%m%d')}",
-      help=("The name of the branch to create in the Nighthawk repository for the"
-            " update."),
+      help=(
+          "The name of the branch to create in the Nighthawk repository for the"
+          " update."
+      ),
+  )
+  parser.add_argument(
+      "--no_sync_nighthawk_repo",
+      action="store_false",
+      dest="sync_nighthawk_repo",
+      help=(
+          "If set, the script will not sync the local Nighthawk repository with"
+          " the upstream remote before starting the update process."
+      ),
   )
 
   args = parser.parse_args()
@@ -608,8 +746,8 @@ def main() -> None:
   updater = NighthawkEnvoyUpdate(
       nighthawk_dir=args.nighthawk_dir,
       branch_name=args.branch_name,
-      sync_nighthawk_repo=args.sync_nighthawk_repo,
       envoy_clone_depth=args.envoy_clone_depth,
+      sync_nighthawk_repo=args.sync_nighthawk_repo,
   )
   updater.run_update()
 
