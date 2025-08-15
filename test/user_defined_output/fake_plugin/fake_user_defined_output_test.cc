@@ -196,8 +196,7 @@ TEST(AggregateGlobalOutput, BuildsOutputsCorrectly) {
 
   auto& factory = Envoy::Config::Utility::getAndCheckFactoryByName<UserDefinedOutputPluginFactory>(
       "nighthawk.fake_user_defined_output");
-  absl::StatusOr<Envoy::Protobuf::Any> any_or =
-      factory.AggregateGlobalOutput(per_worker_outputs);
+  absl::StatusOr<Envoy::Protobuf::Any> any_or = factory.AggregateGlobalOutput(per_worker_outputs);
 
   ASSERT_TRUE(any_or.status().ok());
   EXPECT_THAT(*any_or, EqualsProto(expected_aggregate));
@@ -213,8 +212,7 @@ TEST(AggregateGlobalOutput, FailsElegantlyWithIncorrectInput) {
 
   auto& factory = Envoy::Config::Utility::getAndCheckFactoryByName<UserDefinedOutputPluginFactory>(
       "nighthawk.fake_user_defined_output");
-  absl::StatusOr<Envoy::Protobuf::Any> any_or =
-      factory.AggregateGlobalOutput(per_worker_outputs);
+  absl::StatusOr<Envoy::Protobuf::Any> any_or = factory.AggregateGlobalOutput(per_worker_outputs);
 
   EXPECT_EQ(any_or.status().code(), absl::StatusCode::kInternal);
 }

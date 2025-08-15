@@ -248,8 +248,7 @@ TEST(AggregateGlobalOutput, ReturnsEmptyProto) {
 
   auto& factory = Envoy::Config::Utility::getAndCheckFactoryByName<UserDefinedOutputPluginFactory>(
       "nighthawk.log_response_headers_plugin");
-  absl::StatusOr<Envoy::Protobuf::Any> any_or =
-      factory.AggregateGlobalOutput(per_worker_outputs);
+  absl::StatusOr<Envoy::Protobuf::Any> any_or = factory.AggregateGlobalOutput(per_worker_outputs);
 
   ASSERT_TRUE(any_or.status().ok());
   EXPECT_THAT(*any_or, EqualsProto(expected_aggregate));

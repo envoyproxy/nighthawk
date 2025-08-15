@@ -120,8 +120,8 @@ ConsoleOutputFormatterImpl::formatProto(const nighthawk::client::Output& output)
   return ss.str();
 }
 
-std::string ConsoleOutputFormatterImpl::formatProtoDuration(
-    const Envoy::Protobuf::Duration& duration) const {
+std::string
+ConsoleOutputFormatterImpl::formatProtoDuration(const Envoy::Protobuf::Duration& duration) const {
   auto microseconds = Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(duration);
   return fmt::format("{}s {:03}ms {:03}us", (microseconds % 1'000'000'000) / 1'000'000,
                      (microseconds % 1'000'000) / 1'000, microseconds % 1'000);
