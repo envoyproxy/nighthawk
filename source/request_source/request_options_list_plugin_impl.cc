@@ -26,7 +26,7 @@ RequestSourcePtr FileBasedOptionsListRequestSourceFactory::createRequestSourcePl
     const Envoy::Protobuf::Message& message, Envoy::Api::Api& api,
     Envoy::Http::RequestHeaderMapPtr header) {
   const auto* any =
-      Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
+      Envoy::Protobuf::DynamicCastToGenerated<const Envoy::Protobuf::Any>(&message);
   nighthawk::request_source::FileBasedOptionsListRequestSourceConfig config;
   Envoy::MessageUtil util;
   THROW_IF_NOT_OK(util.unpackTo(*any, config));
@@ -60,7 +60,7 @@ RequestSourcePtr InLineOptionsListRequestSourceFactory::createRequestSourcePlugi
     const Envoy::Protobuf::Message& message, Envoy::Api::Api&,
     Envoy::Http::RequestHeaderMapPtr header) {
   const auto* any =
-      Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
+      Envoy::Protobuf::DynamicCastToGenerated<const Envoy::Protobuf::Any>(&message);
   nighthawk::request_source::InLineOptionsListRequestSourceConfig config;
   THROW_IF_NOT_OK(Envoy::MessageUtil::unpackTo(*any, config));
   auto loaded_list_ptr =

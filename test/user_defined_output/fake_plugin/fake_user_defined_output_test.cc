@@ -29,7 +29,7 @@ absl::StatusOr<UserDefinedOutputPluginPtr> CreatePlugin(const std::string& confi
   FakeUserDefinedOutputConfig config;
   TextFormat::ParseFromString(config_textproto, &config);
 
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   auto& factory = Envoy::Config::Utility::getAndCheckFactoryByName<UserDefinedOutputPluginFactory>(
       "nighthawk.fake_user_defined_output");
@@ -40,11 +40,11 @@ absl::StatusOr<UserDefinedOutputPluginPtr> CreatePlugin(const std::string& confi
 }
 
 // Packs a FakeUserDefinedOutput into an Any.
-Envoy::ProtobufWkt::Any CreateOutputAny(const std::string& textproto) {
+Envoy::Protobuf::Any CreateOutputAny(const std::string& textproto) {
   FakeUserDefinedOutput output;
   TextFormat::ParseFromString(textproto, &output);
 
-  Envoy::ProtobufWkt::Any output_any;
+  Envoy::Protobuf::Any output_any;
   output_any.PackFrom(output);
 
   return output_any;
@@ -68,7 +68,7 @@ TEST(FakeUserDefinedOutputPluginFactory, CreateEmptyConfigProtoCreatesCorrectTyp
 
 TEST(FakeUserDefinedOutputPluginFactory, FactoryRegistersUnderCorrectName) {
   FakeUserDefinedOutputConfig config;
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   auto& factory = Envoy::Config::Utility::getAndCheckFactoryByName<UserDefinedOutputPluginFactory>(
       "nighthawk.fake_user_defined_output");
@@ -77,7 +77,7 @@ TEST(FakeUserDefinedOutputPluginFactory, FactoryRegistersUnderCorrectName) {
 
 TEST(FakeUserDefinedOutputPluginFactory, CreateUserDefinedOutputPluginCreatesCorrectPluginType) {
   FakeUserDefinedOutputConfig config;
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   auto& factory = Envoy::Config::Utility::getAndCheckFactoryByName<UserDefinedOutputPluginFactory>(
       "nighthawk.fake_user_defined_output");
@@ -91,7 +91,7 @@ TEST(GetPerWorkerOutput, ReturnsProtoOfCorrectType) {
   absl::StatusOr<UserDefinedOutputPluginPtr> plugin = CreatePlugin("", /*worker_number=*/0);
   ASSERT_TRUE(plugin.ok());
 
-  absl::StatusOr<Envoy::ProtobufWkt::Any> any_or = (*plugin)->getPerWorkerOutput();
+  absl::StatusOr<Envoy::Protobuf::Any> any_or = (*plugin)->getPerWorkerOutput();
   EXPECT_TRUE(any_or.status().ok());
   EXPECT_TRUE(any_or->Is<FakeUserDefinedOutput>());
 }
@@ -100,11 +100,11 @@ TEST(GetPerWorkerOutput, ReturnsCorrectWorkerNumber) {
   absl::StatusOr<UserDefinedOutputPluginPtr> plugin = CreatePlugin("", /*worker_number=*/13);
   ASSERT_TRUE(plugin.ok());
 
-  Envoy::ProtobufWkt::Any expected_output = CreateOutputAny(R"pb(
+  Envoy::Protobuf::Any expected_output = CreateOutputAny(R"pb(
     worker_name: "worker_13"
   )pb");
 
-  absl::StatusOr<Envoy::ProtobufWkt::Any> any_or = (*plugin)->getPerWorkerOutput();
+  absl::StatusOr<Envoy::Protobuf::Any> any_or = (*plugin)->getPerWorkerOutput();
   EXPECT_THAT(*any_or, EqualsProto(expected_output));
 }
 
@@ -113,7 +113,7 @@ TEST(GetPerWorkerOutput, FailsIfConfiguredToFail) {
       CreatePlugin("fail_per_worker_output: true", /*worker_number=*/13);
   ASSERT_TRUE(plugin.ok());
 
-  absl::StatusOr<Envoy::ProtobufWkt::Any> any_or = (*plugin)->getPerWorkerOutput();
+  absl::StatusOr<Envoy::Protobuf::Any> any_or = (*plugin)->getPerWorkerOutput();
   EXPECT_EQ(any_or.status().code(), absl::StatusCode::kInternal);
 }
 
@@ -124,12 +124,12 @@ TEST(HandleResponseHeaders, IncrementsHeadersCalledCount) {
   EXPECT_TRUE((*plugin)->handleResponseHeaders(headers).ok());
   EXPECT_TRUE((*plugin)->handleResponseHeaders(headers).ok());
 
-  Envoy::ProtobufWkt::Any expected_output = CreateOutputAny(R"pb(
+  Envoy::Protobuf::Any expected_output = CreateOutputAny(R"pb(
     headers_called: 2
     worker_name: "worker_0"
   )pb");
 
-  absl::StatusOr<Envoy::ProtobufWkt::Any> any_or = (*plugin)->getPerWorkerOutput();
+  absl::StatusOr<Envoy::Protobuf::Any> any_or = (*plugin)->getPerWorkerOutput();
   EXPECT_THAT(*any_or, EqualsProto(expected_output));
 }
 
@@ -154,12 +154,12 @@ TEST(HandleResponseData, IncrementsDataCalledCountIfNotEmpty) {
   EXPECT_TRUE((*plugin)->handleResponseData(empty_buffer).ok());
   EXPECT_TRUE((*plugin)->handleResponseData(empty_buffer).ok());
 
-  Envoy::ProtobufWkt::Any expected_output = CreateOutputAny(R"pb(
+  Envoy::Protobuf::Any expected_output = CreateOutputAny(R"pb(
     data_called: 2
     worker_name: "worker_0"
   )pb");
 
-  absl::StatusOr<Envoy::ProtobufWkt::Any> any_or = (*plugin)->getPerWorkerOutput();
+  absl::StatusOr<Envoy::Protobuf::Any> any_or = (*plugin)->getPerWorkerOutput();
   EXPECT_THAT(*any_or, EqualsProto(expected_output));
 }
 
@@ -188,7 +188,7 @@ TEST(AggregateGlobalOutput, BuildsOutputsCorrectly) {
   )pb"),
   });
 
-  Envoy::ProtobufWkt::Any expected_aggregate = CreateOutputAny(R"pb(
+  Envoy::Protobuf::Any expected_aggregate = CreateOutputAny(R"pb(
     data_called: 6
     headers_called: 10
     worker_name: "global"
@@ -196,7 +196,7 @@ TEST(AggregateGlobalOutput, BuildsOutputsCorrectly) {
 
   auto& factory = Envoy::Config::Utility::getAndCheckFactoryByName<UserDefinedOutputPluginFactory>(
       "nighthawk.fake_user_defined_output");
-  absl::StatusOr<Envoy::ProtobufWkt::Any> any_or =
+  absl::StatusOr<Envoy::Protobuf::Any> any_or =
       factory.AggregateGlobalOutput(per_worker_outputs);
 
   ASSERT_TRUE(any_or.status().ok());
@@ -204,7 +204,7 @@ TEST(AggregateGlobalOutput, BuildsOutputsCorrectly) {
 }
 
 TEST(AggregateGlobalOutput, FailsElegantlyWithIncorrectInput) {
-  Envoy::ProtobufWkt::Any invalid_any;
+  Envoy::Protobuf::Any invalid_any;
   FakeUserDefinedOutputConfig wrong_type;
   invalid_any.PackFrom(wrong_type);
   nighthawk::client::UserDefinedOutput user_defined_output;
@@ -213,7 +213,7 @@ TEST(AggregateGlobalOutput, FailsElegantlyWithIncorrectInput) {
 
   auto& factory = Envoy::Config::Utility::getAndCheckFactoryByName<UserDefinedOutputPluginFactory>(
       "nighthawk.fake_user_defined_output");
-  absl::StatusOr<Envoy::ProtobufWkt::Any> any_or =
+  absl::StatusOr<Envoy::Protobuf::Any> any_or =
       factory.AggregateGlobalOutput(per_worker_outputs);
 
   EXPECT_EQ(any_or.status().code(), absl::StatusCode::kInternal);

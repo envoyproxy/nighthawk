@@ -53,7 +53,7 @@ CreatePlugin(const std::string& config_textproto, std::unique_ptr<HeaderLogger> 
   LogResponseHeadersConfig config;
   TextFormat::ParseFromString(config_textproto, &config);
 
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   auto& factory = Envoy::Config::Utility::getAndCheckFactoryByName<UserDefinedOutputPluginFactory>(
       "nighthawk.log_response_headers_plugin");
@@ -73,10 +73,10 @@ CreatePlugin(const std::string& config_textproto, std::unique_ptr<HeaderLogger> 
 /**
  * Creates an empty LogResponseHeadersOutput, packed into an Any.
  */
-Envoy::ProtobufWkt::Any CreateOutputAny() {
+Envoy::Protobuf::Any CreateOutputAny() {
   LogResponseHeadersOutput output;
 
-  Envoy::ProtobufWkt::Any output_any;
+  Envoy::Protobuf::Any output_any;
   output_any.PackFrom(output);
 
   return output_any;
@@ -102,7 +102,7 @@ TEST(LogResponseHeadersPluginFactory, CreateEmptyConfigProtoCreatesCorrectType) 
 
 TEST(LogResponseHeadersPluginFactory, FactoryRegistersUnderCorrectName) {
   LogResponseHeadersConfig config;
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   auto& factory = Envoy::Config::Utility::getAndCheckFactoryByName<UserDefinedOutputPluginFactory>(
       "nighthawk.log_response_headers_plugin");
@@ -123,7 +123,7 @@ TEST(GetPerWorkerOutput, ReturnsProtoOfCorrectType) {
   absl::StatusOr<UserDefinedOutputPluginPtr> plugin =
       CreatePlugin("logging_mode: LM_LOG_ALL_RESPONSES", std::move(logger));
   ASSERT_TRUE(plugin.ok());
-  absl::StatusOr<Envoy::ProtobufWkt::Any> any_or = (*plugin)->getPerWorkerOutput();
+  absl::StatusOr<Envoy::Protobuf::Any> any_or = (*plugin)->getPerWorkerOutput();
   ASSERT_TRUE(any_or.status().ok());
   EXPECT_TRUE(any_or->Is<LogResponseHeadersOutput>());
 }
@@ -244,11 +244,11 @@ TEST(AggregateGlobalOutput, ReturnsEmptyProto) {
       CreateUserDefinedOutput(),
   });
 
-  Envoy::ProtobufWkt::Any expected_aggregate = CreateOutputAny();
+  Envoy::Protobuf::Any expected_aggregate = CreateOutputAny();
 
   auto& factory = Envoy::Config::Utility::getAndCheckFactoryByName<UserDefinedOutputPluginFactory>(
       "nighthawk.log_response_headers_plugin");
-  absl::StatusOr<Envoy::ProtobufWkt::Any> any_or =
+  absl::StatusOr<Envoy::Protobuf::Any> any_or =
       factory.AggregateGlobalOutput(per_worker_outputs);
 
   ASSERT_TRUE(any_or.status().ok());

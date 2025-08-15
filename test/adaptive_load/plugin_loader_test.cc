@@ -39,7 +39,7 @@ const double kBadConfigThreshold = 98765.0;
  */
 absl::Status DoValidateConfig(const Envoy::Protobuf::Message& message) {
   const auto* any =
-      Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
+      Envoy::Protobuf::DynamicCastToGenerated<const Envoy::Protobuf::Any>(&message);
   nighthawk::adaptive_load::LinearScoringFunctionConfig config;
   RETURN_IF_NOT_OK(Envoy::MessageUtil::unpackTo(*any, config));
   return config.threshold() == kBadConfigThreshold
@@ -84,7 +84,7 @@ public:
   InputVariableSetterPtr
   createInputVariableSetter(const Envoy::Protobuf::Message& message) override {
     const auto* any =
-        Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
+        Envoy::Protobuf::DynamicCastToGenerated<const Envoy::Protobuf::Any>(&message);
     nighthawk::adaptive_load::LinearScoringFunctionConfig config;
     THROW_IF_NOT_OK(Envoy::MessageUtil::unpackTo(*any, config));
     return std::make_unique<TestInputVariableSetter>(config);
@@ -123,7 +123,7 @@ public:
   }
   ScoringFunctionPtr createScoringFunction(const Envoy::Protobuf::Message& message) override {
     const auto* any =
-        Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
+        Envoy::Protobuf::DynamicCastToGenerated<const Envoy::Protobuf::Any>(&message);
     nighthawk::adaptive_load::LinearScoringFunctionConfig config;
     THROW_IF_NOT_OK(Envoy::MessageUtil::unpackTo(*any, config));
     return std::make_unique<TestScoringFunction>(config);
@@ -163,7 +163,7 @@ public:
   }
   MetricsPluginPtr createMetricsPlugin(const Envoy::Protobuf::Message& message) override {
     const auto* any =
-        Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
+        Envoy::Protobuf::DynamicCastToGenerated<const Envoy::Protobuf::Any>(&message);
     nighthawk::adaptive_load::LinearScoringFunctionConfig config;
     THROW_IF_NOT_OK(Envoy::MessageUtil::unpackTo(*any, config));
     return std::make_unique<TestMetricsPlugin>(config);
@@ -214,7 +214,7 @@ public:
       const Envoy::Protobuf::Message& message,
       const nighthawk::client::CommandLineOptions& command_line_options_template) override {
     const auto* any =
-        Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
+        Envoy::Protobuf::DynamicCastToGenerated<const Envoy::Protobuf::Any>(&message);
     nighthawk::adaptive_load::LinearScoringFunctionConfig config;
     THROW_IF_NOT_OK(Envoy::MessageUtil::unpackTo(*any, config));
     return std::make_unique<TestStepController>(config, command_line_options_template);
@@ -229,10 +229,10 @@ REGISTER_FACTORY(TestStepControllerConfigFactory, StepControllerConfigFactory);
  * arbitrary. We don't leave the Any empty because we need to check that the plugin utils can
  * correctly pass the proto through to the plugin.
  */
-Envoy::ProtobufWkt::Any CreateTypedConfigAny(const double threshold) {
+Envoy::Protobuf::Any CreateTypedConfigAny(const double threshold) {
   nighthawk::adaptive_load::LinearScoringFunctionConfig config;
   config.set_threshold(threshold);
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   return config_any;
 }

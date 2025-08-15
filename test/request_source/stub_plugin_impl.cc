@@ -23,7 +23,7 @@ Envoy::ProtobufTypes::MessagePtr StubRequestSourcePluginConfigFactory::createEmp
 RequestSourcePtr StubRequestSourcePluginConfigFactory::createRequestSourcePlugin(
     const Envoy::Protobuf::Message& message, Envoy::Api::Api&, Envoy::Http::RequestHeaderMapPtr) {
   const auto* any =
-      Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
+      Envoy::Protobuf::DynamicCastToGenerated<const Envoy::Protobuf::Any>(&message);
   nighthawk::request_source::StubPluginConfig config;
   THROW_IF_NOT_OK(Envoy::MessageUtil::unpackTo(*any, config));
   return std::make_unique<StubRequestSource>(config);

@@ -124,7 +124,7 @@ absl::StatusOr<BenchmarkResult> AdaptiveLoadControllerImpl::PerformAndAnalyzeNig
     nighthawk::client::NighthawkService::StubInterface* nighthawk_service_stub,
     const AdaptiveLoadSessionSpec& spec,
     const absl::flat_hash_map<std::string, MetricsPluginPtr>& name_to_custom_plugin_map,
-    StepController& step_controller, Envoy::ProtobufWkt::Duration duration) {
+    StepController& step_controller, Envoy::Protobuf::Duration duration) {
   absl::StatusOr<nighthawk::client::CommandLineOptions> command_line_options_or =
       step_controller.GetCurrentCommandLineOptions();
   if (!command_line_options_or.ok()) {
