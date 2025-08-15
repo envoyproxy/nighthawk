@@ -89,7 +89,7 @@ public:
    *
    * @return output Any-packed per_worker output to add to the worker's Result.
    */
-  virtual absl::StatusOr<Envoy::ProtobufWkt::Any> getPerWorkerOutput() const PURE;
+  virtual absl::StatusOr<Envoy::Protobuf::Any> getPerWorkerOutput() const PURE;
 };
 
 using UserDefinedOutputPluginPtr = std::unique_ptr<UserDefinedOutputPlugin>;
@@ -116,7 +116,7 @@ public:
    * plugin.
    */
   virtual absl::StatusOr<UserDefinedOutputPluginPtr>
-  createUserDefinedOutputPlugin(const Envoy::ProtobufWkt::Any& typed_config,
+  createUserDefinedOutputPlugin(const Envoy::Protobuf::Any& typed_config,
                                 const WorkerMetadata& worker_metadata) PURE;
 
   /**
@@ -144,7 +144,7 @@ public:
 
    * @return global_output Any-packed aggregated output to add to the global Result.
    */
-  virtual absl::StatusOr<Envoy::ProtobufWkt::Any> AggregateGlobalOutput(
+  virtual absl::StatusOr<Envoy::Protobuf::Any> AggregateGlobalOutput(
       absl::Span<const nighthawk::client::UserDefinedOutput> per_worker_outputs) PURE;
 };
 

@@ -39,7 +39,7 @@ TEST(FakeInputVariableSetterConfigFactory, FactoryRegistersUnderCorrectName) {
 
 TEST(FakeInputVariableSetterConfigFactory, CreateInputVariableSetterCreatesCorrectPluginType) {
   FakeInputVariableSetterConfig config;
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   CommandLineOptions options;
   auto& config_factory =
@@ -50,7 +50,7 @@ TEST(FakeInputVariableSetterConfigFactory, CreateInputVariableSetterCreatesCorre
 }
 
 TEST(FakeInputVariableSetterConfigFactory, ValidateConfigWithBadConfigProtoReturnsError) {
-  Envoy::ProtobufWkt::Any empty_any;
+  Envoy::Protobuf::Any empty_any;
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(
           "nighthawk.fake_input_variable_setter");
@@ -65,7 +65,7 @@ TEST(FakeInputVariableSetterConfigFactory,
   const std::string kExpectedStatusMessage = "artificial validation failure";
   config.mutable_artificial_validation_failure()->set_code(kExpectedStatusCode);
   config.mutable_artificial_validation_failure()->set_message(kExpectedStatusMessage);
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(
@@ -77,7 +77,7 @@ TEST(FakeInputVariableSetterConfigFactory,
 
 TEST(FakeInputVariableSetterConfigFactory, ValidateConfigWithDefaultConfigReturnsOk) {
   FakeInputVariableSetterConfig config;
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(
@@ -89,7 +89,7 @@ TEST(FakeInputVariableSetterConfigFactory, ValidateConfigWithDefaultConfigReturn
 TEST(FakeInputVariableSetterConfigFactory, ValidateConfigWithValidConfigReturnsOk) {
   FakeInputVariableSetterConfig config;
   config.set_adjustment_factor(1.0);
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(

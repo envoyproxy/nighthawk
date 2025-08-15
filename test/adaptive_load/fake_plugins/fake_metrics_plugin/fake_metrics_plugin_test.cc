@@ -42,7 +42,7 @@ TEST(FakeMetricsPluginConfigFactory, FactoryRegistersUnderCorrectName) {
 
 TEST(FakeMetricsPluginConfigFactory, CreateMetricsPluginCreatesCorrectPluginType) {
   FakeMetricsPluginConfig config;
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<MetricsPluginConfigFactory>(
@@ -52,7 +52,7 @@ TEST(FakeMetricsPluginConfigFactory, CreateMetricsPluginCreatesCorrectPluginType
 }
 
 TEST(FakeMetricsPluginConfigFactory, ValidateConfigWithBadConfigProtoReturnsError) {
-  Envoy::ProtobufWkt::Any empty_any;
+  Envoy::Protobuf::Any empty_any;
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<MetricsPluginConfigFactory>(
           "nighthawk.fake_metrics_plugin");
@@ -66,7 +66,7 @@ TEST(FakeMetricsPluginConfigFactory, ValidateConfigWithWellFormedIllegalConfigRe
   FakeMetricsPluginConfig config;
   config.mutable_artificial_validation_failure()->set_code(kExpectedStatusCode);
   config.mutable_artificial_validation_failure()->set_message(kExpectedStatusMessage);
-  Envoy::ProtobufWkt::Any any;
+  Envoy::Protobuf::Any any;
   any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<MetricsPluginConfigFactory>(

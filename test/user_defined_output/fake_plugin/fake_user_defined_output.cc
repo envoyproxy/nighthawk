@@ -40,7 +40,7 @@ absl::Status FakeUserDefinedOutputPlugin::handleResponseData(const Envoy::Buffer
   return absl::OkStatus();
 }
 
-absl::StatusOr<Envoy::ProtobufWkt::Any> FakeUserDefinedOutputPlugin::getPerWorkerOutput() const {
+absl::StatusOr<Envoy::Protobuf::Any> FakeUserDefinedOutputPlugin::getPerWorkerOutput() const {
   Envoy::Thread::LockGuard guard(lock_);
   if (config_.fail_per_worker_output()) {
     return absl::InternalError(
@@ -51,7 +51,7 @@ absl::StatusOr<Envoy::ProtobufWkt::Any> FakeUserDefinedOutputPlugin::getPerWorke
   output.set_headers_called(headers_called_);
   output.set_worker_name(absl::StrCat("worker_", worker_metadata_.worker_number));
 
-  Envoy::ProtobufWkt::Any output_any;
+  Envoy::Protobuf::Any output_any;
   output_any.PackFrom(output);
   return output_any;
 }
@@ -65,7 +65,7 @@ Envoy::ProtobufTypes::MessagePtr FakeUserDefinedOutputPluginFactory::createEmpty
 
 absl::StatusOr<UserDefinedOutputPluginPtr>
 FakeUserDefinedOutputPluginFactory::createUserDefinedOutputPlugin(
-    const Envoy::ProtobufWkt::Any& config_any, const WorkerMetadata& worker_metadata) {
+    const Envoy::Protobuf::Any& config_any, const WorkerMetadata& worker_metadata) {
   plugin_count_++;
   FakeUserDefinedOutputConfig config;
   absl::Status status = Envoy::MessageUtil::unpackTo(config_any, config);
@@ -75,7 +75,7 @@ FakeUserDefinedOutputPluginFactory::createUserDefinedOutputPlugin(
   return std::make_unique<FakeUserDefinedOutputPlugin>(config, worker_metadata);
 }
 
-absl::StatusOr<Envoy::ProtobufWkt::Any> FakeUserDefinedOutputPluginFactory::AggregateGlobalOutput(
+absl::StatusOr<Envoy::Protobuf::Any> FakeUserDefinedOutputPluginFactory::AggregateGlobalOutput(
     absl::Span<const nighthawk::client::UserDefinedOutput> per_worker_outputs) {
   FakeUserDefinedOutput global_output;
   global_output.set_worker_name("global");
@@ -83,7 +83,7 @@ absl::StatusOr<Envoy::ProtobufWkt::Any> FakeUserDefinedOutputPluginFactory::Aggr
   int headers_called = 0;
   for (const nighthawk::client::UserDefinedOutput& user_defined_output : per_worker_outputs) {
     if (user_defined_output.has_typed_output()) {
-      Envoy::ProtobufWkt::Any any = user_defined_output.typed_output();
+      Envoy::Protobuf::Any any = user_defined_output.typed_output();
       FakeUserDefinedOutput output;
       absl::Status status = Envoy::MessageUtil::unpackTo(any, output);
       if (status.ok()) {
@@ -104,7 +104,7 @@ absl::StatusOr<Envoy::ProtobufWkt::Any> FakeUserDefinedOutputPluginFactory::Aggr
   global_output.set_data_called(data_called);
   global_output.set_headers_called(headers_called);
 
-  Envoy::ProtobufWkt::Any global_any;
+  Envoy::Protobuf::Any global_any;
   global_any.PackFrom(global_output);
   return global_any;
 }

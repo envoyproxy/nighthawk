@@ -492,7 +492,7 @@ std::vector<nighthawk::client::UserDefinedOutput> compileGlobalUserDefinedPlugin
 
     auto it = user_defined_outputs_by_plugin.find(factory->name());
     if (it != user_defined_outputs_by_plugin.end()) {
-      absl::StatusOr<Envoy::ProtobufWkt::Any> global_output_any =
+      absl::StatusOr<Envoy::Protobuf::Any> global_output_any =
           factory->AggregateGlobalOutput(it->second);
       if (global_output_any.ok()) {
         *global_output.mutable_typed_output() = *global_output_any;

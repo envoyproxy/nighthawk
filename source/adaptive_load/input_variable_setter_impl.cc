@@ -31,8 +31,7 @@ RequestsPerSecondInputVariableSetterConfigFactory::createEmptyConfigProto() {
 
 InputVariableSetterPtr RequestsPerSecondInputVariableSetterConfigFactory::createInputVariableSetter(
     const Envoy::Protobuf::Message& message) {
-  const auto* any =
-      Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
+  const auto* any = Envoy::Protobuf::DynamicCastToGenerated<const Envoy::Protobuf::Any>(&message);
   nighthawk::adaptive_load::RequestsPerSecondInputVariableSetterConfig config;
   THROW_IF_NOT_OK(Envoy::MessageUtil::unpackTo(*any, config));
   return std::make_unique<RequestsPerSecondInputVariableSetter>(config);

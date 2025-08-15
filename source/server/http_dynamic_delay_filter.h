@@ -133,8 +133,8 @@ public:
    */
   static int64_t
   computeConcurrencyBasedLinearDelayMs(const uint64_t concurrency,
-                                       const Envoy::ProtobufWkt::Duration& minimal_delay,
-                                       const Envoy::ProtobufWkt::Duration& delay_factor) {
+                                       const Envoy::Protobuf::Duration& minimal_delay,
+                                       const Envoy::Protobuf::Duration& delay_factor) {
     return std::round(Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(
                           minimal_delay + (concurrency * delay_factor)) /
                       1e6);
