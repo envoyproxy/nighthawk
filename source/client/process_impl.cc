@@ -126,6 +126,8 @@ public:
   void addSink(Envoy::Stats::SinkPtr sink) { sinks_.emplace_back(std::move(sink)); }
 
   bool enableDeferredCreationStats() const override { return false; }
+  
+  uint32_t evictOnFlush() const override { return 0; }
 
 private:
   std::list<Envoy::Stats::SinkPtr> sinks_;
