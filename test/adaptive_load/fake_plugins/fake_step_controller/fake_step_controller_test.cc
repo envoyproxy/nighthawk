@@ -34,7 +34,7 @@ TEST(FakeStepControllerConfigFactory, CreateEmptyConfigProtoCreatesCorrectType) 
 
 TEST(FakeStepControllerConfigFactory, FactoryRegistersUnderCorrectName) {
   FakeStepControllerConfig config;
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   CommandLineOptions options;
   auto& config_factory =
@@ -45,7 +45,7 @@ TEST(FakeStepControllerConfigFactory, FactoryRegistersUnderCorrectName) {
 
 TEST(FakeStepControllerConfigFactory, CreateStepControllerCreatesCorrectPluginType) {
   FakeStepControllerConfig config;
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   CommandLineOptions options;
   auto& config_factory =
@@ -56,7 +56,7 @@ TEST(FakeStepControllerConfigFactory, CreateStepControllerCreatesCorrectPluginTy
 }
 
 TEST(FakeStepControllerConfigFactory, ValidateConfigWithBadConfigProtoReturnsError) {
-  Envoy::ProtobufWkt::Any empty_any;
+  Envoy::Protobuf::Any empty_any;
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<StepControllerConfigFactory>(
           "nighthawk.fake_step_controller");
@@ -70,7 +70,7 @@ TEST(FakeStepControllerConfigFactory, ValidateConfigWithAritificialValidationErr
   FakeStepControllerConfig config;
   config.mutable_artificial_validation_failure()->set_code(kExpectedStatusCode);
   config.mutable_artificial_validation_failure()->set_message(kExpectedStatusMessage);
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<StepControllerConfigFactory>(
@@ -82,7 +82,7 @@ TEST(FakeStepControllerConfigFactory, ValidateConfigWithAritificialValidationErr
 
 TEST(FakeStepControllerConfigFactory, ValidateConfigWithDefaultConfigReturnsOk) {
   FakeStepControllerConfig config;
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<StepControllerConfigFactory>(
@@ -94,7 +94,7 @@ TEST(FakeStepControllerConfigFactory, ValidateConfigWithDefaultConfigReturnsOk) 
 TEST(FakeStepControllerConfigFactory, ValidateConfigWithValidConfigReturnsOk) {
   FakeStepControllerConfig config;
   config.set_fixed_rps_value(1);
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<StepControllerConfigFactory>(

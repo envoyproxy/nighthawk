@@ -127,6 +127,8 @@ public:
 
   bool enableDeferredCreationStats() const override { return false; }
 
+  uint32_t evictOnFlush() const override { return 0; }
+
 private:
   std::list<Envoy::Stats::SinkPtr> sinks_;
   const std::chrono::milliseconds flush_interval_;
@@ -492,7 +494,7 @@ std::vector<nighthawk::client::UserDefinedOutput> compileGlobalUserDefinedPlugin
 
     auto it = user_defined_outputs_by_plugin.find(factory->name());
     if (it != user_defined_outputs_by_plugin.end()) {
-      absl::StatusOr<Envoy::ProtobufWkt::Any> global_output_any =
+      absl::StatusOr<Envoy::Protobuf::Any> global_output_any =
           factory->AggregateGlobalOutput(it->second);
       if (global_output_any.ok()) {
         *global_output.mutable_typed_output() = *global_output_any;

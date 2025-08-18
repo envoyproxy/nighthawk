@@ -136,8 +136,8 @@ public:
   int64_t compute(uint64_t concurrency, uint64_t minimal_delay_seconds,
                   uint64_t minimal_delay_nanos, uint64_t delay_factor_seconds,
                   uint64_t delay_factor_nanos) {
-    Envoy::ProtobufWkt::Duration minimal_delay;
-    Envoy::ProtobufWkt::Duration delay_factor;
+    Envoy::Protobuf::Duration minimal_delay;
+    Envoy::Protobuf::Duration delay_factor;
     minimal_delay.set_seconds(minimal_delay_seconds);
     minimal_delay.set_nanos(minimal_delay_nanos);
     delay_factor.set_seconds(delay_factor_seconds);

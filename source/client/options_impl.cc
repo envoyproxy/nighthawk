@@ -517,7 +517,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   parsePredicates(failure_predicates, failure_predicates_);
   TCLAP_SET_IF_SPECIFIED(open_loop, open_loop_);
   if (jitter_uniform.isSet()) {
-    Envoy::ProtobufWkt::Duration duration;
+    Envoy::Protobuf::Duration duration;
     if (Envoy::Protobuf::util::TimeUtil::FromString(jitter_uniform.getValue(), &duration)) {
       if (duration.nanos() >= 0 && duration.seconds() >= 0) {
         jitter_uniform_ = std::chrono::nanoseconds(

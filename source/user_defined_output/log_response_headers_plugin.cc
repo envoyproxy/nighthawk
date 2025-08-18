@@ -73,9 +73,9 @@ absl::Status validateConfig(const LogResponseHeadersConfig& config) {
   return absl::OkStatus();
 }
 
-Envoy::ProtobufWkt::Any createEmptyOutput() {
+Envoy::Protobuf::Any createEmptyOutput() {
   nighthawk::LogResponseHeadersOutput output;
-  Envoy::ProtobufWkt::Any any;
+  Envoy::Protobuf::Any any;
   any.PackFrom(output);
   return any;
 }
@@ -110,7 +110,7 @@ absl::Status LogResponseHeadersPlugin::handleResponseData(const Envoy::Buffer::I
   return absl::OkStatus();
 }
 
-absl::StatusOr<Envoy::ProtobufWkt::Any> LogResponseHeadersPlugin::getPerWorkerOutput() const {
+absl::StatusOr<Envoy::Protobuf::Any> LogResponseHeadersPlugin::getPerWorkerOutput() const {
   return createEmptyOutput();
 }
 
@@ -124,7 +124,7 @@ Envoy::ProtobufTypes::MessagePtr LogResponseHeadersPluginFactory::createEmptyCon
 
 absl::StatusOr<UserDefinedOutputPluginPtr>
 LogResponseHeadersPluginFactory::createUserDefinedOutputPlugin(
-    const Envoy::ProtobufWkt::Any& config_any, const WorkerMetadata& worker_metadata) {
+    const Envoy::Protobuf::Any& config_any, const WorkerMetadata& worker_metadata) {
   LogResponseHeadersConfig config;
   absl::Status unpack_status = Envoy::MessageUtil::unpackTo(config_any, config);
   if (!unpack_status.ok()) {
@@ -138,7 +138,7 @@ LogResponseHeadersPluginFactory::createUserDefinedOutputPlugin(
   return std::make_unique<LogResponseHeadersPlugin>(config, worker_metadata);
 }
 
-absl::StatusOr<Envoy::ProtobufWkt::Any> LogResponseHeadersPluginFactory::AggregateGlobalOutput(
+absl::StatusOr<Envoy::Protobuf::Any> LogResponseHeadersPluginFactory::AggregateGlobalOutput(
     absl::Span<const nighthawk::client::UserDefinedOutput>) {
   return createEmptyOutput();
 }

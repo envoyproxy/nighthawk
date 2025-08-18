@@ -35,7 +35,7 @@ TEST(LinearScoringFunctionConfigFactory, CreateEmptyConfigProtoCreatesCorrectTyp
 
 TEST(BinaryScoringFunctionConfigFactory, FactoryRegistrationUsesCorrectPluginName) {
   nighthawk::adaptive_load::BinaryScoringFunctionConfig config;
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(
@@ -45,7 +45,7 @@ TEST(BinaryScoringFunctionConfigFactory, FactoryRegistrationUsesCorrectPluginNam
 
 TEST(BinaryScoringFunctionConfigFactory, CreateScoringFunctionCreatesCorrectPluginType) {
   nighthawk::adaptive_load::BinaryScoringFunctionConfig config;
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(
@@ -57,7 +57,7 @@ TEST(BinaryScoringFunctionConfigFactory, CreateScoringFunctionCreatesCorrectPlug
 TEST(BinaryScoringFunctionConfigFactory, CreateScoringFunctionThrowsExceptionWithWrongConfigProto) {
   // LinearScoringFunctionConfig is the wrong type for BinaryScoringFunction, so it will not unpack.
   nighthawk::adaptive_load::LinearScoringFunctionConfig config;
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(
@@ -67,7 +67,7 @@ TEST(BinaryScoringFunctionConfigFactory, CreateScoringFunctionThrowsExceptionWit
 
 TEST(LinearScoringFunctionConfigFactory, FactoryRegistrationUsesCorrectPluginName) {
   nighthawk::adaptive_load::LinearScoringFunctionConfig config;
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(
@@ -77,7 +77,7 @@ TEST(LinearScoringFunctionConfigFactory, FactoryRegistrationUsesCorrectPluginNam
 
 TEST(LinearScoringFunctionConfigFactory, CreateScoringFunctionCreatesCorrectPluginType) {
   nighthawk::adaptive_load::LinearScoringFunctionConfig config;
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(
@@ -89,7 +89,7 @@ TEST(LinearScoringFunctionConfigFactory, CreateScoringFunctionCreatesCorrectPlug
 TEST(LinearScoringFunctionConfigFactory, CreateScoringFunctionThrowsExceptionWithWrongConfigProto) {
   // BinaryScoringFunctionConfig is the wrong type for LinearScoringFunction, so it will not unpack.
   nighthawk::adaptive_load::BinaryScoringFunctionConfig config;
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(

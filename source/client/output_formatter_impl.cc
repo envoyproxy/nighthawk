@@ -120,8 +120,8 @@ ConsoleOutputFormatterImpl::formatProto(const nighthawk::client::Output& output)
   return ss.str();
 }
 
-std::string ConsoleOutputFormatterImpl::formatProtoDuration(
-    const Envoy::ProtobufWkt::Duration& duration) const {
+std::string
+ConsoleOutputFormatterImpl::formatProtoDuration(const Envoy::Protobuf::Duration& duration) const {
   auto microseconds = Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(duration);
   return fmt::format("{}s {:03}ms {:03}us", (microseconds % 1'000'000'000) / 1'000'000,
                      (microseconds % 1'000'000) / 1'000, microseconds % 1'000);
@@ -226,7 +226,7 @@ CsvOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) con
 }
 
 std::string
-CsvOutputFormatterImpl::formatProtoDuration(const Envoy::ProtobufWkt::Duration& duration) const {
+CsvOutputFormatterImpl::formatProtoDuration(const Envoy::Protobuf::Duration& duration) const {
   int64_t microseconds = Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(duration);
   return fmt::format("{}s {:03}ms {:03}us", (microseconds % 1'000'000'000) / 1'000'000,
                      (microseconds % 1'000'000) / 1'000, microseconds % 1'000);
@@ -352,7 +352,7 @@ absl::StatusOr<std::chrono::nanoseconds> FortioOutputFormatterImpl::getAverageEx
 }
 
 double
-FortioOutputFormatterImpl::durationToSeconds(const Envoy::ProtobufWkt::Duration& duration) const {
+FortioOutputFormatterImpl::durationToSeconds(const Envoy::Protobuf::Duration& duration) const {
   return Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(duration) / 1e9;
 }
 
