@@ -64,6 +64,14 @@ public:
    * @return bool true if the input could be parsed as host:port
    */
   static bool parseHostPort(const std::string& host_port, std::string* host, int* port);
+
+
+  // Obtains an available TCP or UDP port. Throws an exception if one cannot be
+  // allocated.
+  /**
+  * @param udp boolean true if a UDP port is requested, otherwise get a TCP port
+  */
+  uint16_t GetAvailablePort(bool udp);
 };
 
 } // namespace Nighthawk

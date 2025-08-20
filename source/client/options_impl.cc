@@ -1,7 +1,5 @@
 #include "source/client/options_impl.h"
 
-#include <sys/socket.h>
-
 #include <cerrno>
 #include <cstdint>
 #include <exception>
@@ -31,71 +29,6 @@ using ::nighthawk::client::Protocol;
 
 #define TCLAP_SET_IF_SPECIFIED(command, value_member)                                              \
   ((value_member) = (((command).isSet()) ? ((command).getValue()) : (value_member)))
-
-// Obtains an available TCP or UDP port. Throws an exception if one cannot be
-// allocated.
-uint16_t OptionsImpl::GetAvailablePort(bool udp) {
-  int family = (address_family_ == nighthawk::client::AddressFamily::V4) ? AF_INET : AF_INET6;
-  int sock = socket(family, udp ? SOCK_DGRAM : SOCK_STREAM, udp ? 0 : IPPROTO_TCP);
-  if (sock < 0) {
-    throw NighthawkException(absl::StrCat("could not create socket: ", Envoy::errorDetails(errno)));
-    return 0;
-  }
-
-  // Reuseaddr lets us start up a server immediately after it exits
-  int one = 1;
-  if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) < 0) {
-    throw NighthawkException(absl::StrCat("setsockopt: ", Envoy::errorDetails(errno)));
-    close(sock);
-    return 0;
-  }
-  union {
-    struct sockaddr_in sin;
-    struct sockaddr_in6 sin6;
-  } addr;
-  size_t size;
-  if (family == AF_INET) {
-    size = sizeof(sockaddr_in);
-    memset(&addr, 0, size);
-    addr.sin.sin_family = AF_INET;
-    addr.sin.sin_addr.s_addr = INADDR_ANY;
-    addr.sin.sin_port = 0;
-  } else {
-    size = sizeof(sockaddr_in6);
-    memset(&addr, 0, size);
-    addr.sin6.sin6_family = AF_INET6;
-    addr.sin6.sin6_addr = in6addr_any;
-    addr.sin6.sin6_port = 0;
-  }
-
-  if (bind(sock, reinterpret_cast<struct sockaddr*>(&addr), size) < 0) {
-    if (errno == EADDRINUSE) {
-      throw NighthawkException(absl::StrCat("Port allocated already in use"));
-    } else {
-      throw NighthawkException(
-          absl::StrCat("Could not bind to process: ", Envoy::errorDetails(errno)));
-    }
-    return 0;
-  }
-
-  socklen_t len = size;
-  if (getsockname(sock, reinterpret_cast<struct sockaddr*>(&addr), &len) == -1) {
-    throw NighthawkException(absl::StrCat("Could not get sock name: ", Envoy::errorDetails(errno)));
-    return 0;
-  }
-
-  uint16_t port =
-      ntohs(family == AF_INET ? reinterpret_cast<struct sockaddr_in*>(&addr)->sin_port
-                              : reinterpret_cast<struct sockaddr_in6*>(&addr)->sin6_port);
-
-  // close the socket, freeing the port to be used later.
-  if (close(sock) < 0) {
-    throw NighthawkException(absl::StrCat("Could not close socket: ", Envoy::errorDetails(errno)));
-    return 0;
-  }
-
-  return port;
-}
 
 OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   setNonTrivialDefaults();
@@ -178,13 +111,6 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
           "http3]. The default protocol is '{}' ",
           absl::AsciiStrToLower(nighthawk::client::Protocol_ProtocolOptions_Name(protocol_))),
       false, "", "string", cmd);
-  TCLAP::ValueArg<std::string> tunnel_http3_protocol_options(
-      "", "tunnel-http3-protocol-options",
-      "Tunnel HTTP3 protocol options (envoy::config::core::v3::Http3ProtocolOptions) in json. If "
-      "specified, Nighthawk uses these HTTP3 protocol options when encapsulating requests. Only "
-      "valid "
-      "with --tunnel-protocol http3.",
-      false, "", "string", cmd);
   TCLAP::ValueArg<std::string> tunnel_tls_context(
       "", "tunnel-tls-context",
       "Upstream TlS context configuration in json."
@@ -202,14 +128,6 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
           "--rps and --connections values. Default: {}. ",
           concurrency_),
       false, "", "string", cmd);
-
-  TCLAP::ValueArg<std::string> tunnel_concurrency(
-      "", "tunnel-concurrency",
-      fmt::format(
-          "The number of concurrent event loops that should be used. Specify 'auto' to let "
-          "Nighthawk use half the threads specified via the concurrency flag for tunneling.",
-          "Default: auto", tunnel_concurrency_),
-      false, "auto", "string", cmd);
 
   std::vector<std::string> log_levels = {"trace", "debug", "info", "warn", "error", "critical"};
   TCLAP::ValuesConstraint<std::string> verbosities_allowed(log_levels);
@@ -804,10 +722,9 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
     }
     tunnel_uri_ = tunnel_uri.getValue();
     encap_port_ = GetAvailablePort(/*udp=*/protocol_ == Protocol::HTTP3);
-    tunnel_concurrency_ = tunnel_concurrency.getValue();
 
-  } else if (tunnel_uri.isSet() || tunnel_http3_protocol_options.isSet() ||
-             tunnel_tls_context.isSet() || tunnel_concurrency.isSet()) {
+  } else if (tunnel_uri.isSet()||
+             tunnel_tls_context.isSet()) {
     throw MalformedArgvException("tunnel flags require --tunnel-protocol");
   }
 
@@ -822,22 +739,6 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
     }
   } else if (tunnel_protocol_ == Protocol::HTTP3) {
     throw MalformedArgvException("--tunnel-tls-context is required to use --tunnel-protocol http3");
-  }
-
-  if (!tunnel_http3_protocol_options.getValue().empty()) {
-    if (tunnel_protocol_ != Protocol::HTTP3) {
-      throw MalformedArgvException(
-          "--tunnel-http3-protocol-options can only be used with --protocol http3");
-    }
-
-    try {
-      tunnel_http3_protocol_options_.emplace(Http3ProtocolOptions());
-      Envoy::MessageUtil::loadFromJson(tunnel_http3_protocol_options.getValue(),
-                                       tunnel_http3_protocol_options_.value(),
-                                       Envoy::ProtobufMessage::getStrictValidationVisitor());
-    } catch (const Envoy::EnvoyException& e) {
-      throw MalformedArgvException(e.what());
-    }
   }
 
   if (tunnel_protocol.isSet()) {
@@ -944,14 +845,7 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
 
     // we must find an available port for the encap listener
     encap_port_ = GetAvailablePort(/*is_udp=*/protocol_ == Protocol::HTTP3);
-    concurrency_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options.tunnel_options(), tunnel_concurrency,
-                                                   tunnel_concurrency_);
 
-    if (options.tunnel_options().has_tunnel_http3_protocol_options()) {
-      tunnel_http3_protocol_options_.emplace(Http3ProtocolOptions());
-      tunnel_http3_protocol_options_.value().MergeFrom(
-          options.tunnel_options().tunnel_http3_protocol_options());
-    }
     tunnel_tls_context_->MergeFrom(options.tunnel_options().tunnel_tls_context());
   }
 
@@ -1058,7 +952,6 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
 
 void OptionsImpl::setNonTrivialDefaults() {
   concurrency_ = "1";
-  tunnel_concurrency_ = "auto";
   // By default, we don't tolerate error status codes and connection failures, and will report
   // upon observing those.
   failure_predicates_["benchmark.http_4xx"] = 0;
@@ -1089,19 +982,6 @@ void OptionsImpl::validate() const {
     }
     if (parsed_concurrency <= 0) {
       throw MalformedArgvException("Value for --concurrency should be greater then 0.");
-    }
-  }
-  if (tunnel_concurrency_ != "auto") {
-    int parsed_concurrency;
-    try {
-      parsed_concurrency = std::stoi(tunnel_concurrency_);
-    } catch (const std::invalid_argument& ia) {
-      throw MalformedArgvException("Invalid value for --tunnel-concurrency");
-    } catch (const std::out_of_range& oor) {
-      throw MalformedArgvException("Value out of range: --tunnel-concurrency");
-    }
-    if (parsed_concurrency <= 0) {
-      throw MalformedArgvException("Value for --tunnel-concurrency should be greater then 0.");
     }
   }
   if (request_source_ != "") {

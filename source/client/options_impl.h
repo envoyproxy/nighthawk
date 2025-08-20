@@ -47,10 +47,6 @@ public:
   tunnelTlsContext() const override {
     return tunnel_tls_context_;
   }
-  virtual const absl::optional<envoy::config::core::v3::Http3ProtocolOptions>&
-  tunnelHttp3ProtocolOptions() const override {
-    return tunnel_http3_protocol_options_;
-  }
 
   const absl::optional<envoy::config::core::v3::Http3ProtocolOptions>&
   http3ProtocolOptions() const override {
@@ -135,7 +131,6 @@ public:
   }
 
 private:
-  virtual uint16_t GetAvailablePort(bool udp);
   void parsePredicates(const TCLAP::MultiArg<std::string>& arg,
                        TerminationPredicateMap& predicates);
   void setNonTrivialDefaults();
@@ -158,8 +153,6 @@ private:
   nighthawk::client::Protocol::ProtocolOptions tunnel_protocol_{nighthawk::client::Protocol::HTTP1};
   std::string tunnel_uri_;
   uint32_t encap_port_{0};
-  std::string tunnel_concurrency_;
-  absl::optional<envoy::config::core::v3::Http3ProtocolOptions> tunnel_http3_protocol_options_;
   absl::optional<envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext>
       tunnel_tls_context_;
 
