@@ -171,21 +171,12 @@ message CommandLineOptions {
   // upgrade is used instead
   message TunnelOptions {
     // URI to the proxy.
-    string tunnel_uri = 115;
+    string tunnel_uri = 1;
     // the top level protocol.
-    Protocol tunnel_protocol = 116;
+    Protocol tunnel_protocol = 2;
     // TLS context for the proxy.
     // TLS configuration is required for HTTP/3 tunnels.
-    envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext tunnel_tls_context = 117;
-    // Protocol options for when HTTP/3 tunnels are used
-    envoy.config.core.v3.Http3ProtocolOptions tunnel_http3_protocol_options = 118;
-    // Concurrency of the encapsulation server.
-    // Use 'auto' to match the concurrency of the nighthawk process.
-    // specified via the 'concurrency' flag
-    // auto is recommended to avoid bottlenecking nighthawk with encapsulation
-    // Default: auto.
-    google.protobuf.StringValue tunnel_concurrency =
-        119; // [(validate.rules).string = {pattern: "^([0-9]*|auto)$"}];
+    envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext tunnel_tls_context = 3;
   }
 
   TunnelOptions tunnel_options = 114;
@@ -200,9 +191,8 @@ message CommandLineOptions {
   // Nighthawk leverage all vCPUs that have affinity to the Nighthawk process. Note that
   // increasing this results in an effective load multiplier combined with the configured
   // --rps and --connections values. Default: 1.
-  // When tunneling is enabled using tunnel_options, using 'auto' for both this flag
-  // and tunnel_concurrency divides the vCPUs evenly between the nighthawk event
-  // loops and the tunnel encapsulation envoy process.
+  // When tunneling is enabled using tunnel_options, the tunnel has the same
+  // concurrency.
   google.protobuf.StringValue concurrency =
       6; // [(validate.rules).string = {pattern: "^([0-9]*|auto)$"}];
   // Verbosity of the output. Possible values: [trace, debug, info, warn,
