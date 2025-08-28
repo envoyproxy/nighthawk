@@ -169,5 +169,19 @@ public:
   absl::StatusOr<std::string> formatProto(const nighthawk::client::Output& output) const override;
 };
 
+/**
+ * Formats Nighthawk's output proto to Prometheus' metric format.
+ */
+class PrometheusOutputFormatterImpl : public OutputFormatterImpl {
+public:
+  absl::StatusOr<std::string> formatProto(const nighthawk::client::Output& output) const override;
+
+private:
+  void populateMetric(const std::string& metric_name, const std::string& metric_type,
+                      const std::string& metric_labels, const std::string& metric_value,
+                      std::map<std::string, std::stringstream>& metrics_output,
+                      std::string metric_name_suffix = "") const;
+};
+
 } // namespace Client
 } // namespace Nighthawk

@@ -5,6 +5,7 @@
 #include <chrono>
 #include <regex>
 #include <sstream>
+#include <string>
 
 #include "nighthawk/common/exception.h"
 
@@ -520,6 +521,126 @@ FortioPedanticOutputFormatterImpl::formatProto(const nighthawk::client::Output& 
       R"EOF("$1": $2)EOF");
   // clang-format on
   return res;
+}
+
+void PrometheusOutputFormatterImpl::populateMetric(
+    const std::string& metric_name, const std::string& metric_type,
+    const std::string& metric_labels, const std::string& metric_value,
+    std::map<std::string, std::stringstream>& metrics_output,
+    std::string metric_name_suffix) const {
+  const std::string metric_def = fmt::format("{} {}", metric_name, metric_type);
+
+  if (metrics_output.find(metric_def) == metrics_output.end()) {
+    metrics_output[metric_def] = std::stringstream();
+  }
+  metrics_output[metric_def] << fmt::format("{}{}{{{}}} {}", metric_name, metric_name_suffix,
+                                            metric_labels, metric_value)
+                             << std::endl;
+}
+
+absl::StatusOr<std::string>
+PrometheusOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
+  const std::string metric_prefix = "nighthawk";
+
+  // Map to store aggregated prometheus metric output by type definition.
+  std::map<std::string, std::stringstream> metrics_output;
+
+  for (const auto& result : output.results()) {
+    const std::string metric_scope_label = fmt::format("scope=\"{}\"", result.name());
+
+    for (const auto& statistic : result.statistics()) {
+      std::string s_id = statistic.id();
+      // Skip statistics with no Id.
+      if (s_id.empty()) {
+        continue;
+      }
+
+      // Replace all occurences of '.' in metric name with '_' to make it prometheus format
+      // compatible.
+      std::replace(s_id.begin(), s_id.end(), '.', '_');
+
+      const std::string s_name = fmt::format("{}_{}", metric_prefix, s_id);
+      const std::string s_min =
+          statistic.has_min()
+              ? fmt::format(
+                    "{}", Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(statistic.min()))
+              : fmt::format("{}", statistic.raw_min());
+      const std::string s_max =
+          statistic.has_max()
+              ? fmt::format(
+                    "{}", Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(statistic.max()))
+              : fmt::format("{}", statistic.raw_max());
+      const std::string s_pstdev =
+          statistic.has_pstdev()
+              ? fmt::format("{}", Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(
+                                      statistic.pstdev()))
+              : fmt::format("{}", statistic.raw_pstdev());
+      const double s_mean =
+          statistic.has_mean()
+              ? static_cast<double>(
+                    Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(statistic.mean()))
+              : statistic.raw_mean();
+      const double s_sum = s_mean * statistic.count();
+
+      populateMetric(fmt::format("{}_min", s_name), "counter", metric_scope_label, s_min,
+                     metrics_output);
+      populateMetric(fmt::format("{}_max", s_name), "counter", metric_scope_label, s_max,
+                     metrics_output);
+      populateMetric(fmt::format("{}_mean", s_name), "counter", metric_scope_label,
+                     fmt::format("{}", s_mean), metrics_output);
+      populateMetric(fmt::format("{}_pstdev", s_name), "counter", metric_scope_label, s_pstdev,
+                     metrics_output);
+
+      // Prometheus summary is composed of 3 metrics:
+      // 1. Metric for each configured quantile: <metric-name>{quantile="<percentile>"} = <value>
+      // 2. Metric for the count of all samples: <metric-name>_count = <count>
+      // 3. Metric for sum of all observations: <metric-name>_sum = <mean * samples-count>
+      iteratePercentiles(statistic, [this, &metrics_output, s_name, metric_scope_label](
+                                        const nighthawk::client::Percentile& percentile) {
+        std::string value =
+            percentile.has_duration()
+                ? fmt::format("{}", Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(
+                                        percentile.duration()))
+                : fmt::format("{}", static_cast<int64_t>(percentile.raw_value()));
+
+        populateMetric(
+            s_name, "summary",
+            fmt::format("{},quantile=\"{}\"", metric_scope_label, percentile.percentile()), value,
+            metrics_output);
+      });
+
+      if (statistic.percentiles_size() == 0) {
+        // If no percentiles are present, we emit the count and sum as regular counters.
+        populateMetric(fmt::format("{}_count", s_name), "counter", metric_scope_label,
+                       fmt::format("{}", statistic.count()), metrics_output);
+        populateMetric(fmt::format("{}_sum", s_name), "counter", metric_scope_label,
+                       fmt::format("{}", s_sum), metrics_output);
+      } else {
+        // If percentiles are present, we emit the count and sum as part of a prometheus summary.
+        populateMetric(s_name, "summary", metric_scope_label, fmt::format("{}", statistic.count()),
+                       metrics_output, "_count");
+        populateMetric(s_name, "summary", metric_scope_label, fmt::format("{}", s_sum),
+                       metrics_output, "_sum");
+      }
+    }
+
+    for (const auto& counter : result.counters()) {
+      std::string c_name = counter.name();
+      std::replace(c_name.begin(), c_name.end(), '.', '_');
+
+      const std::string counter_name = fmt::format("{}_{}", metric_prefix, c_name);
+      populateMetric(counter_name, "counter", metric_scope_label,
+                     fmt::format("{}", counter.value()), metrics_output);
+    }
+  }
+
+  std::stringstream ss;
+  for (const auto& entry : metrics_output) {
+    ss << fmt::format("# TYPE {}", entry.first) << std::endl;
+    ss << entry.second.str();
+  }
+
+  return ss.str();
 }
 
 } // namespace Client
