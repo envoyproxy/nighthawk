@@ -123,6 +123,7 @@ public:
   void setMaxRequestsPerConnection(uint32_t max_requests_per_connection) {
     max_requests_per_connection_ = max_requests_per_connection;
   }
+  void setTimeout(std::chrono::seconds timeout) { timeout_ = timeout; }
 
   // BenchmarkClient
   void terminate() override;
@@ -161,7 +162,7 @@ private:
   Envoy::Stats::ScopeSharedPtr scope_;
   BenchmarkClientStatistic statistic_;
   const Envoy::Http::Protocol protocol_;
-  std::chrono::seconds timeout_{5s};
+  std::chrono::seconds timeout_{30s};
   uint32_t connection_limit_{1};
   uint32_t max_pending_requests_{1};
   uint32_t max_active_requests_{UINT32_MAX};
