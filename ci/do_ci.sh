@@ -255,6 +255,14 @@ function do_check_format() {
     ./tools/format_python_tools.sh check
 }
 
+function do_build_nighthawk_image() {
+    echo "Building docker images"
+    do_opt_build
+
+    echo "do_docker: Running ci/docker/docker_build.sh."
+    ./ci/docker/docker_build.sh
+}
+
 function do_docker() {
     echo "docker..."
     cd "${SRCDIR}"
@@ -366,6 +374,11 @@ case "$1" in
     opt_build)
         setup_clang_toolchain
         do_opt_build
+        exit 0
+    ;;
+    build_nighthawk_image)
+        setup_clang_toolchain
+        do_build_nighthawk_image
         exit 0
     ;;
     *)

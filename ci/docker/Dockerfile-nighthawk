@@ -1,18 +1,19 @@
 FROM ubuntu:24.04@sha256:1e622c5f073b4f6bfad6632f2616c7f59ef256e96fe78bf6a595d1dc4376ac02
 
-RUN apt-get update && apt-get install libatomic1
+RUN apt -y update && apt -y install libatomic1 curl
 
 ADD nighthawk_client /usr/local/bin/nighthawk_client
 ADD nighthawk_test_server /usr/local/bin/nighthawk_test_server
 ADD nighthawk_output_transform /usr/local/bin/nighthawk_output_transform
 ADD nighthawk_service /usr/local/bin/nighthawk_service
 ADD nighthawk_adaptive_load_client /usr/local/bin/nighthawk_adaptive_load_client
-ADD default-config.yaml /etc/envoy/envoy.yaml
+
+ADD default-config.yaml /etc/nighthawk/nighthawk.yaml
 
 # Ports for nighthawk_test_server, see default-config.yaml
-EXPOSE 10001
-EXPOSE 10080
+EXPOSE 10001 10080
 # The default port for nighthawk_service
 EXPOSE 8443
 
-CMD ["-c", "/etc/envoy/envoy.yaml"]
+ENTRYPOINT ["/usr/local/bin/nighthawk_test_server"]
+CMD ["-c", "/etc/nighthawk/nighthawk.yaml"]
