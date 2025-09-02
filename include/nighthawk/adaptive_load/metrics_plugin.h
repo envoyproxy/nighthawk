@@ -20,10 +20,10 @@ struct ReportingPeriod {
   // start time of the latest (current) iteration of Nighthawk test in the adaptive stage. See
   // https://github.com/envoyproxy/nighthawk/blob/main/docs/root/adaptive_load_controller.md#the-adaptive-load-controller
   // for more information on adaptive load testing.
-  Envoy::ProtobufWkt::Timestamp start_time;
+  Envoy::Protobuf::Timestamp start_time;
 
   // The duration of the time where nighthawk is sending the intended load in the adaptive stage.
-  Envoy::ProtobufWkt::Duration duration;
+  Envoy::Protobuf::Duration duration;
 };
 
 /**

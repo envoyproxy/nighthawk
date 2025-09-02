@@ -115,6 +115,8 @@ OutputFormatterPtr OutputFormatterFactoryImpl::create(
     return std::make_unique<Client::FortioPedanticOutputFormatterImpl>();
   case nighthawk::client::OutputFormat::CSV:
     return std::make_unique<Client::CsvOutputFormatterImpl>();
+  case nighthawk::client::OutputFormat::PROMETHEUS:
+    return std::make_unique<Client::PrometheusOutputFormatterImpl>();
   default:
     PANIC("not reached");
   }

@@ -277,7 +277,7 @@ std::vector<nighthawk::client::UserDefinedOutput>
 BenchmarkClientHttpImpl::getUserDefinedOutputResults() const {
   std::vector<nighthawk::client::UserDefinedOutput> outputs;
   for (const UserDefinedOutputNamePluginPair& plugin : user_defined_output_plugins_) {
-    absl::StatusOr<Envoy::ProtobufWkt::Any> per_worker_output = plugin.second->getPerWorkerOutput();
+    absl::StatusOr<Envoy::Protobuf::Any> per_worker_output = plugin.second->getPerWorkerOutput();
     nighthawk::client::UserDefinedOutput output_result;
     output_result.set_plugin_name(plugin.first);
     if (!per_worker_output.ok()) {

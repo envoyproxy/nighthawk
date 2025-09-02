@@ -5,7 +5,7 @@
 #include <fstream>
 #include <sstream>
 
-#include "external/dep_hdrhistogram_c/src/hdr_histogram_log.h"
+#include "external/dep_hdrhistogram_c/include/hdr/hdr_histogram_log.h"
 #include "external/envoy/source/common/common/assert.h"
 #include "external/envoy/source/common/protobuf/utility.h"
 
@@ -20,7 +20,7 @@ namespace {
  * @param mutable_duration The proto duration that will be updated to reflect the passed in nanos.
  * @param nanos The number of nanoseconds.
  */
-static void setDurationFromNanos(Envoy::ProtobufWkt::Duration& mutable_duration,
+static void setDurationFromNanos(Envoy::Protobuf::Duration& mutable_duration,
                                  const uint64_t nanos) {
   constexpr uint64_t one_billion = 1e9;
   mutable_duration.set_seconds(nanos / one_billion);

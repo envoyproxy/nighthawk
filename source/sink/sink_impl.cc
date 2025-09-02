@@ -106,9 +106,10 @@ FileSinkImpl::LoadExecutionResult(absl::string_view execution_id) const {
     nighthawk::client::ExecutionResponse response;
     std::ifstream ifs(it.path(), std::ios_base::binary);
     if (!response.ParseFromIstream(&ifs)) {
-      return absl::InternalError(fmt::format("Failed to parse ExecutionResponse '{}'.", it.path()));
+      return absl::InternalError(
+          fmt::format("Failed to parse ExecutionResponse '{}'.", std::string(it.path())));
     } else {
-      ENVOY_LOG_MISC(trace, "Loaded '{}'.", it.path());
+      ENVOY_LOG_MISC(trace, "Loaded '{}'.", std::string(it.path()));
     }
     responses.push_back(response);
   }

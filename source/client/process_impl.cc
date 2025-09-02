@@ -127,6 +127,8 @@ public:
 
   bool enableDeferredCreationStats() const override { return false; }
 
+  uint32_t evictOnFlush() const override { return 0; }
+
 private:
   std::list<Envoy::Stats::SinkPtr> sinks_;
   const std::chrono::milliseconds flush_interval_;
@@ -238,13 +240,9 @@ public:
     PANIC("NighthawkServerFactoryContext::bootstrap not implemented");
   }
 
-  Envoy::Http::Context& httpContext() override {
-    PANIC("NighthawkServerFactoryContext::httpContext not implemented");
-  }
+  Envoy::Http::Context& httpContext() override { return server_.httpContext(); }
 
-  Envoy::Server::OverloadManager& overloadManager() override {
-    PANIC("NighthawkServerFactoryContext::overloadManager not implemented");
-  }
+  Envoy::Server::OverloadManager& overloadManager() override { return server_.overloadManager(); }
 
   Envoy::Server::OverloadManager& nullOverloadManager() override {
     PANIC("NighthawkServerFactoryContext::nullOverloadManager not implemented");
@@ -284,14 +282,15 @@ public:
                           Envoy::ThreadLocal::Instance& tls,
                           Envoy::LocalInfo::LocalInfo& local_info,
                           Envoy::ProtobufMessage::ProdValidationContextImpl& validation_context,
-                          Envoy::Grpc::Context& grpc_context,
+                          Envoy::Grpc::Context& grpc_context, Envoy::Http::Context& http_context,
                           Envoy::Router::Context& router_context, Envoy::Stats::StoreRoot& store,
                           Envoy::Secret::SecretManagerImpl& secret_manager)
       : admin_(admin), api_(api), dispatcher_(dispatcher), log_manager_(log_manager),
         options_(options), runtime_(runtime), singleton_manager_(singleton_manager),
         stats_store_(store), tls_(tls), local_info_(local_info),
         validation_context_(validation_context), grpc_context_(grpc_context),
-        router_context_(router_context), server_factory_context_(*this),
+        http_context_(http_context), router_context_(router_context),
+        server_factory_context_(*this),
         http_server_properties_cache_manager_(
             server_factory_context_, Envoy::ProtobufMessage::getStrictValidationVisitor(), tls),
         xds_manager_(dispatcher, api, store, local_info, validation_context_, *this),
@@ -362,9 +361,7 @@ public:
   }
   Envoy::Stats::Store& stats() override { return stats_store_; }
   Envoy::Grpc::Context& grpcContext() override { return grpc_context_; }
-  Envoy::Http::Context& httpContext() override {
-    PANIC("NighthawkServerInstance::httpContext not implemented");
-  }
+  Envoy::Http::Context& httpContext() override { return http_context_; }
   Envoy::Router::Context& routerContext() override { return router_context_; }
   Envoy::ProcessContextOptRef processContext() override {
     PANIC("NighthawkServerInstance::processContext not implemented");
@@ -419,6 +416,7 @@ private:
   Envoy::LocalInfo::LocalInfo& local_info_;
   Envoy::ProtobufMessage::ProdValidationContextImpl& validation_context_;
   Envoy::Grpc::Context& grpc_context_;
+  Envoy::Http::Context& http_context_;
   Envoy::Router::Context& router_context_;
   NighthawkServerFactoryContext server_factory_context_;
   Envoy::Http::HttpServerPropertiesCacheManagerImpl http_server_properties_cache_manager_;
@@ -496,7 +494,7 @@ std::vector<nighthawk::client::UserDefinedOutput> compileGlobalUserDefinedPlugin
 
     auto it = user_defined_outputs_by_plugin.find(factory->name());
     if (it != user_defined_outputs_by_plugin.end()) {
-      absl::StatusOr<Envoy::ProtobufWkt::Any> global_output_any =
+      absl::StatusOr<Envoy::Protobuf::Any> global_output_any =
           factory->AggregateGlobalOutput(it->second);
       if (global_output_any.ok()) {
         *global_output.mutable_typed_output() = *global_output_any;
@@ -557,7 +555,7 @@ public:
                 pool->transportSocketOptions())};
             return codec;
           },
-          protocols, server_.overloadManager());
+          protocols, context_.overloadManager());
       h1_pool->setConnectionReuseStrategy(connection_reuse_strategy_);
       h1_pool->setPrefetchConnections(prefetch_connections_);
       return Envoy::Http::ConnectionPool::InstancePtr{h1_pool};
@@ -917,7 +915,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
 
     server_ = std::make_unique<NighthawkServerInstance>(
         admin_, *api_, *dispatcher_, access_log_manager_, envoy_options_, *runtime_loader_.get(),
-        *singleton_manager_, tls_, *local_info_, validation_context_, grpc_context_,
+        *singleton_manager_, tls_, *local_info_, validation_context_, grpc_context_, http_context_,
         router_context_, store_root_, secret_manager_);
     ssl_context_manager_ =
         std::make_unique<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>(
@@ -925,9 +923,9 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     dynamic_cast<NighthawkServerFactoryContext*>(&server_->serverFactoryContext())
         ->setSslContextManager(*ssl_context_manager_);
     cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
-        server_->serverFactoryContext(), store_root_, tls_, http_context_,
+        server_->serverFactoryContext(),
         [dns_resolver]() -> Envoy::Network::DnsResolverSharedPtr { return dns_resolver; },
-        *ssl_context_manager_, quic_stat_names_, *server_);
+        quic_stat_names_);
     cluster_manager_factory_->setConnectionReuseStrategy(
         options_.h1ConnectionReuseStrategy() == nighthawk::client::H1ConnectionReuseStrategy::LRU
             ? Http1PoolImpl::ConnectionReuseStrategy::LRU

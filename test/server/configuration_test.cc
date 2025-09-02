@@ -286,37 +286,42 @@ TEST(ApplyConfigToResponseHeaders, AppendsHeadersFromEnvoyApiV3Config) {
                                              << expected_header_map;
 }
 
-TEST(ApplyConfigToResponseHeaders, ThrowsOnInvalidConfiguration) {
+TEST(ApplyConfigToResponseHeaders, CrashesOnInvalidConfiguration) {
   nighthawk::server::ResponseOptions configuration;
   configuration.add_response_headers();
   configuration.add_v3_response_headers();
 
   TestResponseHeaderMapImpl header_map;
-  EXPECT_THROW(applyConfigToResponseHeaders(header_map, configuration), Envoy::EnvoyException);
+  ASSERT_DEATH(applyConfigToResponseHeaders(header_map, configuration),
+               HasSubstr("cannot specify both response_headers and v3_response_headers"));
 }
 
-TEST(ValidateResponseOptions, DoesNotThrowOnEmptyConfiguration) {
+TEST(ValidateResponseOptions, DoesNotCrashOnEmptyConfiguration) {
   nighthawk::server::ResponseOptions configuration;
-  EXPECT_NO_THROW(validateResponseOptions(configuration));
+  // Shouldn't crash
+  validateResponseOptions(configuration);
 }
 
-TEST(ValidateResponseOptions, DoesNotThrowWhenOnlyEnvoyApiV2ResponseHeadersAreSet) {
-  nighthawk::server::ResponseOptions configuration;
-  configuration.add_response_headers();
-  EXPECT_NO_THROW(validateResponseOptions(configuration));
-}
-
-TEST(ValidateResponseOptions, DoesNotThrowWhenOnlyEnvoyApiV3ResponseHeadersAreSet) {
-  nighthawk::server::ResponseOptions configuration;
-  configuration.add_v3_response_headers();
-  EXPECT_NO_THROW(validateResponseOptions(configuration));
-}
-
-TEST(ValidateResponseOptions, ThrowsWhenBothEnvoyApiV2AndV3ResponseHeadersAreSet) {
+TEST(ValidateResponseOptions, DoesNotCrashWhenOnlyEnvoyApiV2ResponseHeadersAreSet) {
   nighthawk::server::ResponseOptions configuration;
   configuration.add_response_headers();
+  // Shouldn't crash
+  validateResponseOptions(configuration);
+}
+
+TEST(ValidateResponseOptions, DoesNotCrashWhenOnlyEnvoyApiV3ResponseHeadersAreSet) {
+  nighthawk::server::ResponseOptions configuration;
   configuration.add_v3_response_headers();
-  EXPECT_THROW(validateResponseOptions(configuration), Envoy::EnvoyException);
+  // Shouldn't crash
+  validateResponseOptions(configuration);
+}
+
+TEST(ValidateResponseOptions, CrashesWhenBothEnvoyApiV2AndV3ResponseHeadersAreSet) {
+  nighthawk::server::ResponseOptions configuration;
+  configuration.add_response_headers();
+  configuration.add_v3_response_headers();
+  ASSERT_DEATH(validateResponseOptions(configuration),
+               HasSubstr("cannot specify both response_headers and v3_response_headers"));
 }
 
 } // namespace

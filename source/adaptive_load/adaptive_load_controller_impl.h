@@ -74,7 +74,7 @@ private:
       nighthawk::client::NighthawkService::StubInterface* nighthawk_service_stub,
       const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec,
       const absl::flat_hash_map<std::string, MetricsPluginPtr>& name_to_custom_plugin_map,
-      StepController& step_controller, Envoy::ProtobufWkt::Duration duration);
+      StepController& step_controller, Envoy::Protobuf::Duration duration);
 
   const NighthawkServiceClient& nighthawk_service_client_;
   const MetricsEvaluator& metrics_evaluator_;
