@@ -590,7 +590,7 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
                 "commit",
                 "--gpg-sign",
                 "-m",
-                f"Updating Envoy version to {self.best_envoy_commit}",
+                f"Updating Envoy version to {self.best_envoy_commit[:7]} ({datetime.datetime.now().strftime('%b %d, %Y')})",
             ],
             cwd=self.nighthawk_dir,
             interactive=True,
