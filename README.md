@@ -193,10 +193,8 @@ bazel-bin/nighthawk_client  [--user-defined-plugin-config <string>] ...
 <json|human|yaml|dotted|fortio
 |experimental_fortio_pedantic|csv>] [-v
 <trace|debug|info|warn|error|critical>]
-[--tunnel-concurrency <string>]
 [--concurrency <string>]
 [--tunnel-tls-context <string>]
-[--tunnel-http3-protocol-options <string>]
 [--tunnel-uri <string>] [--tunnel-protocol
 <http1|http2|http3>]
 [--http3-protocol-options <string>] [-p
@@ -395,11 +393,6 @@ format is 'human'.
 Verbosity of the output. Possible values: [trace, debug, info, warn,
 error, critical]. The default level is 'info'.
 
---tunnel-concurrency <string>
-The number of concurrent event loops that should be used. Specify
-'auto' to let Nighthawk use half the threads specified via the
-concurrency flag for tunneling.
-
 --concurrency <string>
 The number of concurrent event loops that should be used. Specify
 'auto' to let Nighthawk leverage all vCPUs that have affinity to the
@@ -413,12 +406,6 @@ HTTP3Example (json):
 {common_tls_context:{tls_params:{cipher_suites:["-ALL:ECDHE-RSA-AES128
 -SHA"]}}}
 
---tunnel-http3-protocol-options <string>
-Tunnel HTTP3 protocol options
-(envoy::config::core::v3::Http3ProtocolOptions) in json. If specified,
-Nighthawk uses these HTTP3 protocol options when encapsulating
-requests. Only valid with --tunnel-protocol http3.
-
 --tunnel-uri <string>
 The address of the proxy. Possible values: [http1, http2, http3]. The
 default protocol is 'http1'
@@ -427,9 +414,9 @@ default protocol is 'http1'
 The protocol for setting up tunnel encapsulation. Possible values:
 [http1, http2, http3]. The default protocol is 'http1' Combinations
 not supported currently are protocol = HTTP3 and tunnel_protocol =
-HTTP1and protocol = HTTP3 and tunnel_protocol = HTTP3When protocol is
+HTTP1 and protocol = HTTP3 and tunnel_protocol = HTTP3. When protocol is
 set to HTTP3 and tunneling is enabled, the CONNECT-UDP method is
-usedOtherwise, the HTTP CONNECT method is used
+used. Otherwise, the HTTP CONNECT method is used.
 
 --http3-protocol-options <string>
 HTTP3 protocol options (envoy::config::core::v3::Http3ProtocolOptions)

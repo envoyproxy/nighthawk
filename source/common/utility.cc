@@ -96,7 +96,7 @@ uint16_t Utility::GetAvailablePort(bool udp, nighthawk::client::AddressFamily::A
 
   // Reuseaddr lets us start up a server immediately after it exits
   int one = 1;
-  if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) < 0) {
+  if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &one, sizeof(one)) < 0) {
     throw NighthawkException(absl::StrCat("setsockopt: ", Envoy::errorDetails(errno)));
     close(sock);
     return 0;
