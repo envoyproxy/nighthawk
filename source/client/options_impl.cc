@@ -721,7 +721,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       throw MalformedArgvException("--tunnel-protocol requires --tunnel-uri");
     }
     tunnel_uri_ = tunnel_uri.getValue();
-    encap_port_ = GetAvailablePort(/*udp=*/protocol_ == Protocol::HTTP3);
+    encap_port_ = Utility::GetAvailablePort(/*udp=*/protocol_ == Protocol::HTTP3, address_family_);
 
   } else if (tunnel_uri.isSet()||
              tunnel_tls_context.isSet()) {
@@ -844,7 +844,7 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
     tunnel_uri_ = options.tunnel_options().tunnel_uri();
 
     // we must find an available port for the encap listener
-    encap_port_ = GetAvailablePort(/*is_udp=*/protocol_ == Protocol::HTTP3);
+    encap_port_ = Utility::GetAvailablePort(/*is_udp=*/protocol_ == Protocol::HTTP3, address_family_);
 
     tunnel_tls_context_->MergeFrom(options.tunnel_options().tunnel_tls_context());
   }

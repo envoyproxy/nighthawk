@@ -86,8 +86,8 @@ bool Utility::parseHostPort(const std::string& host_port, std::string* address, 
 
 // Obtains an available TCP or UDP port. Throws an exception if one cannot be
 // allocated.
-uint16_t Utility::GetAvailablePort(bool udp) {
-  int family = (address_family_ == nighthawk::client::AddressFamily::V4) ? AF_INET : AF_INET6;
+uint16_t Utility::GetAvailablePort(bool udp, nighthawk::client::AddressFamily::AddressFamilyOptions address_family) {
+  int family = (address_family == nighthawk::client::AddressFamily::V4) ? AF_INET : AF_INET6;
   int sock = socket(family, udp ? SOCK_DGRAM : SOCK_STREAM, udp ? 0 : IPPROTO_TCP);
   if (sock < 0) {
     throw NighthawkException(absl::StrCat("could not create socket: ", Envoy::errorDetails(errno)));

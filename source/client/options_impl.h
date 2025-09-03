@@ -54,7 +54,6 @@ public:
   }
 
   std::string concurrency() const override { return concurrency_; }
-  std::string tunnelConcurrency() const override { return tunnel_concurrency_; }
   nighthawk::client::Verbosity::VerbosityOptions verbosity() const override { return verbosity_; };
   nighthawk::client::OutputFormat::OutputFormatOptions outputFormat() const override {
     return output_format_;

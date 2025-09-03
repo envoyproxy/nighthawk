@@ -89,6 +89,7 @@ public:
   ~EncapsulationSubProcessRunner() {
     auto status = TerminateEncapSubProcess();
     if (!status.ok()) {
+      ENVOY_LOG_MISC(warn, status.ToString());
     }
     if (pid_ == 0) {
       // Have only parent process destroy semaphore

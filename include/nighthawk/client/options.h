@@ -55,11 +55,8 @@ public:
   virtual uint32_t encapPort() const PURE;
   virtual const absl::optional<envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext>
   tunnelTlsContext() const PURE;
-  virtual const absl::optional<envoy::config::core::v3::Http3ProtocolOptions>&
-  tunnelHttp3ProtocolOptions() const PURE;
 
   virtual std::string concurrency() const PURE;
-  virtual std::string tunnelConcurrency() const PURE;
   virtual nighthawk::client::Verbosity::VerbosityOptions verbosity() const PURE;
   virtual nighthawk::client::OutputFormat::OutputFormatOptions outputFormat() const PURE;
   virtual bool prefetchConnections() const PURE;

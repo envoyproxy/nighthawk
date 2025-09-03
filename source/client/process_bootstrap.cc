@@ -391,12 +391,6 @@ createEncapBootstrap(const Client::Options& options, UriImpl& tunnel_uri,
 
   envoy::extensions::upstreams::http::v3::HttpProtocolOptions protocol_options;
   if (tunnel_protocol == Envoy::Http::Protocol::Http3) {
-    auto h3_options =
-        protocol_options.mutable_explicit_http_config()->mutable_http3_protocol_options();
-
-    if (options.tunnelHttp3ProtocolOptions().has_value()) {
-      h3_options->MergeFrom(options.tunnelHttp3ProtocolOptions().value());
-    }
     auto* transport_socket = cluster->mutable_transport_socket();
     envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext upstream_tls_context =
         *options.tunnelTlsContext();

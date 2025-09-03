@@ -95,13 +95,6 @@ public:
     // affinity is set / we don't have affinity with all cores, we should default to autoscale.
     // (e.g. we are called via taskset).
     uint32_t concurrency = autoscale ? cpu_cores_with_affinity : std::stoi(options.concurrency());
-    if (!options.tunnelUri().empty() && options.tunnelConcurrency() == "auto") {
-      // Divide concurrency in half
-      concurrency = concurrency / 2;
-      if (concurrency == 0) {
-        concurrency = 1;
-      }
-    }
 
     if (autoscale) {
       ENVOY_LOG(info, "Detected {} (v)CPUs with affinity..", cpu_cores_with_affinity);
@@ -926,16 +919,8 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
 
     ENVOY_LOG(info, encap_bootstrap.DebugString());
     envoy_options.setConfigProto(encap_bootstrap);
-    if (options_.tunnelConcurrency() == "auto") {
-      envoy_options.setConcurrency(number_of_workers_);
-    } else {
-      uint64_t encap_concurrency;
-      bool success = absl::SimpleAtoi(options_.tunnelConcurrency(), &encap_concurrency);
-      if (!success) {
-        ENVOY_LOG(error, "Failed to parse tunnel concurrency: {}", options_.tunnelConcurrency());
-        return;
-      }
-    }
+    // for now, match the concurrency of nighthawk
+    envoy_options.setConcurrency(number_of_workers_);
 
     Envoy::ProdComponentFactory prod_component_factory;
     auto listener_test_hooks = std::make_unique<Envoy::DefaultListenerHooks>();

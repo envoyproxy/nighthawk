@@ -71,7 +71,7 @@ public:
   /**
   * @param udp boolean true if a UDP port is requested, otherwise get a TCP port
   */
-  uint16_t GetAvailablePort(bool udp);
+  static uint16_t GetAvailablePort(bool udp, nighthawk::client::AddressFamily::AddressFamilyOptions address_family);
 };
 
 } // namespace Nighthawk
