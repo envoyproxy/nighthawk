@@ -407,8 +407,7 @@ HTTP3Example (json):
 -SHA"]}}}
 
 --tunnel-uri <string>
-The address of the proxy. Possible values: [http1, http2, http3]. The
-default protocol is 'http1'
+The uri of the proxy.
 
 --tunnel-protocol <http1|http2|http3>
 The protocol for setting up tunnel encapsulation. Possible values:
