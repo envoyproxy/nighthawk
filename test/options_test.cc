@@ -1220,6 +1220,36 @@ TEST_F(OptionsImplTest, TunnelModeHInvalidProtocolCombination) {
                                                  "--tunnel-uri http://foo/ --tunnel-tls-context {}",
                                                  client_name_, good_test_uri_, tls_context)),
       MalformedArgvException, "--protocol HTTP3 over --tunnel-protocol HTTP3 is not supported");
+  
+  EXPECT_NO_THROW(TestUtility::createOptionsImpl(
+       fmt::format("{} {} --protocol http1 --tunnel-protocol http3 "
+                                                 "--tunnel-uri http://foo/ --tunnel-tls-context {}",
+                                                 client_name_, good_test_uri_, tls_context)));
+
+  EXPECT_NO_THROW(TestUtility::createOptionsImpl(
+       fmt::format("{} {} --protocol http2 --tunnel-protocol http3 "
+                                                 "--tunnel-uri http://foo/ --tunnel-tls-context {}",
+                                                 client_name_, good_test_uri_, tls_context)));
+
+  EXPECT_NO_THROW(TestUtility::createOptionsImpl(
+       fmt::format("{} {} --protocol http1 --tunnel-protocol http1 "
+                                                 "--tunnel-uri http://foo/",
+                                                 client_name_, good_test_uri_, tls_context)));
+
+  EXPECT_NO_THROW(TestUtility::createOptionsImpl(
+       fmt::format("{} {} --protocol http2 --tunnel-protocol http1 "
+                                                 "--tunnel-uri http://foo/",
+                                                 client_name_, good_test_uri_, tls_context)));
+
+  EXPECT_NO_THROW(TestUtility::createOptionsImpl(
+       fmt::format("{} {} --protocol http2 --tunnel-protocol http2 "
+                                                 "--tunnel-uri http://foo/",
+                                                 client_name_, good_test_uri_, tls_context)));
+
+  EXPECT_NO_THROW(TestUtility::createOptionsImpl(
+       fmt::format("{} {} --protocol http1 --tunnel-protocol http2 "
+                                                 "--tunnel-uri http://foo/",
+                                                 client_name_, good_test_uri_, tls_context)));
 }
 
 TEST_F(OptionsImplTest, TunnelModeMissingParams) {
@@ -1229,12 +1259,32 @@ TEST_F(OptionsImplTest, TunnelModeMissingParams) {
                                                  client_name_, good_test_uri_)),
       MalformedArgvException, "--tunnel-protocol requires --tunnel-uri");
 
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(fmt::format("{} {} --protocol http2 --tunnel-protocol http1",
+                                                 client_name_, good_test_uri_)),
+      MalformedArgvException, "--tunnel-protocol requires --tunnel-uri");
+
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(fmt::format("{} {} --protocol http3 --tunnel-protocol http1",
+                                                 client_name_, good_test_uri_)),
+      MalformedArgvException, "--tunnel-protocol requires --tunnel-uri");
+
   std::string tls_context =
       "{sni:\"localhost\",common_tls_context:{validation_context:{trusted_ca:{filename:"
       "\"fakeRootCA.pem\"},trust_chain_verification:\"ACCEPT_UNTRUSTED\"}}}";
 
   EXPECT_THROW_WITH_REGEX(
       TestUtility::createOptionsImpl(fmt::format("{} {} --protocol http1 --tunnel-tls-context {}",
+                                                 client_name_, good_test_uri_, tls_context)),
+      MalformedArgvException, "tunnel flags require --tunnel-protocol");
+
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(fmt::format("{} {} --protocol http2 --tunnel-tls-context {}",
+                                                 client_name_, good_test_uri_, tls_context)),
+      MalformedArgvException, "tunnel flags require --tunnel-protocol");
+
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(fmt::format("{} {} --protocol http3 --tunnel-tls-context {}",
                                                  client_name_, good_test_uri_, tls_context)),
       MalformedArgvException, "tunnel flags require --tunnel-protocol");
 
