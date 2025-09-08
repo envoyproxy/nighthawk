@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <string>
 
 #include "external/envoy/source/common/network/dns_resolver/dns_factory_util.h"
@@ -195,6 +196,26 @@ TEST_F(UtilityTest, MapCountersFromStore) {
 
 TEST_F(UtilityTest, MultipleSemicolons) {
   EXPECT_THROW(UriImpl("HTTP://HTTP://a:111"), UriException);
+}
+
+TEST_F(UtilityTest, GetAvailablePort){
+
+  for(auto ip_version: {
+    nighthawk::client::AddressFamily::AddressFamilyOptions::AddressFamily_AddressFamilyOptions_V4,
+    nighthawk::client::AddressFamily::AddressFamilyOptions::AddressFamily_AddressFamilyOptions_V6
+    }){
+      uint16_t tcp_port = 0;
+      uint16_t udp_port = 0;
+
+      EXPECT_NO_THROW({
+        tcp_port = Utility::GetAvailablePort(/*udp=*/false, ip_version);
+      });
+      EXPECT_NO_THROW({
+        udp_port = Utility::GetAvailablePort(/*udp=*/true, ip_version);
+      });
+      EXPECT_GT(tcp_port, 0);
+      EXPECT_GT(udp_port, 0);
+  }
 }
 
 } // namespace Nighthawk

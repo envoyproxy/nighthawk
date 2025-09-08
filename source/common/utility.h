@@ -70,6 +70,7 @@ public:
   // allocated.
   /**
   * @param udp boolean true if a UDP port is requested, otherwise get a TCP port
+  * @return port number
   */
   static uint16_t GetAvailablePort(bool udp, nighthawk::client::AddressFamily::AddressFamilyOptions address_family);
 };
