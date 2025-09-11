@@ -320,8 +320,9 @@ class EnvoyCommitIntegration(StepHandler[EnvoyCommitIntegrationStep]):
               cwd=self.nighthawk_dir,
               shell=True,
           )
-          raise (_patch_merge_conflict_instructions(self.target_envoy_commit,
-                                                    self.nighthawk_dir)) from e
+          raise RuntimeError(
+              _patch_merge_conflict_instructions(self.target_envoy_commit,
+                                                 self.nighthawk_dir)) from e
       case EnvoyCommitIntegrationStep.FIX_FORMAT:
         _run_command(["./ci/do_ci.sh", "fix_format"], cwd=self.nighthawk_dir)
       case EnvoyCommitIntegrationStep.BAZEL_UPDATE_REQUIREMENTS:
@@ -360,6 +361,7 @@ class NighthawkEnvoyUpdateStep(enum.Enum):
   CHECK_ENVOY_CLONE_DEPTH = enum.auto()
   GET_LATEST_ENVOY_COMMIT = enum.auto()
   GET_ENVOY_COMMIT_RANGE = enum.auto()
+  BAZEL_CLEAN_EXPUNGE = enum.auto()
   FIND_LATEST_TRIVIAL_MERGE = enum.auto()
   COMMIT_AND_PUSH_UPDATE_BRANCH = enum.auto()
   APPLY_PARTIAL_NON_TRIVIAL_MERGE = enum.auto()
@@ -523,6 +525,8 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
         )
 
         self.envoy_commits_current_to_latest = [c for c in current_to_latest_raw.splitlines() if c]
+      case NighthawkEnvoyUpdateStep.BAZEL_CLEAN_EXPUNGE:
+        _run_command(["bazel", "clean", "--expunge"], cwd=self.nighthawk_dir)
       case NighthawkEnvoyUpdateStep.FIND_LATEST_TRIVIAL_MERGE:
         statuses = [" " * 8] * len(self.envoy_commits_current_to_latest)
 
@@ -576,9 +580,17 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
         else:
           # A trivially integrated Envoy commit was found and there are further
           # Envoy commits after it.
-          self.best_envoy_commit = self.envoy_commits_current_to_latest[latest_passing_commit_index]
           self.first_non_trivial_commit = self.envoy_commits_current_to_latest[
               latest_passing_commit_index + 1]
+
+          # Set the Nighthawk repo to the latest best commit
+          self.best_envoy_commit = self.envoy_commits_current_to_latest[latest_passing_commit_index]
+          EnvoyCommitIntegration(
+              nighthawk_dir=self.nighthawk_dir,
+              envoy_dir=self.envoy_dir,
+              current_envoy_commit=self.current_envoy_commit,
+              target_envoy_commit=self.best_envoy_commit,
+          ).run_envoy_commit_integration_steps()
       case NighthawkEnvoyUpdateStep.COMMIT_AND_PUSH_UPDATE_BRANCH:
         if not self.best_envoy_commit:
           raise RuntimeError("Nighthawk repo attempting to commit when no trivial Envoy"
@@ -588,7 +600,6 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
             [
                 "git",
                 "commit",
-                "--gpg-sign",
                 "-m",
                 f"Updating Envoy version to {self.best_envoy_commit[:7]} ({datetime.datetime.now().strftime('%b %d, %Y')})",
             ],
