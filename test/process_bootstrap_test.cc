@@ -2048,7 +2048,6 @@ TEST_F(CreateBootstrapConfigurationTest, CreateEncapBootstrapWithCustomTLSContex
       " --tunnel-protocol http3 --tunnel-uri http://www.example.org --tunnel-tls-context"
       " {sni:\"localhost\",common_tls_context:{validation_context:"
       "{trusted_ca:{filename:\"fakeRootCA.pem\"},trust_chain_verification:\"ACCEPT_UNTRUSTED\"}}}"
-      " --tunnel-http3-protocol-options {quic_protocol_options:{max_concurrent_streams:1}}"
 
   );
 
@@ -2135,11 +2134,6 @@ static_resources {
         [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
           explicit_http_config {
             http3_protocol_options {
-              quic_protocol_options {
-                max_concurrent_streams {
-                  value: 1
-                }
-              }
             }
           }
         }
