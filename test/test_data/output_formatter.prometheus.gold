@@ -1,0 +1,102 @@
+# TYPE nighthawk_bar counter
+nighthawk_bar{scope="worker_0"} 2
+nighthawk_bar{scope="worker_1"} 2
+nighthawk_bar{scope="global"} 2
+# TYPE nighthawk_foo counter
+nighthawk_foo{scope="worker_0"} 1
+nighthawk_foo{scope="worker_1"} 1
+nighthawk_foo{scope="global"} 1
+# TYPE nighthawk_foo_latency summary
+nighthawk_foo_latency{scope="worker_0",quantile="0"} 180
+nighthawk_foo_latency{scope="worker_0",quantile="0.5"} 190
+nighthawk_foo_latency{scope="worker_0",quantile="0.75"} 200
+nighthawk_foo_latency{scope="worker_0",quantile="1"} 210
+nighthawk_foo_latency_count{scope="worker_0"} 4
+nighthawk_foo_latency_sum{scope="worker_0"} 780
+nighthawk_foo_latency{scope="worker_1",quantile="0"} 180
+nighthawk_foo_latency{scope="worker_1",quantile="0.5"} 190
+nighthawk_foo_latency{scope="worker_1",quantile="0.75"} 200
+nighthawk_foo_latency{scope="worker_1",quantile="1"} 210
+nighthawk_foo_latency_count{scope="worker_1"} 4
+nighthawk_foo_latency_sum{scope="worker_1"} 780
+nighthawk_foo_latency{scope="global",quantile="0"} 180
+nighthawk_foo_latency{scope="global",quantile="0.5"} 190
+nighthawk_foo_latency{scope="global",quantile="0.75"} 200
+nighthawk_foo_latency{scope="global",quantile="1"} 210
+nighthawk_foo_latency_count{scope="global"} 4
+nighthawk_foo_latency_sum{scope="global"} 780
+# TYPE nighthawk_foo_latency_max counter
+nighthawk_foo_latency_max{scope="worker_0"} 210
+nighthawk_foo_latency_max{scope="worker_1"} 210
+nighthawk_foo_latency_max{scope="global"} 210
+# TYPE nighthawk_foo_latency_mean counter
+nighthawk_foo_latency_mean{scope="worker_0"} 195
+nighthawk_foo_latency_mean{scope="worker_1"} 195
+nighthawk_foo_latency_mean{scope="global"} 195
+# TYPE nighthawk_foo_latency_min counter
+nighthawk_foo_latency_min{scope="worker_0"} 180
+nighthawk_foo_latency_min{scope="worker_1"} 180
+nighthawk_foo_latency_min{scope="global"} 180
+# TYPE nighthawk_foo_latency_pstdev counter
+nighthawk_foo_latency_pstdev{scope="worker_0"} 11
+nighthawk_foo_latency_pstdev{scope="worker_1"} 11
+nighthawk_foo_latency_pstdev{scope="global"} 11
+# TYPE nighthawk_foo_size summary
+nighthawk_foo_size{scope="worker_0",quantile="0"} 14
+nighthawk_foo_size{scope="worker_0",quantile="0.5"} 15
+nighthawk_foo_size{scope="worker_0",quantile="0.75"} 16
+nighthawk_foo_size{scope="worker_0",quantile="1"} 17
+nighthawk_foo_size_count{scope="worker_0"} 4
+nighthawk_foo_size_sum{scope="worker_0"} 62
+nighthawk_foo_size{scope="worker_1",quantile="0"} 14
+nighthawk_foo_size{scope="worker_1",quantile="0.5"} 15
+nighthawk_foo_size{scope="worker_1",quantile="0.75"} 16
+nighthawk_foo_size{scope="worker_1",quantile="1"} 17
+nighthawk_foo_size_count{scope="worker_1"} 4
+nighthawk_foo_size_sum{scope="worker_1"} 62
+nighthawk_foo_size{scope="global",quantile="0"} 14
+nighthawk_foo_size{scope="global",quantile="0.5"} 15
+nighthawk_foo_size{scope="global",quantile="0.75"} 16
+nighthawk_foo_size{scope="global",quantile="1"} 17
+nighthawk_foo_size_count{scope="global"} 4
+nighthawk_foo_size_sum{scope="global"} 62
+# TYPE nighthawk_foo_size_max counter
+nighthawk_foo_size_max{scope="worker_0"} 17
+nighthawk_foo_size_max{scope="worker_1"} 17
+nighthawk_foo_size_max{scope="global"} 17
+# TYPE nighthawk_foo_size_mean counter
+nighthawk_foo_size_mean{scope="worker_0"} 15.5
+nighthawk_foo_size_mean{scope="worker_1"} 15.5
+nighthawk_foo_size_mean{scope="global"} 15.5
+# TYPE nighthawk_foo_size_min counter
+nighthawk_foo_size_min{scope="worker_0"} 14
+nighthawk_foo_size_min{scope="worker_1"} 14
+nighthawk_foo_size_min{scope="global"} 14
+# TYPE nighthawk_foo_size_pstdev counter
+nighthawk_foo_size_pstdev{scope="worker_0"} 1.118033988749895
+nighthawk_foo_size_pstdev{scope="worker_1"} 1.118033988749895
+nighthawk_foo_size_pstdev{scope="global"} 1.118033988749895
+# TYPE nighthawk_stat_id_count counter
+nighthawk_stat_id_count{scope="worker_0"} 3
+nighthawk_stat_id_count{scope="worker_1"} 3
+nighthawk_stat_id_count{scope="global"} 3
+# TYPE nighthawk_stat_id_max counter
+nighthawk_stat_id_max{scope="worker_0"} 3000
+nighthawk_stat_id_max{scope="worker_1"} 3000
+nighthawk_stat_id_max{scope="global"} 3000
+# TYPE nighthawk_stat_id_mean counter
+nighthawk_stat_id_mean{scope="worker_0"} 2000
+nighthawk_stat_id_mean{scope="worker_1"} 2000
+nighthawk_stat_id_mean{scope="global"} 2000
+# TYPE nighthawk_stat_id_min counter
+nighthawk_stat_id_min{scope="worker_0"} 1000
+nighthawk_stat_id_min{scope="worker_1"} 1000
+nighthawk_stat_id_min{scope="global"} 1000
+# TYPE nighthawk_stat_id_pstdev counter
+nighthawk_stat_id_pstdev{scope="worker_0"} 816
+nighthawk_stat_id_pstdev{scope="worker_1"} 816
+nighthawk_stat_id_pstdev{scope="global"} 816
+# TYPE nighthawk_stat_id_sum counter
+nighthawk_stat_id_sum{scope="worker_0"} 6000
+nighthawk_stat_id_sum{scope="worker_1"} 6000
+nighthawk_stat_id_sum{scope="global"} 6000

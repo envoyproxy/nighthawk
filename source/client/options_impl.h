@@ -115,7 +115,7 @@ public:
     return stats_sinks_;
   }
   uint32_t statsFlushInterval() const override { return stats_flush_interval_; }
-  Envoy::ProtobufWkt::Duration statsFlushIntervalDuration() const override {
+  Envoy::Protobuf::Duration statsFlushIntervalDuration() const override {
     return stats_flush_interval_duration_;
   }
   std::string responseHeaderWithLatencyInput() const override {
@@ -198,7 +198,7 @@ private:
   bool no_duration_{false};
   std::vector<envoy::config::metrics::v3::StatsSink> stats_sinks_;
   uint32_t stats_flush_interval_{5};
-  Envoy::ProtobufWkt::Duration stats_flush_interval_duration_;
+  Envoy::Protobuf::Duration stats_flush_interval_duration_;
   std::string latency_response_header_name_;
   absl::optional<Envoy::SystemTime> scheduled_start_;
   absl::optional<std::string> execution_id_;

@@ -83,7 +83,7 @@ TEST_F(StubRequestSourcePluginTest, CreateEmptyConfigProtoCreatesCorrectType) {
 
 TEST_F(StubRequestSourcePluginTest, FactoryRegistrationUsesCorrectPluginName) {
   nighthawk::request_source::StubPluginConfig config;
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
@@ -93,7 +93,7 @@ TEST_F(StubRequestSourcePluginTest, FactoryRegistrationUsesCorrectPluginName) {
 
 TEST_F(StubRequestSourcePluginTest, CreateRequestSourcePluginCreatesCorrectPluginType) {
   nighthawk::request_source::StubPluginConfig config;
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
@@ -108,7 +108,7 @@ TEST_F(StubRequestSourcePluginTest, CreateRequestSourcePluginCreatesWorkingPlugi
   nighthawk::request_source::StubPluginConfig config;
   double test_value = 2;
   config.mutable_test_value()->set_value(test_value);
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
@@ -135,7 +135,7 @@ TEST_F(FileBasedRequestSourcePluginTest, CreateEmptyConfigProtoCreatesCorrectTyp
 
 TEST_F(FileBasedRequestSourcePluginTest, FactoryRegistrationUsesCorrectPluginName) {
   nighthawk::request_source::FileBasedOptionsListRequestSourceConfig config;
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
@@ -147,7 +147,7 @@ TEST_F(FileBasedRequestSourcePluginTest, CreateRequestSourcePluginCreatesCorrect
   nighthawk::request_source::FileBasedOptionsListRequestSourceConfig config =
       MakeFileBasedPluginConfigWithTestYaml(Nighthawk::TestEnvironment::runfilesPath(
           "test/request_source/test_data/test-config-ab.yaml"));
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
@@ -165,7 +165,7 @@ TEST_F(FileBasedRequestSourcePluginTest,
       MakeFileBasedPluginConfigWithTestYaml(Nighthawk::TestEnvironment::runfilesPath(
           "test/request_source/test_data/test-config-ab.yaml"));
   config.set_num_requests(2);
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
@@ -194,7 +194,7 @@ TEST_F(FileBasedRequestSourcePluginTest,
       MakeFileBasedPluginConfigWithTestYaml(Nighthawk::TestEnvironment::runfilesPath(
           "test/request_source/test_data/test-jsonconfig-ab.yaml"));
   config.set_num_requests(2);
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
@@ -225,7 +225,7 @@ TEST_F(FileBasedRequestSourcePluginTest, CreateRequestSourcePluginWithJsonBodySe
       MakeFileBasedPluginConfigWithTestYaml(Nighthawk::TestEnvironment::runfilesPath(
           "test/request_source/test_data/test-jsonconfig-ab.yaml"));
   config.set_num_requests(2);
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
@@ -251,7 +251,7 @@ TEST_F(FileBasedRequestSourcePluginTest,
       MakeFileBasedPluginConfigWithTestYaml(Nighthawk::TestEnvironment::runfilesPath(
           "test/request_source/test_data/test-jsonconfig-ab.yaml"));
   config.set_num_requests(2);
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
@@ -278,7 +278,7 @@ TEST_F(FileBasedRequestSourcePluginTest, CreateRequestSourcePluginWithTooLargeAF
   const uint32_t max_file_size = 10;
   config.set_num_requests(2);
   config.mutable_max_file_size()->set_value(max_file_size);
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
@@ -294,7 +294,7 @@ TEST_F(FileBasedRequestSourcePluginTest,
   nighthawk::request_source::FileBasedOptionsListRequestSourceConfig config =
       MakeFileBasedPluginConfigWithTestYaml(Nighthawk::TestEnvironment::runfilesPath(
           "test/request_source/test_data/test-config-ab.yaml"));
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
@@ -331,9 +331,9 @@ TEST_F(
   config_ab.set_num_requests(2);
   config_c.set_num_requests(2);
 
-  Envoy::ProtobufWkt::Any config_ab_any;
+  Envoy::Protobuf::Any config_ab_any;
   config_ab_any.PackFrom(config_ab);
-  Envoy::ProtobufWkt::Any config_c_any;
+  Envoy::Protobuf::Any config_c_any;
   config_c_any.PackFrom(config_c);
 
   auto& config_factory =
@@ -387,7 +387,7 @@ TEST_F(InLineRequestSourcePluginTest, CreateEmptyConfigProtoCreatesCorrectType) 
 
 TEST_F(InLineRequestSourcePluginTest, FactoryRegistrationUsesCorrectPluginName) {
   nighthawk::request_source::InLineOptionsListRequestSourceConfig config;
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
@@ -406,7 +406,7 @@ TEST_F(InLineRequestSourcePluginTest, CreateRequestSourcePluginCreatesCorrectPlu
                         /*Api*/ *api_));
   nighthawk::request_source::InLineOptionsListRequestSourceConfig config =
       MakeInLinePluginConfig(options_list, /*num_requests*/ 2);
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
@@ -430,7 +430,7 @@ TEST_F(InLineRequestSourcePluginTest,
                         /*Api*/ *api_));
   nighthawk::request_source::InLineOptionsListRequestSourceConfig config =
       MakeInLinePluginConfig(options_list, /*num_requests*/ 2);
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
@@ -465,7 +465,7 @@ TEST_F(InLineRequestSourcePluginTest,
                         /*Api*/ *api_));
   nighthawk::request_source::InLineOptionsListRequestSourceConfig config =
       MakeInLinePluginConfig(options_list, /*num_requests*/ 2);
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
@@ -502,7 +502,7 @@ TEST_F(InLineRequestSourcePluginTest, CreateRequestSourcePluginWithJsonBodyGetsR
                         /*Api*/ *api_));
   nighthawk::request_source::InLineOptionsListRequestSourceConfig config =
       MakeInLinePluginConfig(options_list, /*num_requests*/ 2);
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
@@ -533,7 +533,7 @@ TEST_F(InLineRequestSourcePluginTest, CreateRequestSourcePluginWithJsonBodyGetsC
                         /*Api*/ *api_));
   nighthawk::request_source::InLineOptionsListRequestSourceConfig config =
       MakeInLinePluginConfig(options_list, /*num_requests*/ 2);
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
@@ -565,7 +565,7 @@ TEST_F(InLineRequestSourcePluginTest,
                         /*Api*/ *api_));
   nighthawk::request_source::InLineOptionsListRequestSourceConfig config =
       MakeInLinePluginConfig(options_list, /*num_requests*/ 4);
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
@@ -614,9 +614,9 @@ TEST_F(
   nighthawk::request_source::InLineOptionsListRequestSourceConfig config_c =
       MakeInLinePluginConfig(options_list_c, /*num_requests*/ 2);
 
-  Envoy::ProtobufWkt::Any config_ab_any;
+  Envoy::Protobuf::Any config_ab_any;
   config_ab_any.PackFrom(config_ab);
-  Envoy::ProtobufWkt::Any config_c_any;
+  Envoy::Protobuf::Any config_c_any;
   config_c_any.PackFrom(config_c);
 
   auto& config_factory =

@@ -101,7 +101,7 @@ public:
   virtual bool noDuration() const PURE;
   virtual std::vector<envoy::config::metrics::v3::StatsSink> statsSinks() const PURE;
   virtual uint32_t statsFlushInterval() const PURE;
-  virtual Envoy::ProtobufWkt::Duration statsFlushIntervalDuration() const PURE;
+  virtual Envoy::Protobuf::Duration statsFlushIntervalDuration() const PURE;
   virtual std::string responseHeaderWithLatencyInput() const PURE;
 
   virtual absl::optional<Envoy::SystemTime> scheduled_start() const PURE;

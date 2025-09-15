@@ -5,6 +5,7 @@
 #include "envoy/api/v2/core/base.pb.h"
 #include "envoy/config/core/v3/base.pb.h"
 
+#include "external/envoy/source/common/common/assert.h"
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
 #include "external/envoy/source/common/protobuf/utility.h"
 
@@ -71,13 +72,11 @@ envoy::config::core::v3::HeaderValueOption upgradeDeprecatedEnvoyV2HeaderValueOp
 }
 
 void validateResponseOptions(const nighthawk::server::ResponseOptions& response_options) {
-  if (response_options.response_headers_size() > 0 &&
-      response_options.v3_response_headers_size() > 0) {
-    throw Envoy::EnvoyException(
-        absl::StrCat("invalid configuration in nighthawk::server::ResponseOptions ",
-                     "cannot specify both response_headers and v3_response_headers ",
-                     "configuration was: ", absl::StrCat(response_options)));
-  }
+  RELEASE_ASSERT(!(response_options.response_headers_size() > 0 &&
+                   response_options.v3_response_headers_size() > 0),
+                 absl::StrCat("invalid configuration in nighthawk::server::ResponseOptions ",
+                              "cannot specify both response_headers and v3_response_headers ",
+                              "configuration was: ", absl::StrCat(response_options)));
 }
 
 } // namespace Configuration

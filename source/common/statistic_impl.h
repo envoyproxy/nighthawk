@@ -5,7 +5,7 @@
 
 #include "nighthawk/common/statistic.h"
 
-#include "external/dep_hdrhistogram_c/src/hdr_histogram.h"
+#include "external/dep_hdrhistogram_c/include/hdr/hdr_histogram.h"
 #include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/stats/histogram_impl.h"
 
@@ -228,6 +228,7 @@ public:
 
   // Envoy::Stats::Histogram
   void recordValue(uint64_t value) override;
+  void markUnused() override {}
   bool used() const override { return count() > 0; }
   bool hidden() const override { return false; }
   // Overriding name() to return Nighthawk::Statistic::id().
@@ -250,6 +251,7 @@ public:
 
   // Envoy::Stats::Histogram
   void recordValue(uint64_t value) override;
+  void markUnused() override {}
   bool used() const override { return count() > 0; }
   bool hidden() const override { return false; }
   // Overriding name() to return Nighthawk::Statistic::id().

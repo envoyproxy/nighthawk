@@ -191,9 +191,9 @@ bazel-bin/nighthawk_client  [--user-defined-plugin-config <string>] ...
 <auto|v4|v6>] [--burst-size <uint32_t>]
 [--prefetch-connections] [--output-format
 <json|human|yaml|dotted|fortio
-|experimental_fortio_pedantic|csv>] [-v
-<trace|debug|info|warn|error|critical>]
-[--concurrency <string>]
+|experimental_fortio_pedantic|csv
+|prometheus>] [-v <trace|debug|info|warn
+|error|critical>] [--concurrency <string>]
 [--tunnel-tls-context <string>]
 [--tunnel-uri <string>] [--tunnel-protocol
 <http1|http2|http3>]
@@ -383,10 +383,10 @@ Release requests in bursts of the specified size (default: 0).
 Use proactive connection prefetching (HTTP/1 only).
 
 --output-format <json|human|yaml|dotted|fortio
-|experimental_fortio_pedantic|csv>
+|experimental_fortio_pedantic|csv|prometheus>
 Output format. Possible values: ["json", "human", "yaml", "dotted",
-"fortio", "experimental_fortio_pedantic", "csv"]. The default output
-format is 'human'.
+"fortio", "experimental_fortio_pedantic", "csv", "prometheus"]. The
+default output format is 'human'.
 
 -v <trace|debug|info|warn|error|critical>,  --verbosity <trace|debug
 |info|warn|error|critical>
@@ -534,16 +534,17 @@ USAGE:
 
 bazel-bin/nighthawk_output_transform  --output-format <json|human|yaml
 |dotted|fortio
-|experimental_fortio_pedantic|csv>
-[--] [--version] [-h]
+|experimental_fortio_pedantic|csv
+|prometheus> [--] [--version] [-h]
 
 
 Where:
 
 --output-format <json|human|yaml|dotted|fortio
-|experimental_fortio_pedantic|csv>
+|experimental_fortio_pedantic|csv|prometheus>
 (required)  Output format. Possible values: ["json", "human", "yaml",
-"dotted", "fortio", "experimental_fortio_pedantic", "csv"].
+"dotted", "fortio", "experimental_fortio_pedantic", "csv",
+"prometheus"].
 
 --,  --ignore_rest
 Ignores the rest of the labeled arguments following this flag.

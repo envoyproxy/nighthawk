@@ -75,8 +75,7 @@ Envoy::ProtobufTypes::MessagePtr FakeStepControllerConfigFactory::createEmptyCon
 StepControllerPtr FakeStepControllerConfigFactory::createStepController(
     const Envoy::Protobuf::Message& message,
     const nighthawk::client::CommandLineOptions& command_line_options_template) {
-  const auto* any =
-      Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
+  const auto* any = Envoy::Protobuf::DynamicCastToGenerated<const Envoy::Protobuf::Any>(&message);
   nighthawk::adaptive_load::FakeStepControllerConfig config;
   THROW_IF_NOT_OK(Envoy::MessageUtil::unpackTo(*any, config));
   return std::make_unique<FakeStepController>(config, command_line_options_template);
@@ -85,8 +84,7 @@ StepControllerPtr FakeStepControllerConfigFactory::createStepController(
 absl::Status
 FakeStepControllerConfigFactory::ValidateConfig(const Envoy::Protobuf::Message& message) const {
   try {
-    const auto* any =
-        Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
+    const auto* any = Envoy::Protobuf::DynamicCastToGenerated<const Envoy::Protobuf::Any>(&message);
     nighthawk::adaptive_load::FakeStepControllerConfig config;
     RETURN_IF_NOT_OK(Envoy::MessageUtil::unpackTo(*any, config));
     if (config.has_artificial_validation_failure()) {
@@ -107,7 +105,7 @@ MakeFakeStepControllerPluginConfigWithRps(int fixed_rps_value) {
   outer_config.set_name("nighthawk.fake_step_controller");
   nighthawk::adaptive_load::FakeStepControllerConfig config;
   config.set_fixed_rps_value(fixed_rps_value);
-  Envoy::ProtobufWkt::Any config_any;
+  Envoy::Protobuf::Any config_any;
   config_any.PackFrom(config);
   *outer_config.mutable_typed_config() = config_any;
   return outer_config;

@@ -494,7 +494,7 @@ TEST_F(BenchmarkClientHttpTest, CallsUserDefinedPluginHandleHeaders) {
 
   client_->onComplete(true, headers);
   client_->onComplete(true, headers);
-  absl::StatusOr<Envoy::ProtobufWkt::Any> output_any = plugin_ptr->getPerWorkerOutput();
+  absl::StatusOr<Envoy::Protobuf::Any> output_any = plugin_ptr->getPerWorkerOutput();
   ASSERT_TRUE(output_any.ok());
   nighthawk::FakeUserDefinedOutput output;
   ASSERT_TRUE(Envoy::MessageUtil::unpackTo(*output_any, output).ok());
@@ -525,7 +525,7 @@ TEST_F(BenchmarkClientHttpTest, IncrementsCounterWhenUserDefinedPluginHandleHead
 
   client_->onComplete(true, headers);
   client_->onComplete(true, headers);
-  absl::StatusOr<Envoy::ProtobufWkt::Any> output_any = plugin_ptr->getPerWorkerOutput();
+  absl::StatusOr<Envoy::Protobuf::Any> output_any = plugin_ptr->getPerWorkerOutput();
   ASSERT_TRUE(output_any.ok());
   nighthawk::FakeUserDefinedOutput output;
   ASSERT_TRUE(Envoy::MessageUtil::unpackTo(*output_any, output).ok());
@@ -552,7 +552,7 @@ TEST_F(BenchmarkClientHttpTest, CallsUserDefinedPluginHandleData) {
 
   client_->handleResponseData(buffer);
   client_->handleResponseData(buffer);
-  absl::StatusOr<Envoy::ProtobufWkt::Any> output_any = plugin_ptr->getPerWorkerOutput();
+  absl::StatusOr<Envoy::Protobuf::Any> output_any = plugin_ptr->getPerWorkerOutput();
   ASSERT_TRUE(output_any.ok());
   nighthawk::FakeUserDefinedOutput output;
   ASSERT_TRUE(Envoy::MessageUtil::unpackTo(*output_any, output).ok());
@@ -581,7 +581,7 @@ TEST_F(BenchmarkClientHttpTest, IncrementsCounterWhenUserDefinedPluginHandleData
 
   client_->handleResponseData(buffer);
   client_->handleResponseData(buffer);
-  absl::StatusOr<Envoy::ProtobufWkt::Any> output_any = plugin_ptr->getPerWorkerOutput();
+  absl::StatusOr<Envoy::Protobuf::Any> output_any = plugin_ptr->getPerWorkerOutput();
   ASSERT_TRUE(output_any.ok());
   nighthawk::FakeUserDefinedOutput output;
   ASSERT_TRUE(Envoy::MessageUtil::unpackTo(*output_any, output).ok());
@@ -612,7 +612,7 @@ TEST_F(BenchmarkClientHttpTest, GetUserDefinedOutputResultsReturnsResults) {
 
   client_->onComplete(true, headers);
   client_->handleResponseData(buffer);
-  absl::StatusOr<Envoy::ProtobufWkt::Any> expected_any = plugin_ptr->getPerWorkerOutput();
+  absl::StatusOr<Envoy::Protobuf::Any> expected_any = plugin_ptr->getPerWorkerOutput();
   ASSERT_TRUE(expected_any.ok());
   nighthawk::client::UserDefinedOutput expected_output;
   *expected_output.mutable_typed_output() = *expected_any;
