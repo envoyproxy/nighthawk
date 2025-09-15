@@ -391,6 +391,7 @@ createEncapBootstrap(const Client::Options& options, UriImpl& tunnel_uri,
 
   envoy::extensions::upstreams::http::v3::HttpProtocolOptions protocol_options;
   if (tunnel_protocol == Envoy::Http::Protocol::Http3) {
+    protocol_options.mutable_explicit_http_config()->mutable_http3_protocol_options();
     auto* transport_socket = cluster->mutable_transport_socket();
     envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext upstream_tls_context =
         *options.tunnelTlsContext();
@@ -441,7 +442,7 @@ createEncapBootstrap(const Client::Options& options, UriImpl& tunnel_uri,
 }
 
 absl::Status
-EncapsulationSubProcessRunner::RunWithSubprocess(std::function<void()> nigthawk_fn,
+EncapsulationSubProcessRunner::RunWithSubprocess(std::function<void()> nighthawk_fn,
                                                  std::function<void(sem_t&)> envoy_fn) {
 
   pid_t pid_ = fork();
@@ -455,7 +456,7 @@ EncapsulationSubProcessRunner::RunWithSubprocess(std::function<void()> nigthawk_
     // wait for envoy to start and signal nighthawk to start
     sem_wait(nighthawk_control_sem_);
     // start nighthawk
-    nigthawk_fn();
+    nighthawk_fn();
     // signal envoy to shutdown
     return TerminateEncapSubProcess();
   }

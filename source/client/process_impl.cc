@@ -655,6 +655,12 @@ ProcessImpl::~ProcessImpl() {
 }
 
 void ProcessImpl::shutdown() {
+  if (encap_runner_ != nullptr) {
+    auto status = encap_runner_->TerminateEncapSubProcess();
+    if (status != absl::OkStatus()) {
+      ENVOY_LOG(error, status);
+    }
+  }
   // Before we shut down the worker threads, stop threading.
   tls_.shutdownGlobalThreading();
   store_root_.shutdownThreading();
@@ -684,7 +690,6 @@ void ProcessImpl::shutdown() {
 }
 
 bool ProcessImpl::requestExecutionCancellation() {
-  ENVOY_LOG(debug, "Requesting workers to cancel execution");
   auto guard = std::make_unique<Envoy::Thread::LockGuard>(workers_lock_);
   for (auto& worker : workers_) {
     worker->requestExecutionCancellation();
@@ -942,12 +947,14 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
       } catch (const Envoy::EnvoyException& ex) {
         std::cout << "error caught by envoy " << ex.what() << std::endl;
         ENVOY_LOG(error, ex.what());
-        return;
+        // let nighthawk start and close envoy process
+        sem_post(&nighthawk_control_sem);
       }
-    } else {
-      // let nighthawk start and close envoy process
+    }
+    else{
       sem_post(&nighthawk_control_sem);
     }
+
   };
 
   bool result = true;
@@ -1067,9 +1074,6 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
         w->start();
       }
     }
-    for (auto& w : workers_) {
-      w->waitForCompletion();
-    }
   };
   encap_runner_ = std::make_shared<EncapsulationSubProcessRunner>(nigthawk_fn, envoy_routine);
   auto status = encap_runner_->Run();
@@ -1081,6 +1085,10 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
   if (!status.ok()) {
     ENVOY_LOG(error, status);
     return false;
+  }
+  
+  for (auto& w : workers_) {
+    w->waitForCompletion();
   }
 
   if (!options_.statsSinks().empty() && flush_worker_ != nullptr) {
