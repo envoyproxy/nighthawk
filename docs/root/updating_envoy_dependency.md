@@ -268,16 +268,6 @@ merge_from_envoy "tools/code_format/config.yaml"
 
 ### Step 11
 
-Perform this step if [tools/base/requirements.in](/tools/base/requirements.in)
-has not been updated in the last 30 days (based on comment at top of file).
-
-```bash
-head -1 tools/base/requirements.in
-```
-
-- If less than 30 days ago, skip to next step.
-- If more than 30 days ago, do the rest of this step.
-
 The Python dependencies need to be updated regularly. The list of packages
 the Nighthawk codebase uses is listed in
 [tools/base/requirements.in](/tools/base/requirements.in). This file specifies
@@ -287,15 +277,9 @@ incompatibility is found, you can pin a package by specifying a `<=` constraint.
 These should always be accompanied with a comment explaining them. Avoid using
 `==` constraint to the extent possible.
 
-First attempt to remove all existing pins in
-[tools/base/requirements.in](/tools/base/requirements.in) to see if they are
-still necessary. Once done editing
-[tools/base/requirements.in](/tools/base/requirements.in), delete the contents
-of [tools/base/requirements.txt](/tools/base/requirements.txt) and update the
-dependencies by running:
+Update the dependencies by running:
 
 ```bash
-echo > tools/base/requirements.txt
 bazel run //tools/base:requirements.update
 ```
 

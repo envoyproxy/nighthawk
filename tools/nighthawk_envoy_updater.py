@@ -233,10 +233,11 @@ class EnvoyCommitIntegrationStep(enum.Enum):
   GET_ENVOY_SHA = enum.auto()
   SET_NIGHTHAWK_BAZEL_DEP = enum.auto()
   PATCH_SHARED_FILES = enum.auto()
-  FIX_FORMAT = enum.auto()
   BAZEL_UPDATE_REQUIREMENTS = enum.auto()
-  UPDATE_CLI_README = enum.auto()
+  BUILD_NIGHTHAWK = enum.auto()
   TEST_NIGHTHAWK = enum.auto()
+  UPDATE_CLI_README = enum.auto()
+  FIX_FORMAT = enum.auto()
 
 
 class EnvoyCommitIntegration(StepHandler[EnvoyCommitIntegrationStep]):
@@ -323,20 +324,22 @@ class EnvoyCommitIntegration(StepHandler[EnvoyCommitIntegrationStep]):
           raise RuntimeError(
               _patch_merge_conflict_instructions(self.target_envoy_commit,
                                                  self.nighthawk_dir)) from e
-      case EnvoyCommitIntegrationStep.FIX_FORMAT:
-        _run_command(["./ci/do_ci.sh", "fix_format"], cwd=self.nighthawk_dir)
       case EnvoyCommitIntegrationStep.BAZEL_UPDATE_REQUIREMENTS:
         _run_command(
             ["bazel", "run", "//tools/base:requirements.update"],
             cwd=self.nighthawk_dir,
         )
+      case EnvoyCommitIntegrationStep.BUILD_NIGHTHAWK:
+        _run_command(["./ci/do_ci.sh", "build"], cwd=self.nighthawk_dir)
+      case EnvoyCommitIntegrationStep.TEST_NIGHTHAWK:
+        _run_command(["./ci/do_ci.sh", "test"], cwd=self.nighthawk_dir)
       case EnvoyCommitIntegrationStep.UPDATE_CLI_README:
         _run_command(
             ["./tools/update_cli_readme_documentation.sh", "--mode=fix"],
             cwd=self.nighthawk_dir,
         )
-      case EnvoyCommitIntegrationStep.TEST_NIGHTHAWK:
-        _run_command(["./ci/do_ci.sh", "test"], cwd=self.nighthawk_dir)
+      case EnvoyCommitIntegrationStep.FIX_FORMAT:
+        _run_command(["./ci/do_ci.sh", "fix_format"], cwd=self.nighthawk_dir)
       case _:
         raise ValueError(f"{step} is not supported.")
 
@@ -486,16 +489,13 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
         if (not self.current_envoy_commit or len(self.current_envoy_commit) != 40):
           raise RuntimeError(f"Failed to extract current Envoy commit from {repo_file}")
       case NighthawkEnvoyUpdateStep.CLONE_ENVOY:
-        _run_command(
-            [
-                "git",
-                "clone",
-                f"--depth={self.envoy_clone_depth}",
-                "git@github.com:envoyproxy/envoy.git",
-                str(self.envoy_dir),
-            ],
-            interactive=True,
-        )
+        _run_command([
+            "git",
+            "clone",
+            f"--depth={self.envoy_clone_depth}",
+            "https://github.com/envoyproxy/envoy.git",
+            str(self.envoy_dir),
+        ],)
       case NighthawkEnvoyUpdateStep.CHECK_ENVOY_CLONE_DEPTH:
         try:
           _run_command(
