@@ -365,9 +365,10 @@ TEST_P(ProcessTest, FailsWhenDnsResolverFactoryFails) {
                   .ok());
 }
 
-TEST_P(ProcessTest, TestWithEncapsulation){
+TEST_P(ProcessTest, TestWithEncapsulation) {
   options_ = TestUtility::createOptionsImpl(
-      fmt::format("foo --tunnel-uri https://{}/ --tunnel-protocol http1 --protocol http1 --concurrency 2 https://{}/",
+      fmt::format("foo --tunnel-uri https://{}/ --tunnel-protocol http1 --protocol http1 "
+                  "--concurrency 2 https://{}/",
                   loopback_address_, loopback_address_));
   EXPECT_TRUE(runProcess(RunExpectation::EXPECT_FAILURE).ok());
 }

@@ -950,11 +950,9 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
         // let nighthawk start and close envoy process
         sem_post(&nighthawk_control_sem);
       }
-    }
-    else{
+    } else {
       sem_post(&nighthawk_control_sem);
     }
-
   };
 
   bool result = true;
@@ -1003,50 +1001,50 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
 
       runtime_loader_ = *std::move(loader);
 
-    server_ = std::make_unique<NighthawkServerInstance>(
-        admin_, *api_, *dispatcher_, access_log_manager_, envoy_options_, *runtime_loader_.get(),
-        *singleton_manager_, tls_, *local_info_, validation_context_, grpc_context_, http_context_,
-        router_context_, store_root_, secret_manager_);
-    ssl_context_manager_ =
-        std::make_unique<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>(
-            server_->serverFactoryContext());
-    dynamic_cast<NighthawkServerFactoryContext*>(&server_->serverFactoryContext())
-        ->setSslContextManager(*ssl_context_manager_);
-    cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
-        server_->serverFactoryContext(),
-        [dns_resolver]() -> Envoy::Network::DnsResolverSharedPtr { return dns_resolver; },
-        quic_stat_names_);
-    cluster_manager_factory_->setConnectionReuseStrategy(
-        options_.h1ConnectionReuseStrategy() == nighthawk::client::H1ConnectionReuseStrategy::LRU
-            ? Http1PoolImpl::ConnectionReuseStrategy::LRU
-            : Http1PoolImpl::ConnectionReuseStrategy::MRU);
-    cluster_manager_factory_->setPrefetchConnections(options_.prefetchConnections());
-    if (tracing_uri != nullptr) {
-      setupTracingImplementation(bootstrap_, *tracing_uri);
-      addTracingCluster(bootstrap_, *tracing_uri);
-    }
-    ENVOY_LOG(debug, "Computed configuration: {}", absl::StrCat(bootstrap_));
-    absl::StatusOr<Envoy::Upstream::ClusterManagerPtr> cluster_manager =
-        cluster_manager_factory_->clusterManagerFromProto(bootstrap_);
-    if (!cluster_manager.ok()) {
-      ENVOY_LOG(error, "clusterManagerFromProto failed. Received bad status: {}",
-                cluster_manager.status().message());
-      result = false;
-      return;
-    }
-    cluster_manager_ = std::move(*cluster_manager);
-    dynamic_cast<NighthawkServerFactoryContext*>(&server_->serverFactoryContext())
-        ->setClusterManager(*cluster_manager_);
-    absl::Status status = cluster_manager_->initialize(bootstrap_);
-    if (!status.ok()) {
-      ENVOY_LOG(error, "cluster_manager initialize failed. Received bad status: {}",
-                status.message());
-      result = false;
-      return;
-    }
-    maybeCreateTracingDriver(bootstrap_.tracing());
-    cluster_manager_->setInitializedCb(
-        [this]() -> void { init_manager_.initialize(init_watcher_); });
+      server_ = std::make_unique<NighthawkServerInstance>(
+          admin_, *api_, *dispatcher_, access_log_manager_, envoy_options_, *runtime_loader_.get(),
+          *singleton_manager_, tls_, *local_info_, validation_context_, grpc_context_,
+          http_context_, router_context_, store_root_, secret_manager_);
+      ssl_context_manager_ =
+          std::make_unique<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>(
+              server_->serverFactoryContext());
+      dynamic_cast<NighthawkServerFactoryContext*>(&server_->serverFactoryContext())
+          ->setSslContextManager(*ssl_context_manager_);
+      cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
+          server_->serverFactoryContext(),
+          [dns_resolver]() -> Envoy::Network::DnsResolverSharedPtr { return dns_resolver; },
+          quic_stat_names_);
+      cluster_manager_factory_->setConnectionReuseStrategy(
+          options_.h1ConnectionReuseStrategy() == nighthawk::client::H1ConnectionReuseStrategy::LRU
+              ? Http1PoolImpl::ConnectionReuseStrategy::LRU
+              : Http1PoolImpl::ConnectionReuseStrategy::MRU);
+      cluster_manager_factory_->setPrefetchConnections(options_.prefetchConnections());
+      if (tracing_uri != nullptr) {
+        setupTracingImplementation(bootstrap_, *tracing_uri);
+        addTracingCluster(bootstrap_, *tracing_uri);
+      }
+      ENVOY_LOG(debug, "Computed configuration: {}", absl::StrCat(bootstrap_));
+      absl::StatusOr<Envoy::Upstream::ClusterManagerPtr> cluster_manager =
+          cluster_manager_factory_->clusterManagerFromProto(bootstrap_);
+      if (!cluster_manager.ok()) {
+        ENVOY_LOG(error, "clusterManagerFromProto failed. Received bad status: {}",
+                  cluster_manager.status().message());
+        result = false;
+        return;
+      }
+      cluster_manager_ = std::move(*cluster_manager);
+      dynamic_cast<NighthawkServerFactoryContext*>(&server_->serverFactoryContext())
+          ->setClusterManager(*cluster_manager_);
+      absl::Status status = cluster_manager_->initialize(bootstrap_);
+      if (!status.ok()) {
+        ENVOY_LOG(error, "cluster_manager initialize failed. Received bad status: {}",
+                  status.message());
+        result = false;
+        return;
+      }
+      maybeCreateTracingDriver(bootstrap_.tracing());
+      cluster_manager_->setInitializedCb(
+          [this]() -> void { init_manager_.initialize(init_watcher_); });
 
       absl::Status initialize_status = runtime_loader_->initialize(*cluster_manager_);
       if (!initialize_status.ok()) {
@@ -1086,7 +1084,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     ENVOY_LOG(error, status);
     return false;
   }
-  
+
   for (auto& w : workers_) {
     w->waitForCompletion();
   }

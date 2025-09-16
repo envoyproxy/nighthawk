@@ -103,9 +103,7 @@ public:
    *
    * @return error status for processes
    **/
-  absl::Status Run() {
-    return RunWithSubprocess(nighthawk_runner_, encap_envoy_runner_);
-  }
+  absl::Status Run() { return RunWithSubprocess(nighthawk_runner_, encap_envoy_runner_); }
 
   /**
    * Sends a SIGTERM to Encap Envoy subprocess and blocks till exit
