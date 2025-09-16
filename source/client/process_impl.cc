@@ -838,13 +838,13 @@ void ProcessImpl::maybeCreateTracingDriver(const envoy::config::trace::v3::Traci
             configuration.http());
     Envoy::ProtobufTypes::MessagePtr message = Envoy::Config::Utility::translateToFactoryConfig(
         configuration.http(), Envoy::ProtobufMessage::getStrictValidationVisitor(), factory);
+\
     const auto* zipkin_config =
         Envoy::Protobuf::DynamicCastToGenerated<const envoy::config::trace::v3::ZipkinConfig>(
             message.get());
     Envoy::Tracing::DriverPtr zipkin_driver =
         std::make_unique<Envoy::Extensions::Tracers::Zipkin::Driver>(
-            *zipkin_config, *cluster_manager_, scope_root_, tls_, *runtime_loader_.get(),
-            *local_info_, generator_, time_system_);
+            *zipkin_config, server_->serverFactoryContext());
     tracer_ = std::make_unique<Envoy::Tracing::TracerImpl>(std::move(zipkin_driver), *local_info_);
 #else
     ENVOY_LOG(error, "Not build with any tracing support");
