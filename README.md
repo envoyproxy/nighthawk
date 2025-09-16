@@ -401,21 +401,22 @@ load multiplier combined with the configured --rps and --connections
 values. Default: 1.
 
 --tunnel-tls-context <string>
-Upstream TlS context configuration in json.Required to encapsulate in
-HTTP3Example (json):
+Upstream TlS context configuration in json. Required to encapsulate in
+HTTP3 Example (json):
 {common_tls_context:{tls_params:{cipher_suites:["-ALL:ECDHE-RSA-AES128
 -SHA"]}}}
 
 --tunnel-uri <string>
-The uri of the proxy.
+The address of the proxy. Possible values: [http1, http2, http3]. The
+default protocol is 'http1'
 
 --tunnel-protocol <http1|http2|http3>
 The protocol for setting up tunnel encapsulation. Possible values:
 [http1, http2, http3]. The default protocol is 'http1' Combinations
 not supported currently are protocol = HTTP3 and tunnel_protocol =
-HTTP1 and protocol = HTTP3 and tunnel_protocol = HTTP3. When protocol is
-set to HTTP3 and tunneling is enabled, the CONNECT-UDP method is
-used. Otherwise, the HTTP CONNECT method is used.
+HTTP1. and protocol = HTTP3 and tunnel_protocol = HTTP3. When protocol
+is set to HTTP3 and tunneling is enabled, the CONNECT-UDP method is
+used Otherwise, the HTTP CONNECT method is used
 
 --http3-protocol-options <string>
 HTTP3 protocol options (envoy::config::core::v3::Http3ProtocolOptions)

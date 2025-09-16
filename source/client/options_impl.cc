@@ -97,10 +97,10 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       fmt::format(
           "The protocol for setting up tunnel encapsulation. Possible values: [http1, http2, "
           "http3]. The default protocol is '{}' "
-          "Combinations not supported currently are protocol = HTTP3 and tunnel_protocol = HTTP1"
-          "and protocol = HTTP3 and tunnel_protocol = HTTP3"
-          "When protocol is set to HTTP3 and tunneling is enabled, the CONNECT-UDP method is used"
-          "Otherwise, the HTTP CONNECT method is used",
+          "Combinations not supported currently are protocol = HTTP3 and tunnel_protocol = HTTP1."
+          " and protocol = HTTP3 and tunnel_protocol = HTTP3."
+          " When protocol is set to HTTP3 and tunneling is enabled, the CONNECT-UDP method is used"
+          " Otherwise, the HTTP CONNECT method is used",
           absl::AsciiStrToLower(
               nighthawk::client::Protocol_ProtocolOptions_Name(tunnel_protocol_))),
       false, "", &tunnel_protocols_allowed, cmd);
@@ -114,9 +114,9 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   TCLAP::ValueArg<std::string> tunnel_tls_context(
       "", "tunnel-tls-context",
       "Upstream TlS context configuration in json."
-      "Required to encapsulate in HTTP3"
-      "Example (json): "
-      "{common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]}}}",
+      " Required to encapsulate in HTTP3"
+      " Example (json): "
+      " {common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]}}}",
       false, "", "string", cmd);
 
   TCLAP::ValueArg<std::string> concurrency(
