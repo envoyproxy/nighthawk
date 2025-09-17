@@ -58,6 +58,9 @@ You can customize the script's behavior using the following arguments:
 *   `--branch_name NAME`: The name of the branch to create in the Nighthawk
     repository for the update. Default: `update-envoy-YYYYMMDD` (e.g.,
     `update-envoy-20250809`)
+*   `--agent_invocation CMD`: Command to invoke an LLM agent (e.g., `gemini`) to
+    attempt to automatically fix errors. The agent will be called with the
+    prompt provided via stdin. Default: `None`
 
 The script provides detailed output for each step it performs, prefixed with
 `NighthawkEnvoyUpdate:` or `....EnvoyCommitIntegration:` for sub-steps.
@@ -71,6 +74,21 @@ manual step (like resolving merge conflicts):
 
 The script will detect the existing branch, rebase it on `origin/main` if
 necessary, and attempt to continue the update process.
+
+### LLM-in-the-loop automated integration fix
+
+To experimentaly enable automated fixes, you can use the `--agent_invocation`
+argument. The utility will use the specified command (e.g. `gemini`) when a step
+fails and pass a detailed prompt via stdin. The agent can then attempt to modify
+the files in your local Nighthawk repository to resolve the issue. The utility
+gives the agent 3 tries to fix an error before returning the error to the user.
+
+```bash
+./tools/nighthawk_envoy_updater.py \
+  --nighthawk_dir ~/my_local_nighthawk_git_repo \
+  --branch_name my-envoy-update-with-agent \
+  --agent_invocation gemini
+```
 
 ### Outcomes
 
