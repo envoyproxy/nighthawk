@@ -25,5 +25,8 @@ fi
 docker login -u "$DOCKERHUB_USERNAME" -p "$DOCKERHUB_PASSWORD"
 
 docker push "${DOCKER_IMAGE_PREFIX}-dev:latest"
+
+# Push image tagged with Github SHA.
 docker tag "${DOCKER_IMAGE_PREFIX}-dev:latest" \
   "${DOCKER_IMAGE_PREFIX}-dev:${GH_SHA1}"
+docker push "${DOCKER_IMAGE_PREFIX}-dev:${GH_SHA1}"
