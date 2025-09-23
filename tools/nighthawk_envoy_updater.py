@@ -23,12 +23,16 @@ from typing import Generic, TypeVar
 
 MAX_AGENT_ATTEMPTS = 3
 
+# Files Nighthawk re-uses verbatim from its Envoy dependency.
+copied_files: list[str] = [
+    ".bazelversion",
+    "ci/run_envoy_docker.sh",
+]
+
 # Files Nighthawk re-uses (almost) verbatim from its Envoy dependency.
 shared_files: list[str] = [
     ".bazelrc",
-    ".bazelversion",
     "ci/docker-compose.yml",
-    "ci/run_envoy_docker.sh",
     "tools/code_format/config.yaml",
     "tools/gen_compilation_database.py",
 ]
@@ -215,7 +219,8 @@ class StepHandler(Generic[TStep]):
         "nighthawk_git_repo_dir to resolve the error. The primary goal ",
         "is to make the failing command pass:",
         f"```sh\n{cmd}\n```",
-        "Avoid changing the behavior of Nighthawk's tests, if possible.",
+        "Avoid changing the behavior of Nighthawk's tests, if possible. ",
+        "Avoid changing compilation flags, if possible. ",
         "The Envoy source code for the target commit is available in a tmp ",
         "directory under the Nighthawk project root parent, envoy_git_repo_dir.",
     ])
@@ -272,6 +277,7 @@ class EnvoyCommitIntegrationStep(enum.Enum):
   RESET_NIGHTHAWK_REPO = enum.auto()
   GET_ENVOY_SHA = enum.auto()
   SET_NIGHTHAWK_BAZEL_DEP = enum.auto()
+  COPY_EXACT_FILES = enum.auto()
   PATCH_SHARED_FILES = enum.auto()
   BAZEL_UPDATE_REQUIREMENTS = enum.auto()
   BUILD_NIGHTHAWK = enum.auto()
@@ -357,6 +363,13 @@ class EnvoyCommitIntegration(StepHandler[EnvoyCommitIntegrationStep]):
             new_pattern=f'ENVOY_SHA = "{self.envoy_sha}"',
             filename=str(repo_file),
         )
+      case EnvoyCommitIntegrationStep.COPY_EXACT_FILES:
+        for copied_file in copied_files:
+          _run_command([
+              "cp",
+              f"{self.envoy_git_repo_dir}/{copied_file}",
+              f"{self.nighthawk_git_repo_dir}/{copied_file}",
+          ])
       case EnvoyCommitIntegrationStep.PATCH_SHARED_FILES:
         patch_file_name = _run_command(["mktemp"])
         _run_command(
