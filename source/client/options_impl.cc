@@ -1,5 +1,9 @@
 #include "source/client/options_impl.h"
 
+#include <cerrno>
+#include <cstdint>
+#include <exception>
+
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"
 #include "external/envoy/source/common/protobuf/utility.h"
@@ -12,6 +16,7 @@
 #include "source/common/version_info.h"
 
 #include "absl/strings/numbers.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "absl/types/optional.h"
 #include "fmt/ranges.h"
@@ -83,6 +88,35 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "with --protocol http3. Mutually exclusive with any other command line option that would "
       "modify the http3 protocol options, e.g. --max-concurrent-streams. Example (json): "
       "{quic_protocol_options:{max_concurrent_streams:1}}",
+      false, "", "string", cmd);
+
+  std::vector<std::string> tunnel_protocols = {"http1", "http2", "http3"};
+  TCLAP::ValuesConstraint<std::string> tunnel_protocols_allowed(tunnel_protocols);
+  TCLAP::ValueArg<std::string> tunnel_protocol(
+      "", "tunnel-protocol",
+      fmt::format(
+          "The protocol for setting up tunnel encapsulation. Possible values: [http1, http2, "
+          "http3]. The default protocol is '{}' "
+          "Combinations not supported currently are protocol = HTTP3 and tunnel_protocol = HTTP1."
+          " and protocol = HTTP3 and tunnel_protocol = HTTP3."
+          " When protocol is set to HTTP3 and tunneling is enabled, the CONNECT-UDP method is used"
+          " Otherwise, the HTTP CONNECT method is used",
+          absl::AsciiStrToLower(
+              nighthawk::client::Protocol_ProtocolOptions_Name(tunnel_protocol_))),
+      false, "", &tunnel_protocols_allowed, cmd);
+  TCLAP::ValueArg<std::string> tunnel_uri(
+      "", "tunnel-uri",
+      fmt::format(
+          "The address of the proxy. Possible values: [http1, http2, "
+          "http3]. The default protocol is '{}' ",
+          absl::AsciiStrToLower(nighthawk::client::Protocol_ProtocolOptions_Name(protocol_))),
+      false, "", "string", cmd);
+  TCLAP::ValueArg<std::string> tunnel_tls_context(
+      "", "tunnel-tls-context",
+      "Upstream TlS context configuration in json."
+      " Required to encapsulate in HTTP3"
+      " Example (json): "
+      " {common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]}}}",
       false, "", "string", cmd);
 
   TCLAP::ValueArg<std::string> concurrency(
@@ -677,6 +711,46 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
     }
   }
 
+  if (tunnel_protocol.isSet()) {
+    std::string upper_cased = tunnel_protocol.getValue();
+    absl::AsciiStrToUpper(&upper_cased);
+    RELEASE_ASSERT(
+        nighthawk::client::Protocol::ProtocolOptions_Parse(upper_cased, &tunnel_protocol_),
+        "Failed to parse tunnel protocol");
+    if (!tunnel_uri.isSet()) {
+      throw MalformedArgvException("--tunnel-protocol requires --tunnel-uri");
+    }
+    tunnel_uri_ = tunnel_uri.getValue();
+    encap_port_ = Utility::GetAvailablePort(/*udp=*/protocol_ == Protocol::HTTP3, address_family_);
+
+  } else if (tunnel_uri.isSet() || tunnel_tls_context.isSet()) {
+    throw MalformedArgvException("tunnel flags require --tunnel-protocol");
+  }
+
+  if (!tunnel_tls_context.getValue().empty()) {
+    try {
+      tunnel_tls_context_.emplace(
+          envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext());
+      Envoy::MessageUtil::loadFromJson(tunnel_tls_context.getValue(), tunnel_tls_context_.value(),
+                                       Envoy::ProtobufMessage::getStrictValidationVisitor());
+    } catch (const Envoy::EnvoyException& e) {
+      throw MalformedArgvException(e.what());
+    }
+  } else if (tunnel_protocol_ == Protocol::HTTP3) {
+    throw MalformedArgvException("--tunnel-tls-context is required to use --tunnel-protocol http3");
+  }
+
+  if (tunnel_protocol.isSet()) {
+    if (tunnel_protocol_ == Protocol::HTTP3 && protocol_ == Protocol::HTTP3) {
+      throw MalformedArgvException(
+          "--protocol HTTP3 over --tunnel-protocol HTTP3 is not supported");
+    }
+    if (tunnel_protocol_ == Protocol::HTTP1 && protocol_ == Protocol::HTTP3) {
+      throw MalformedArgvException(
+          "--protocol HTTP3 over --tunnel-protocol HTTP1 is not supported");
+    }
+  }
+
   validate();
 }
 
@@ -684,6 +758,16 @@ Envoy::Http::Protocol OptionsImpl::protocol() const {
   if (h2_ || protocol_ == Protocol::HTTP2) {
     return Envoy::Http::Protocol::Http2;
   } else if (protocol_ == Protocol::HTTP3) {
+    return Envoy::Http::Protocol::Http3;
+  } else {
+    return Envoy::Http::Protocol::Http11;
+  }
+}
+
+Envoy::Http::Protocol OptionsImpl::tunnelProtocol() const {
+  if (tunnel_protocol_ == Protocol::HTTP2) {
+    return Envoy::Http::Protocol::Http2;
+  } else if (tunnel_protocol_ == Protocol::HTTP3) {
     return Envoy::Http::Protocol::Http3;
   } else {
     return Envoy::Http::Protocol::Http11;
@@ -752,6 +836,18 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
       PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, prefetch_connections, prefetch_connections_);
   burst_size_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, burst_size, burst_size_);
   address_family_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, address_family, address_family_);
+
+  if (options.has_tunnel_options()) {
+    tunnel_protocol_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options.tunnel_options(), tunnel_protocol,
+                                                       tunnel_protocol_);
+    tunnel_uri_ = options.tunnel_options().tunnel_uri();
+
+    // we must find an available port for the encap listener
+    encap_port_ =
+        Utility::GetAvailablePort(/*is_udp=*/protocol_ == Protocol::HTTP3, address_family_);
+
+    tunnel_tls_context_->MergeFrom(options.tunnel_options().tunnel_tls_context());
+  }
 
   if (options.has_request_options()) {
     const auto& request_options = options.request_options();

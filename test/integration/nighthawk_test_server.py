@@ -220,6 +220,7 @@ class TestServerBase(SubprocessMixin):
     try:
       listeners = self.fetchJsonFromAdminInterface("/listeners?format=json")
       # We assume the listeners all use the same address.
+
       for listener in listeners["listener_statuses"]:
         port = listener["local_address"]["socket_address"]["port_value"]
         self.server_ports.append(port)
@@ -275,7 +276,7 @@ class TestServerBase(SubprocessMixin):
 
 
 class NighthawkTestServer(TestServerBase):
-  """Run the Nighthawk test server in a separate process.
+  """Run the Nighthawk test server or envoy in a separate process.
 
   Passes in the right cli-arg to point it to its
   configuration. For, say, NGINX this would be '-c' instead.
@@ -289,7 +290,7 @@ class NighthawkTestServer(TestServerBase):
                request,
                parameters=dict(),
                tag=""):
-    """Initialize a NighthawkTestServer instance.
+    """Initialize a NighthawkTestServer instance or an envoy instance.
 
     Args:
         server_binary_path (String): Path to the nighthawk test server binary.
