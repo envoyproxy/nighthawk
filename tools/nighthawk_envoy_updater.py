@@ -338,7 +338,7 @@ class EnvoyCommitIntegration(StepHandler[EnvoyCommitIntegrationStep]):
     match step:
       case EnvoyCommitIntegrationStep.RESET_NIGHTHAWK_REPO:
         _run_command(["git", "reset", "--hard", "HEAD"], cwd=self.nighthawk_git_repo_dir)
-        _run_command(["git", "clean", "-fdx"], cwd=self.nighthawk_git_repo_dir)
+        _run_command(["git", "clean", "-fd"], cwd=self.nighthawk_git_repo_dir)
       case EnvoyCommitIntegrationStep.GET_ENVOY_SHA:
         tarball_url = f"https://github.com/envoyproxy/envoy/archive/{self.target_envoy_commit}.tar.gz"
         self.envoy_sha = _run_command(
