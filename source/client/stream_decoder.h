@@ -84,6 +84,7 @@ public:
   void decodeTrailers(Envoy::Http::ResponseTrailerMapPtr&& trailers) override;
   void decodeMetadata(Envoy::Http::MetadataMapPtr&&) override { PANIC("not implemented"); }
   void dumpState(std::ostream&, int) const override { PANIC("not implemented"); }
+  Envoy::Http::ResponseDecoderHandlePtr createResponseDecoderHandle() override { return nullptr; }
 
   // Http::StreamCallbacks
   void onResetStream(Envoy::Http::StreamResetReason reason,

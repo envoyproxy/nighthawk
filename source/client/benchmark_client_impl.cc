@@ -192,6 +192,7 @@ bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completi
       *statistic_.connect_statistic, *statistic_.response_statistic,
       *statistic_.response_header_size_statistic, *statistic_.response_body_size_statistic,
       *statistic_.origin_latency_statistic, request->header(), request->body(),
+
       shouldMeasureLatencies(), content_length, generator_, tracer_, latency_response_header_name_);
   requests_initiated_++;
   pool_data.value().newStream(*stream_decoder, *stream_decoder,
