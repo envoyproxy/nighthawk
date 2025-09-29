@@ -60,6 +60,8 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
   benchmark_client->setMaxPendingRequests(options_.maxPendingRequests());
   benchmark_client->setMaxActiveRequests(options_.maxActiveRequests());
   benchmark_client->setMaxRequestsPerConnection(options_.maxRequestsPerConnection());
+  benchmark_client->setTimeout(options_.timeout());
+
   return benchmark_client;
 }
 

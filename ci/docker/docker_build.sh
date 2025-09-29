@@ -10,8 +10,8 @@ set -e
 # publishing sensitive information into public CI logs if someone makes a change in a
 # consuming script that is off guard.
 
-DOCKER_NAME="nighthawk"
-DOCKER_IMAGE_PREFIX="envoyproxy/${DOCKER_NAME}"
+DOCKER_IMAGE_PREFIX="${DOCKER_IMAGE_PREFIX:-envoyproxy/nighthawk}"
+
 BINARIES=(nighthawk_test_server nighthawk_client nighthawk_service nighthawk_output_transform nighthawk_adaptive_load_client)
 BAZEL_BIN="$(bazel info -c opt bazel-bin)"
 WORKSPACE="$(bazel info workspace)"
@@ -33,6 +33,6 @@ done
 
 cd "${TMP_DIR}"
 echo "running docker build ... "
-docker build -f "${TMP_DIR}/Dockerfile-${DOCKER_NAME}" -t "${DOCKER_IMAGE_PREFIX}-dev:latest" .
+docker build -f "${TMP_DIR}/Dockerfile-nighthawk" -t "${DOCKER_IMAGE_PREFIX}-dev:latest" .
 rm -rf "${TMP_DIR}"
 echo "docker build finished"
