@@ -38,6 +38,7 @@
 #include "external/envoy/source/common/singleton/manager_impl.h"
 #include "external/envoy/source/common/stats/tag_producer_impl.h"
 #include "external/envoy/source/common/thread_local/thread_local_impl.h"
+#include "external/envoy/source/exe/main_common.h"
 #include "external/envoy/source/server/null_overload_manager.h"
 #include "external/envoy/source/server/server.h"
 #include "external/envoy_api/envoy/config/core/v3/resolver.pb.h"
@@ -652,6 +653,12 @@ ProcessImpl::~ProcessImpl() {
 }
 
 void ProcessImpl::shutdown() {
+  if (encap_runner_ != nullptr) {
+    auto status = encap_runner_->TerminateEncapSubProcess();
+    if (status != absl::OkStatus()) {
+      ENVOY_LOG(error, status);
+    }
+  }
   // Before we shut down the worker threads, stop threading.
   tls_.shutdownGlobalThreading();
   store_root_.shutdownThreading();
@@ -681,10 +688,16 @@ void ProcessImpl::shutdown() {
 }
 
 bool ProcessImpl::requestExecutionCancellation() {
-  ENVOY_LOG(debug, "Requesting workers to cancel execution");
   auto guard = std::make_unique<Envoy::Thread::LockGuard>(workers_lock_);
   for (auto& worker : workers_) {
     worker->requestExecutionCancellation();
+  }
+  if (encap_runner_ != nullptr) {
+    auto status = encap_runner_->TerminateEncapSubProcess();
+    if (status != absl::OkStatus()) {
+      ENVOY_LOG(error, status);
+      return false;
+    }
   }
   cancelled_ = true;
   return true;
@@ -762,7 +775,10 @@ ProcessImpl::mergeWorkerStatistics(const std::vector<ClientWorkerPtr>& workers) 
   // (We always have at least one worker, and all workers have the same number of Statistic
   // instances associated to them, in the same order).
   std::vector<StatisticPtr> merged_statistics;
-  StatisticPtrMap w0_statistics = workers[0]->statistics();
+  StatisticPtrMap w0_statistics;
+  if (!workers.empty()) {
+    w0_statistics = workers[0]->statistics();
+  }
   for (const auto& w0_statistic : w0_statistics) {
     auto new_statistic = w0_statistic.second->createNewInstanceOfSameType();
     new_statistic->setId(w0_statistic.first);
@@ -866,116 +882,206 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
                               const Envoy::Network::DnsResolverSharedPtr& dns_resolver,
                               const absl::optional<Envoy::SystemTime>& scheduled_start) {
   const Envoy::SystemTime now = time_system_.systemTime();
+  std::shared_ptr<Envoy::MainCommonBase> encap_main_common = nullptr;
+
   if (scheduled_start.value_or(now) < now) {
     ENVOY_LOG(error, "Scheduled execution date already transpired.");
     return false;
   }
-  {
-    auto guard = std::make_unique<Envoy::Thread::LockGuard>(workers_lock_);
-    if (cancelled_) {
-      return true;
-    }
-    shutdown_ = false;
 
-    // Needs to happen as early as possible (before createWorkers()) in the instantiation to preempt
-    // the objects that require stats.
-    if (!options_.statsSinks().empty()) {
-      absl::StatusOr<Envoy::Stats::TagProducerPtr> producer_or_error =
-          Envoy::Stats::TagProducerImpl::createTagProducer(bootstrap_.stats_config(),
-                                                           envoy_options_.statsTags());
-      if (!producer_or_error.ok()) {
-        ENVOY_LOG(error, "createTagProducer failed. Received bad status: {}",
-                  producer_or_error.status());
-        return false;
-      }
-      store_root_.setTagProducer(std::move(producer_or_error.value()));
-    }
+  Bootstrap encap_bootstrap;
 
-    absl::Status workers_status = createWorkers(number_of_workers_, scheduled_start);
-    if (!workers_status.ok()) {
-      ENVOY_LOG(error, "createWorkers failed. Received bad status: {}", workers_status.message());
+  if (!options_.tunnelUri().empty()) {
+    // Spin up an envoy for tunnel encapsulation.
+
+    UriImpl tunnel_uri(options_.tunnelUri());
+
+    auto status_or_bootstrap =
+        createEncapBootstrap(options_, tunnel_uri, *dispatcher_.get(), dns_resolver);
+    if (!status_or_bootstrap.ok()) {
+      ENVOY_LOG(error, status_or_bootstrap.status().ToString());
       return false;
     }
-    tls_.registerThread(*dispatcher_, true);
-    store_root_.initializeThreading(*dispatcher_, tls_);
-
-    absl::StatusOr<Envoy::Runtime::LoaderPtr> loader = Envoy::Runtime::LoaderImpl::create(
-        *dispatcher_, tls_, {}, *local_info_, store_root_, generator_,
-        Envoy::ProtobufMessage::getStrictValidationVisitor(), *api_);
-
-    if (!loader.ok()) {
-      ENVOY_LOG(error, "create runtime loader failed. Received bad status: {}", loader.status());
-      return false;
-    }
-
-    runtime_loader_ = *std::move(loader);
-
-    server_ = std::make_unique<NighthawkServerInstance>(
-        admin_, *api_, *dispatcher_, access_log_manager_, envoy_options_, *runtime_loader_.get(),
-        *singleton_manager_, tls_, *local_info_, validation_context_, grpc_context_, http_context_,
-        router_context_, store_root_, secret_manager_);
-    ssl_context_manager_ =
-        std::make_unique<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>(
-            server_->serverFactoryContext());
-    dynamic_cast<NighthawkServerFactoryContext*>(&server_->serverFactoryContext())
-        ->setSslContextManager(*ssl_context_manager_);
-    cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
-        server_->serverFactoryContext(),
-        [dns_resolver]() -> Envoy::Network::DnsResolverSharedPtr { return dns_resolver; },
-        quic_stat_names_);
-    cluster_manager_factory_->setConnectionReuseStrategy(
-        options_.h1ConnectionReuseStrategy() == nighthawk::client::H1ConnectionReuseStrategy::LRU
-            ? Http1PoolImpl::ConnectionReuseStrategy::LRU
-            : Http1PoolImpl::ConnectionReuseStrategy::MRU);
-    cluster_manager_factory_->setPrefetchConnections(options_.prefetchConnections());
-    if (tracing_uri != nullptr) {
-      setupTracingImplementation(bootstrap_, *tracing_uri);
-      addTracingCluster(bootstrap_, *tracing_uri);
-    }
-    ENVOY_LOG(debug, "Computed configuration: {}", absl::StrCat(bootstrap_));
-    absl::StatusOr<Envoy::Upstream::ClusterManagerPtr> cluster_manager =
-        cluster_manager_factory_->clusterManagerFromProto(bootstrap_);
-    if (!cluster_manager.ok()) {
-      ENVOY_LOG(error, "clusterManagerFromProto failed. Received bad status: {}",
-                cluster_manager.status().message());
-      return false;
-    }
-    cluster_manager_ = std::move(*cluster_manager);
-    dynamic_cast<NighthawkServerFactoryContext*>(&server_->serverFactoryContext())
-        ->setClusterManager(*cluster_manager_);
-    absl::Status status = cluster_manager_->initialize(bootstrap_);
-    if (!status.ok()) {
-      ENVOY_LOG(error, "cluster_manager initialize failed. Received bad status: {}",
-                status.message());
-      return false;
-    }
-    maybeCreateTracingDriver(bootstrap_.tracing());
-    cluster_manager_->setInitializedCb(
-        [this]() -> void { init_manager_.initialize(init_watcher_); });
-
-    absl::Status initialize_status = runtime_loader_->initialize(*cluster_manager_);
-    if (!initialize_status.ok()) {
-      ENVOY_LOG(error, "runtime_loader initialize failed. Received bad status: {}",
-                initialize_status.message());
-      return false;
-    }
-
-    std::list<std::unique_ptr<Envoy::Stats::Sink>> stats_sinks;
-    setupStatsSinks(bootstrap_, stats_sinks);
-    std::chrono::milliseconds stats_flush_interval = std::chrono::milliseconds(
-        Envoy::DurationUtil::durationToMilliseconds(bootstrap_.stats_flush_interval()));
-
-    if (!options_.statsSinks().empty()) {
-      // There should be only a single live flush worker instance at any time.
-      flush_worker_ = std::make_unique<FlushWorkerImpl>(
-          stats_flush_interval, *api_, tls_, store_root_, stats_sinks, *cluster_manager_);
-      flush_worker_->start();
-    }
-
-    for (auto& w : workers_) {
-      w->start();
-    }
+    encap_bootstrap = *status_or_bootstrap;
   }
+
+  std::function<void(sem_t&)> envoy_routine = [this, &encap_main_common,
+                                               &encap_bootstrap](sem_t& nighthawk_control_sem) {
+    const Envoy::OptionsImpl::HotRestartVersionCb hot_restart_version_cb = [](bool) {
+      return "disabled";
+    };
+
+    std::string lower = absl::AsciiStrToLower(
+        nighthawk::client::Verbosity::VerbosityOptions_Name(options_.verbosity()));
+
+    Envoy::OptionsImpl envoy_options({"encap_envoy"}, hot_restart_version_cb,
+                                     spdlog::level::from_str(lower));
+
+    ENVOY_LOG(info, encap_bootstrap.DebugString());
+    envoy_options.setConfigProto(encap_bootstrap);
+    // for now, match the concurrency of nighthawk
+    envoy_options.setConcurrency(number_of_workers_);
+
+    Envoy::ProdComponentFactory prod_component_factory;
+    auto listener_test_hooks = std::make_unique<Envoy::DefaultListenerHooks>();
+
+    if (!options_.tunnelUri().empty()) {
+      // Spin up an envoy for tunnel encapsulation.
+      try {
+        encap_main_common = std::make_shared<Envoy::MainCommonBase>(
+            envoy_options, time_system_, *listener_test_hooks, prod_component_factory,
+            std::make_unique<Envoy::PlatformImpl>(),
+            std::make_unique<Envoy::Random::RandomGeneratorImpl>(), nullptr);
+
+        // spin up envoy thread that first manages envoy.
+        auto startup_envoy_thread_ptr =
+            encap_main_common->server()->lifecycleNotifier().registerCallback(
+                NighthawkLifecycleNotifierImpl::Stage::PostInit, [&nighthawk_control_sem]() {
+                  // signal nighthawk to start.
+                  sem_post(&nighthawk_control_sem);
+                });
+        encap_main_common->run();
+      } catch (const Envoy::EnvoyException& ex) {
+        std::cout << "error caught by envoy " << ex.what() << std::endl;
+        ENVOY_LOG(error, ex.what());
+        // let nighthawk start and close envoy process
+        sem_post(&nighthawk_control_sem);
+      }
+    } else {
+      sem_post(&nighthawk_control_sem);
+    }
+  };
+
+  bool result = true;
+  std::function<void()> nigthawk_fn = [this, &result, &dns_resolver, &scheduled_start,
+                                       &tracing_uri]() {
+    {
+      auto guard = std::make_unique<Envoy::Thread::LockGuard>(workers_lock_);
+      if (cancelled_) {
+        return;
+      }
+      shutdown_ = false;
+
+      // Needs to happen as early as possible (before createWorkers()) in the instantiation to
+      // preempt the objects that require stats.
+      if (!options_.statsSinks().empty()) {
+        absl::StatusOr<Envoy::Stats::TagProducerPtr> producer_or_error =
+            Envoy::Stats::TagProducerImpl::createTagProducer(bootstrap_.stats_config(),
+                                                             envoy_options_.statsTags());
+        if (!producer_or_error.ok()) {
+          ENVOY_LOG(error, "createTagProducer failed. Received bad status: {}",
+                    producer_or_error.status());
+          result = false;
+          return;
+        }
+        store_root_.setTagProducer(std::move(producer_or_error.value()));
+      }
+
+      absl::Status workers_status = createWorkers(number_of_workers_, scheduled_start);
+      if (!workers_status.ok()) {
+        ENVOY_LOG(error, "createWorkers failed. Received bad status: {}", workers_status.message());
+        result = false;
+        return;
+      }
+      tls_.registerThread(*dispatcher_, true);
+      store_root_.initializeThreading(*dispatcher_, tls_);
+
+      absl::StatusOr<Envoy::Runtime::LoaderPtr> loader = Envoy::Runtime::LoaderImpl::create(
+          *dispatcher_, tls_, {}, *local_info_, store_root_, generator_,
+          Envoy::ProtobufMessage::getStrictValidationVisitor(), *api_);
+
+      if (!loader.ok()) {
+        ENVOY_LOG(error, "create runtime loader failed. Received bad status: {}", loader.status());
+        result = false;
+        return;
+      }
+
+      runtime_loader_ = *std::move(loader);
+
+      server_ = std::make_unique<NighthawkServerInstance>(
+          admin_, *api_, *dispatcher_, access_log_manager_, envoy_options_, *runtime_loader_.get(),
+          *singleton_manager_, tls_, *local_info_, validation_context_, grpc_context_,
+          http_context_, router_context_, store_root_, secret_manager_);
+      ssl_context_manager_ =
+          std::make_unique<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>(
+              server_->serverFactoryContext());
+      dynamic_cast<NighthawkServerFactoryContext*>(&server_->serverFactoryContext())
+          ->setSslContextManager(*ssl_context_manager_);
+      cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
+          server_->serverFactoryContext(),
+          [dns_resolver]() -> Envoy::Network::DnsResolverSharedPtr { return dns_resolver; },
+          quic_stat_names_);
+      cluster_manager_factory_->setConnectionReuseStrategy(
+          options_.h1ConnectionReuseStrategy() == nighthawk::client::H1ConnectionReuseStrategy::LRU
+              ? Http1PoolImpl::ConnectionReuseStrategy::LRU
+              : Http1PoolImpl::ConnectionReuseStrategy::MRU);
+      cluster_manager_factory_->setPrefetchConnections(options_.prefetchConnections());
+      if (tracing_uri != nullptr) {
+        setupTracingImplementation(bootstrap_, *tracing_uri);
+        addTracingCluster(bootstrap_, *tracing_uri);
+      }
+      ENVOY_LOG(debug, "Computed configuration: {}", absl::StrCat(bootstrap_));
+      absl::StatusOr<Envoy::Upstream::ClusterManagerPtr> cluster_manager =
+          cluster_manager_factory_->clusterManagerFromProto(bootstrap_);
+      if (!cluster_manager.ok()) {
+        ENVOY_LOG(error, "clusterManagerFromProto failed. Received bad status: {}",
+                  cluster_manager.status().message());
+        result = false;
+        return;
+      }
+      cluster_manager_ = std::move(*cluster_manager);
+      dynamic_cast<NighthawkServerFactoryContext*>(&server_->serverFactoryContext())
+          ->setClusterManager(*cluster_manager_);
+      absl::Status status = cluster_manager_->initialize(bootstrap_);
+      if (!status.ok()) {
+        ENVOY_LOG(error, "cluster_manager initialize failed. Received bad status: {}",
+                  status.message());
+        result = false;
+        return;
+      }
+      maybeCreateTracingDriver(bootstrap_.tracing());
+      cluster_manager_->setInitializedCb(
+          [this]() -> void { init_manager_.initialize(init_watcher_); });
+
+      absl::Status initialize_status = runtime_loader_->initialize(*cluster_manager_);
+      if (!initialize_status.ok()) {
+        ENVOY_LOG(error, "runtime_loader initialize failed. Received bad status: {}",
+                  initialize_status.message());
+        result = false;
+        return;
+      }
+
+      std::list<std::unique_ptr<Envoy::Stats::Sink>> stats_sinks;
+      setupStatsSinks(bootstrap_, stats_sinks);
+      std::chrono::milliseconds stats_flush_interval = std::chrono::milliseconds(
+          Envoy::DurationUtil::durationToMilliseconds(bootstrap_.stats_flush_interval()));
+
+      ENVOY_LOG(error, bootstrap_.DebugString());
+
+      if (!options_.statsSinks().empty()) {
+        // There should be only a single live flush worker instance at any time.
+        flush_worker_ = std::make_unique<FlushWorkerImpl>(
+            stats_flush_interval, *api_, tls_, store_root_, stats_sinks, *cluster_manager_);
+        flush_worker_->start();
+      }
+
+      for (auto& w : workers_) {
+        w->start();
+      }
+    }
+  };
+  encap_runner_ = std::make_shared<EncapsulationSubProcessRunner>(nigthawk_fn, envoy_routine);
+  auto status = encap_runner_->Run();
+
+  if (!result) {
+    return result;
+  }
+
+  if (!status.ok()) {
+    ENVOY_LOG(error, status);
+    return false;
+  }
+
   for (auto& w : workers_) {
     w->waitForCompletion();
   }
@@ -1031,9 +1137,11 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
   std::vector<nighthawk::client::UserDefinedOutput> global_user_defined_outputs =
       compileGlobalUserDefinedPluginOutputs(user_defined_outputs_by_plugin,
                                             user_defined_output_factories_);
-  collector.addResult("global", mergeWorkerStatistics(workers_), counters,
-                      total_execution_duration / workers_.size(), first_acquisition_time,
-                      global_user_defined_outputs);
+  if (workers_.size() > 0) {
+    collector.addResult("global", mergeWorkerStatistics(workers_), counters,
+                        total_execution_duration / workers_.size(), first_acquisition_time,
+                        global_user_defined_outputs);
+  }
   if (counters.find("sequencer.failed_terminations") == counters.end()) {
     return true;
   } else {
