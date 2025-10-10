@@ -38,6 +38,7 @@ build --tool_java_language_version=11
 build --copt=-DABSL_MIN_LOG_LEVEL=4
 # Global C++ standard and common warning suppressions
 build --cxxopt=-std=c++20 --host_cxxopt=-std=c++20
+build --cxxopt=-Wno-error=missing-requires
 build --copt=-Wno-deprecated-declarations
 build --define envoy_mobile_listener=enabled
 build --experimental_repository_downloader_retries=2
@@ -398,7 +399,7 @@ build:compile-time-options --@envoy//source/extensions/filters/http/kill_request
 
 # Docker sandbox
 # NOTE: Update this from https://github.com/envoyproxy/envoy-build-tools/blob/main/toolchains/rbe_toolchains_config.bzl#L8
-build:docker-sandbox --experimental_docker_image=envoyproxy/envoy-build-ubuntu:f4a881a1205e8e6db1a57162faf3df7aed88eae8@sha256:b10346fe2eee41733dbab0e02322c47a538bf3938d093a5daebad9699860b814
+build:docker-sandbox --experimental_docker_image=docker.io/envoyproxy/envoy-build-ubuntu:f4a881a1205e8e6db1a57162faf3df7aed88eae8@sha256:b10346fe2eee41733dbab0e02322c47a538bf3938d093a5daebad9699860b814
 build:docker-sandbox --spawn_strategy=docker
 build:docker-sandbox --strategy=Javac=docker
 build:docker-sandbox --strategy=Closure=docker
