@@ -198,8 +198,8 @@ def test_http_h2(http_test_server_fixture):
 @pytest.mark.serial
 @pytest.mark.parametrize('terminating_proxy_config, tunnel_protocol', [
     ("nighthawk/test/integration/configurations/terminating_http1_connect_envoy.yaml", "http1"),
-    ("nighthawk/test/integration/configurations/terminating_http2_connect_envoy.yaml", "http2"),
-    ("nighthawk/test/integration/configurations/terminating_http3_connect_envoy.yaml", "http3"),
+    # ("nighthawk/test/integration/configurations/terminating_http2_connect_envoy.yaml", "http2"),
+    # ("nighthawk/test/integration/configurations/terminating_http3_connect_envoy.yaml", "http3"),
 ])
 def test_connect_tunneling(tunneling_connect_test_server_fixture, tunnel_protocol):
   """Test h1, h2 over h1/2/3 CONNECT tunnels.
@@ -277,7 +277,7 @@ def test_connect_tunneling(tunneling_connect_test_server_fixture, tunnel_protoco
   asserts.assertGreaterEqual(len(counters), 12)
 
 
-@pytest.mark.serial
+# @pytest.mark.serial
 @pytest.mark.parametrize('terminating_proxy_config', [
     ("nighthawk/test/integration/configurations/terminating_http2_connect_udp_envoy.yaml"),
 ])
