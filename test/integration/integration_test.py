@@ -35,7 +35,7 @@ if __name__ == '__main__':
       plugins=["xdist"])
   if (r != 0):
     exit(r)
-  if not utility.isSanitizerRun():
+  if not utility.isTsanRun():
     r = pytest.main(
         [
             "--rootdir=" + path,

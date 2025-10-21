@@ -33,13 +33,31 @@ def parseUrisToSocketAddress(uris: list[str]) -> list[SocketAddress]:
   return addresses
 
 
+def isTsanRun():
+  """Determine if current execution is tsan.
+
+  Returns:
+      bool: True iff the current execution is determined to be a sanitizer run.
+  """
+  return True if os.environ.get("NH_INTEGRATION_TEST_THREAD_SANITIZER_RUN", 0) == "1" else False
+
+
+def isAsanRun():
+  """Determine if current execution is asan.
+
+  Returns:
+      bool: True iff the current execution is determined to be a sanitizer run.
+  """
+  return True if os.environ.get("NH_INTEGRATION_TEST_ADDRESS_SANITIZER_RUN", 0) == "1" else False
+
+
 def isSanitizerRun():
   """Determine if the current execution is a tsan/asan/ubsan run.
 
   Returns:
       bool: True iff the current execution is determined to be a sanitizer run.
   """
-  return True if os.environ.get("NH_INTEGRATION_TEST_SANITIZER_RUN", 0) == "1" else False
+  return True if isTsanRun() or isAsanRun() else False
 
 
 def run_binary_with_args(binary, args):
