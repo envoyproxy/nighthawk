@@ -39,6 +39,15 @@ public:
   absl::optional<std::string> uri() const override { return uri_; }
 
   Envoy::Http::Protocol protocol() const override;
+
+  Envoy::Http::Protocol tunnelProtocol() const override;
+  std::string tunnelUri() const override { return tunnel_uri_; }
+  uint32_t encapPort() const override { return encap_port_; }
+  virtual const absl::optional<envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext>
+  tunnelTlsContext() const override {
+    return tunnel_tls_context_;
+  }
+
   const absl::optional<envoy::config::core::v3::Http3ProtocolOptions>&
   http3ProtocolOptions() const override {
     return http3_protocol_options_;
@@ -138,6 +147,14 @@ private:
   absl::optional<envoy::config::core::v3::Http3ProtocolOptions> http3_protocol_options_;
 
   std::string concurrency_;
+
+  // Tunnel related options.
+  nighthawk::client::Protocol::ProtocolOptions tunnel_protocol_{nighthawk::client::Protocol::HTTP1};
+  std::string tunnel_uri_;
+  uint32_t encap_port_{0};
+  absl::optional<envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext>
+      tunnel_tls_context_;
+
   nighthawk::client::Verbosity::VerbosityOptions verbosity_{nighthawk::client::Verbosity::WARN};
   nighthawk::client::OutputFormat::OutputFormatOptions output_format_{
       nighthawk::client::OutputFormat::JSON};

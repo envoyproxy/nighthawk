@@ -20,6 +20,18 @@ public:
   MOCK_METHOD(Envoy::Http::Protocol, protocol, (), (const, override));
   MOCK_METHOD(absl::optional<envoy::config::core::v3::Http3ProtocolOptions>&, http3ProtocolOptions,
               (), (const, override));
+
+  // HTTP CONNECT/CONNECT-UDP Tunneling related options.
+  MOCK_METHOD(Envoy::Http::Protocol, tunnelProtocol, (), (const, override));
+  MOCK_METHOD(std::string, tunnelUri, (), (const PURE));
+  MOCK_METHOD(uint32_t, encapPort, (), (const PURE));
+  MOCK_METHOD(
+      const absl::optional<envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext>,
+      tunnelTlsContext, (), (const PURE));
+  MOCK_METHOD(const absl::optional<envoy::config::core::v3::Http3ProtocolOptions>&,
+              tunnelHttp3ProtocolOptions, (), (const PURE));
+
+  MOCK_METHOD(std::string, tunnelConcurrency, (), (const PURE));
   MOCK_METHOD(std::string, concurrency, (), (const, override));
   MOCK_METHOD(nighthawk::client::Verbosity::VerbosityOptions, verbosity, (), (const, override));
   MOCK_METHOD(nighthawk::client::OutputFormat::OutputFormatOptions, outputFormat, (),

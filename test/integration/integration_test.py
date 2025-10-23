@@ -21,6 +21,8 @@ if __name__ == '__main__':
           "no:cacheprovider",  # Avoid a bunch of warnings on readonly filesystems
           "-k",
           test_selection_arg,  # Passed in via BUILD/py_test()
+          "-m"
+          "not serial",
           "-x",
           path,
           "-n",
@@ -31,4 +33,26 @@ if __name__ == '__main__':
           "INFO",
       ],
       plugins=["xdist"])
+  if (r != 0):
+    exit(r)
+  if not utility.isTsanRun():
+    r = pytest.main(
+        [
+            "--rootdir=" + path,
+            "-p",
+            "no:cacheprovider",  # Avoid a bunch of warnings on readonly filesystems
+            "-k",
+            test_selection_arg,  # Passed in via BUILD/py_test()
+            "-m"
+            "serial",
+            "-x",
+            path,
+            "-n",
+            "1",  # Run in serial
+            "--log-level",
+            "INFO",
+            "--log-cli-level",
+            "INFO",
+        ],
+        plugins=["xdist"])
   exit(r)

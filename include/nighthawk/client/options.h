@@ -49,6 +49,13 @@ public:
   virtual const absl::optional<envoy::config::core::v3::Http3ProtocolOptions>&
   http3ProtocolOptions() const PURE;
 
+  // HTTP CONNECT/CONNECT-UDP Tunneling related options.
+  virtual Envoy::Http::Protocol tunnelProtocol() const PURE;
+  virtual std::string tunnelUri() const PURE;
+  virtual uint32_t encapPort() const PURE;
+  virtual const absl::optional<envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext>
+  tunnelTlsContext() const PURE;
+
   virtual std::string concurrency() const PURE;
   virtual nighthawk::client::Verbosity::VerbosityOptions verbosity() const PURE;
   virtual nighthawk::client::OutputFormat::OutputFormatOptions outputFormat() const PURE;
