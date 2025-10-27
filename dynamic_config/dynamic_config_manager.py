@@ -11,7 +11,7 @@ from envoy.config.endpoint.v3 import endpoint_pb2, endpoint_components_pb2
 from envoy.service.discovery.v3 import discovery_pb2
 from envoy.extensions.upstreams.http.v3 import http_protocol_options_pb2
 from envoy.extensions.transport_sockets.tls.v3 import tls_pb2
-from nighthawk.api.configuration import cluster_config_manager_pb2, endpoints_config_manager_pb2
+from api.configuration import cluster_config_manager_pb2, endpoints_config_manager_pb2
 
 import random
 import argparse
