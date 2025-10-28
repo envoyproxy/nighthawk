@@ -21,7 +21,8 @@ TMP_DIR="$(mktemp -d ${WORKSPACE}/tmp-docker-build-context-XXXXXXXX)"
 
 echo "Preparing docker build context in ${TMP_DIR}"
 cp -r "${WORKSPACE}/ci/docker/" "${TMP_DIR}/"
-cp -rL "${BAZEL_BIN}/benchmarks" "${TMP_DIR}"
+# Exclude any venv files since they aren't necessary and docker can't handle symlinks.
+rsync -a --exclude='*.venv/' "${BAZEL_BIN}/benchmarks" "${TMP_DIR}"
 
 cd "${TMP_DIR}"
 echo "running docker build ... "
