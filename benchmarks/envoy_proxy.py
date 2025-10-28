@@ -8,7 +8,7 @@ import logging
 import os
 import pytest
 import yaml
-from rules_python.python.runfiles import runfiles
+from python.runfiles import runfiles
 
 from test.integration import integration_test_fixtures, nighthawk_test_server, utility
 
