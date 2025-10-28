@@ -2,7 +2,7 @@
 
 from google.protobuf import any_pb2
 from test.integration import subprocess_mixin
-from rules_python.python.runfiles import runfiles
+from python.runfiles import runfiles
 import base64
 import os
 from os import path
