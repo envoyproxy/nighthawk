@@ -2,7 +2,7 @@
 
 import logging
 import json
-from rules_python.python.runfiles import runfiles
+from python.runfiles import runfiles
 import os
 import shutil
 

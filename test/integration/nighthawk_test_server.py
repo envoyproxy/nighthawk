@@ -16,7 +16,7 @@ import threading
 import time
 import yaml
 from pathlib import Path
-from rules_python.python.runfiles import runfiles
+from python.runfiles import runfiles
 
 from test.integration import utility
 from test.integration.common import IpVersion, NighthawkException

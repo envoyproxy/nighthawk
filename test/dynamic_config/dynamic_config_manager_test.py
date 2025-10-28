@@ -1,7 +1,7 @@
 """Tests for dynamic_config_manager."""
 
-from nighthawk.dynamic_config import dynamic_config_manager
-from nighthawk.api.configuration import cluster_config_manager_pb2, endpoints_config_manager_pb2
+from dynamic_config import dynamic_config_manager
+from api.configuration import cluster_config_manager_pb2, endpoints_config_manager_pb2
 from envoy.config.endpoint.v3 import endpoint_pb2
 from unittest import mock
 import pytest
