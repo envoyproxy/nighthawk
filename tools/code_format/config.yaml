@@ -228,7 +228,7 @@ paths:
     - source/extensions/tracers
     - source/extensions/transport_sockets/internal_upstream
     - source/extensions/transport_sockets/tls/cert_validator
-    - source/extensions/transport_sockets/tcp_stats/config.cc
+    - source/common/tracing/custom_tag_impl.cc
 
   # Only one C++ file should instantiate grpc_init
   grpc_init:
@@ -396,12 +396,12 @@ re:
   codeowners_contrib: (/contrib/[^@]*\s+)(@.*)
   codeowners_extensions: .*(extensions[^@]*\s+)(@.*)
   comment: //|\*
-  # Check for punctuation in a terminal ref clause, e.g.
+  # Check for punctuation in a terminal ref clause, e.g. 
   # :ref:`panic mode. <arch_overview_load_balancing_panic_threshold>`
   dot_multi_space: \. +
   duration_value: \b[Dd]uration\(([0-9.]+)
   # C++17 feature, lacks sufficient support across various libraries / compilers.
-  for_each_n: for_each_n\(
+  for_each_n: for_each_n\
   histogram_si_suffix: (?<=HISTOGRAM\()[a-zA-Z0-9_]+_(b|kb|mb|ns|us|ms|s)(?=,)
   line_number: ^(\d+)[a|c|d]?\d*(?:,\d+[a|c|d]?\d*)?$
   mangled_protobuf_name: envoy::[a-z0-9_:]+::[A-Z][a-z]\w*_\w*_[A-Z]{2}
@@ -410,9 +410,9 @@ re:
   old_mock_method: dontmatchanything                                           # unique
   owner: "@\\S+"
   runtime_guard_flag: RUNTIME_GUARD\((.*)\);
-  test_name_starting_lc: TEST(_.\(.*,\s|\()[a-z].*\)\s\{
-  virtual_include_headers: \#include.*/_virtual_includes/
-  x_envoy_used_directly: .*\"x-envoy-.*\".*
+  test_name_starting_lc: TEST(_\.\(.*,\s|\()[a-z].*\)\s\{
+  virtual_include_headers: #include.*/_virtual_includes/
+  x_envoy_used_directly: ."x-envoy-.*".*
 
 re_multiline:
   proto_package: ^package (\S+);\n*
@@ -422,63 +422,4 @@ replacements:
     # We can't just remove Times(1) everywhere, since .Times(1).WillRepeatedly
     # is a legitimate pattern. See
     # https://github.com/google/googletest/blob/master/googlemock/docs/for_dummies.md#cardinalities-how-many-times-will-it-be-called
-    ".Times(1);": ";"
-    # These may miss some cases, due to line breaks, but should reduce the
-    # Times(1) noise.
-    ".Times(1).WillOnce": ".WillOnce"
-    ".Times(1).WillRepeatedly": ".WillOnce"
-    "Stats::ScopePtr": "Stats::ScopeSharedPtr"
-
-  libcxx:
-    "absl::make_unique<": "std::make_unique<"
-
-  protobuf_type_errors:
-    "ProtobufUtil::MessageDifferencer": "Protobuf::util::MessageDifferencer"
-
-include_angle: "#include <"
-unsorted_flags:
-- envoy.reloadable_features.activate_timers_next_event_loop
-- envoy.reloadable_features.grpc_json_transcoder_adhere_to_buffer_limits
-- envoy.reloadable_features.sanitize_http_header_referer
-
-# https://github.com/envoyproxy/envoy/issues/20589
-# https://github.com/envoyproxy/envoy/issues/9953
-# PLEASE DO NOT ADD FILES TO THIS LIST WITHOUT SENIOR MAINTAINER APPROVAL
-visibility_excludes:
-- source/extensions/clusters/eds/
-- source/extensions/clusters/strict_dns/
-- source/extensions/clusters/static/
-- source/extensions/clusters/original_dst/
-- source/extensions/clusters/logical_dns/
-- source/extensions/clusters/dns/
-- source/extensions/early_data/BUILD
-- source/extensions/filters/http/buffer/BUILD
-- source/extensions/filters/network/common/BUILD
-- source/extensions/filters/network/generic_proxy/interface/BUILD
-- source/extensions/http/header_validators/envoy_default/BUILD
-- source/extensions/transport_sockets/common/BUILD
-- source/extensions/transport_sockets/tap/BUILD
-- source/extensions/udp_packet_writer/default/BUILD
-- source/extensions/udp_packet_writer/gso/BUILD
-- source/extensions/path/uri_template_lib/BUILD
-- source/extensions/path/match/uri_template/BUILD
-- source/extensions/path/rewrite/uri_template/BUILD
-- source/extensions/quic/connection_id_generator/BUILD
-- source/extensions/quic/server_preferred_address/BUILD
-- source/extensions/listener_managers/listener_manager/BUILD
-- source/extensions/upstreams/tcp/BUILD
-- source/extensions/health_check/event_sinks/BUILD
-- source/extensions/health_checkers/BUILD
-- source/extensions/health_checkers/BUILD
-- source/extensions/health_checkers/BUILD
-- source/extensions/config_subscription/rest/BUILD
-- source/extensions/config_subscription/filesystem/BUILD
-- source/extensions/config_subscription/grpc/BUILD
-- source/extensions/load_balancing_policies/subset/BUILD
-- source/extensions/load_balancing_policies/ring_hash/BUILD
-- source/extensions/load_balancing_policies/round_robin/
-- source/extensions/load_balancing_policies/least_request/
-- source/extensions/load_balancing_policies/random/
-- source/extensions/load_balancing_policies/cluster_provided/
-- source/extensions/filters/http/match_delegate/
-- source/extensions/transport_sockets/tls/
+    ".Times(1);":
