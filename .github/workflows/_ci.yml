@@ -36,7 +36,7 @@ jobs:
       packages: read
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5.0.1
     - name: Configure repo Bazel settings
       run: |
         echo "build:remote-envoy-engflow --config=bes-envoy-engflow" > repo.bazelrc

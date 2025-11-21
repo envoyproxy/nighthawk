@@ -228,6 +228,7 @@ public:
 
   // Envoy::Stats::Histogram
   void recordValue(uint64_t value) override;
+  void markUnused() override {}
   bool used() const override { return count() > 0; }
   bool hidden() const override { return false; }
   // Overriding name() to return Nighthawk::Statistic::id().
@@ -250,6 +251,7 @@ public:
 
   // Envoy::Stats::Histogram
   void recordValue(uint64_t value) override;
+  void markUnused() override {}
   bool used() const override { return count() > 0; }
   bool hidden() const override { return false; }
   // Overriding name() to return Nighthawk::Statistic::id().

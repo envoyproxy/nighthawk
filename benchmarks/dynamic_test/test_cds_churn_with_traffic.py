@@ -10,8 +10,8 @@ import os
 from dynamic_config_envoy_proxy import (inject_dynamic_envoy_http_proxy_fixture, proxy_config)
 from benchmarks import utilities as benchmarks_utilities
 from typing import Generator
-from rules_python.python.runfiles import runfiles
-from nighthawk.api.configuration import cluster_config_manager_pb2
+from python.runfiles import runfiles
+from api.configuration import cluster_config_manager_pb2
 from test.integration import utility
 
 _BENCHMARK_DURATION = int(os.environ.get("NIGHTHAWK_BENCHMARK_DURATION", 30))

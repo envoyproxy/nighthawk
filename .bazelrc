@@ -3,7 +3,7 @@
 # the Envoy repository contents via Bazel.                                                  # unique
                                                                                             # unique
 build:asan --test_timeout=900                                                               # unique
-build:tsan --test_timeout=900                                                               # unique
+build:tsan --test_timeout=3600                                                              # unique
 # See https://github.com/envoyproxy/nighthawk/issues/405                                    # unique
 build:macos --copt -UDEBUG                                                                  # unique
                                                                                             # unique
@@ -18,7 +18,7 @@ build:macos --copt -UDEBUG                                                      
 # The number 3G is chosen heuristically to both support large VM and small VM with RBE.
 # Startup options cannot be selected via config.
 # TODO: Adding just to test android
-startup --host_jvm_args=-Xmx3g
+startup --host_jvm_args="-DBAZEL_TRACK_SOURCE_DIRECTORIES=1"
 
 common --noenable_bzlmod
 
@@ -80,6 +80,9 @@ test --experimental_ui_max_stdouterr_bytes=11712829 #default 1048576
 # Allow tags to influence execution requirements
 common --experimental_allow_tags_propagation
 
+# Python
+common --@rules_python//python/config_settings:bootstrap_impl=script
+
 # Test configuration flags                                                                  # unique
 # Enable stress tests (expensive tests that are skipped by default)                         # unique
 test:stress --//test/config:run_stress_tests=True                                           # unique
@@ -103,6 +106,7 @@ build --@com_googlesource_googleurl//build_config:system_icu=0
 # Common flags for sanitizers
 build:sanitizer --define tcmalloc=disabled
 build:sanitizer --linkopt -ldl
+test:sanitizer --build_tests_only
 
 # Common flags for Clang (shared between all clang variants)
 build:clang-common --action_env=BAZEL_COMPILER=clang
@@ -192,6 +196,7 @@ build:asan --linkopt='-L/opt/llvm/lib/clang/18/lib/x86_64-unknown-linux-gnu'
 build:macos --action_env=PATH=/opt/homebrew/bin:/opt/local/bin:/usr/local/bin:/usr/bin:/bin
 build:macos --host_action_env=PATH=/opt/homebrew/bin:/opt/local/bin:/usr/local/bin:/usr/bin:/bin
 build:macos --define tcmalloc=disabled
+build:macos --cxxopt=-Wno-nullability-completeness
 
 # macOS ASAN/UBSAN
 build:macos-asan --config=asan
@@ -217,7 +222,7 @@ build:tsan --copt -DEVENT__DISABLE_DEBUG_MODE
 # https://github.com/abseil/abseil-cpp/issues/760
 # https://github.com/google/sanitizers/issues/953
 build:tsan --test_env="TSAN_OPTIONS=report_atomic_races=0"
-build:tsan --test_timeout=120,600,1500,4800
+#build:tsan --test_timeout=120,600,1500,4800                                                # unique
 
 # Base MSAN config
 build:msan --action_env=ENVOY_MSAN=1
@@ -293,7 +298,7 @@ build:fuzz-coverage --test_tag_filters=-nocoverage
 # resources required to build and run the tests.
 build:fuzz-coverage --define=wasm=disabled
 build:fuzz-coverage --config=fuzz-coverage-config
-build:fuzz-coverage-config --//tools/coverage:config=//test:fuzz_coverage_config
+build:fuzz-coverage-config --//tools/coverage:config=@envoy//test:fuzz_coverage_config
 
 build:cache-local --remote_cache=grpc://localhost:9092
 
@@ -397,7 +402,7 @@ build:compile-time-options --@envoy//source/extensions/filters/http/kill_request
 
 # Docker sandbox
 # NOTE: Update this from https://github.com/envoyproxy/envoy-build-tools/blob/main/toolchains/rbe_toolchains_config.bzl#L8
-build:docker-sandbox --experimental_docker_image=envoyproxy/envoy-build-ubuntu:f4a881a1205e8e6db1a57162faf3df7aed88eae8@sha256:b10346fe2eee41733dbab0e02322c47a538bf3938d093a5daebad9699860b814
+build:docker-sandbox --experimental_docker_image=docker.io/envoyproxy/envoy-build-ubuntu:014410eea358648b3493283e0a4cf6db263bb8e2@sha256:007d4c1814628375b5e6e7e030a2d9ff132f5a0deace98c39d32182c7a72899f
 build:docker-sandbox --spawn_strategy=docker
 build:docker-sandbox --strategy=Javac=docker
 build:docker-sandbox --strategy=Closure=docker
@@ -570,7 +575,7 @@ common:bes-envoy-engflow --bes_timeout=3600s
 common:bes-envoy-engflow --bes_upload_mode=fully_async
 common:bes-envoy-engflow --nolegacy_important_outputs
 common:rbe-envoy-engflow --remote_executor=grpcs://mordenite.cluster.engflow.com
-common:rbe-envoy-engflow --remote_default_exec_properties=container-image=docker://gcr.io/envoy-ci/envoy-build@sha256:95d7afdea0f0f8881e88fa5e581db4f50907d0745ac8d90e00357ac1a316abe5
+common:rbe-envoy-engflow --remote_default_exec_properties=container-image=docker://gcr.io/envoy-ci/envoy-build@sha256:007d4c1814628375b5e6e7e030a2d9ff132f5a0deace98c39d32182c7a72899f
 common:rbe-envoy-engflow --jobs=200
 common:rbe-envoy-engflow --define=engflow_rbe=true
 
@@ -581,8 +586,10 @@ common:remote-envoy-engflow --config=rbe-envoy-engflow
 common:remote-cache-envoy-engflow --config=common-envoy-engflow
 common:remote-cache-envoy-engflow --config=cache-envoy-engflow
 
+common:cves --//tools/dependency:cve-data=//tools/dependency:cve-data-dir
+
 # Specifies the rustfmt.toml for all rustfmt_test targets.
-build --@rules_rust//rust/settings:rustfmt.toml=//:rustfmt.toml
+build --@rules_rust//rust/settings:rustfmt.toml=@envoy//:rustfmt.toml
 
 #############################################################################
 # debug: Various Bazel debugging flags

@@ -59,7 +59,7 @@ public:
   /**
    * Returns empty LogHeadersOutput.
    */
-  absl::StatusOr<Envoy::ProtobufWkt::Any> getPerWorkerOutput() const override;
+  absl::StatusOr<Envoy::Protobuf::Any> getPerWorkerOutput() const override;
 
   /**
    * Use a specific header logger implementation, rather than the default EnvoyHeaderLogger.
@@ -82,10 +82,10 @@ public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
   absl::StatusOr<UserDefinedOutputPluginPtr>
-  createUserDefinedOutputPlugin(const Envoy::ProtobufWkt::Any& config_any,
+  createUserDefinedOutputPlugin(const Envoy::Protobuf::Any& config_any,
                                 const WorkerMetadata& worker_metadata) override;
 
-  absl::StatusOr<Envoy::ProtobufWkt::Any> AggregateGlobalOutput(
+  absl::StatusOr<Envoy::Protobuf::Any> AggregateGlobalOutput(
       absl::Span<const nighthawk::client::UserDefinedOutput> per_worker_outputs) override;
 };
 

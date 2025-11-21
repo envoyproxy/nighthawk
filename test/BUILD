@@ -130,6 +130,7 @@ envoy_cc_test(
         "test_data/output_formatter.medium.fortio.gold",
         "test_data/output_formatter.medium.fortio-noquirks.gold",
         "test_data/output_formatter.medium.proto.gold",
+        "test_data/output_formatter.prometheus.gold",
         "test_data/output_formatter.txt.gold",
         "test_data/output_formatter.yaml.gold",
         "test_data/percentile-column-overflow.json",

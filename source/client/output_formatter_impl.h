@@ -36,7 +36,7 @@ public:
   static std::string statIdtoFriendlyStatName(absl::string_view stat_id);
 
 private:
-  std::string formatProtoDuration(const Envoy::ProtobufWkt::Duration& duration) const;
+  std::string formatProtoDuration(const Envoy::Protobuf::Duration& duration) const;
 };
 
 class JsonOutputFormatterImpl : public OutputFormatterImpl {
@@ -73,14 +73,14 @@ public:
 
 private:
   /**
-   * Transforms an Envoy::ProtobufWkt::Duration to a human-readable string in the format of "{}s
+   * Transforms an Envoy::Protobuf::Duration to a human-readable string in the format of "{}s
    * {:03}ms {:03}us".
    *
-   * @param duration the Envoy::ProtobufWkt::Duration& to transform
+   * @param duration the Envoy::Protobuf::Duration& to transform
    * @return the human-readable string representation of the specified duration. Example: "11s 033ms
    * 190us"
    */
-  std::string formatProtoDuration(const Envoy::ProtobufWkt::Duration& duration) const;
+  std::string formatProtoDuration(const Envoy::Protobuf::Duration& duration) const;
 };
 
 class DottedStringOutputFormatterImpl : public OutputFormatterImpl {
@@ -145,7 +145,7 @@ protected:
    * @param duration the proto Duration to convert
    * @return double the number of seconds
    */
-  double durationToSeconds(const Envoy::ProtobufWkt::Duration& duration) const;
+  double durationToSeconds(const Envoy::Protobuf::Duration& duration) const;
 };
 
 /**
@@ -167,6 +167,20 @@ public:
    * @return std::string Fortio formatted json string.
    */
   absl::StatusOr<std::string> formatProto(const nighthawk::client::Output& output) const override;
+};
+
+/**
+ * Formats Nighthawk's output proto to Prometheus' metric format.
+ */
+class PrometheusOutputFormatterImpl : public OutputFormatterImpl {
+public:
+  absl::StatusOr<std::string> formatProto(const nighthawk::client::Output& output) const override;
+
+private:
+  void populateMetric(const std::string& metric_name, const std::string& metric_type,
+                      const std::string& metric_labels, const std::string& metric_value,
+                      std::map<std::string, std::stringstream>& metrics_output,
+                      std::string metric_name_suffix = "") const;
 };
 
 } // namespace Client

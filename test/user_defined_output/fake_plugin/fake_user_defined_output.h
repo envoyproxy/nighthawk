@@ -47,7 +47,7 @@ public:
   /**
    * Get the output for this instance of the plugin, packing it into output.
    */
-  absl::StatusOr<Envoy::ProtobufWkt::Any> getPerWorkerOutput() const override;
+  absl::StatusOr<Envoy::Protobuf::Any> getPerWorkerOutput() const override;
 
 private:
   mutable Envoy::Thread::MutexBasicLockable lock_;
@@ -66,10 +66,10 @@ public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
   absl::StatusOr<UserDefinedOutputPluginPtr>
-  createUserDefinedOutputPlugin(const Envoy::ProtobufWkt::Any& config_any,
+  createUserDefinedOutputPlugin(const Envoy::Protobuf::Any& config_any,
                                 const WorkerMetadata& worker_metadata) override;
 
-  absl::StatusOr<Envoy::ProtobufWkt::Any> AggregateGlobalOutput(
+  absl::StatusOr<Envoy::Protobuf::Any> AggregateGlobalOutput(
       absl::Span<const nighthawk::client::UserDefinedOutput> per_worker_outputs) override;
 
   /**

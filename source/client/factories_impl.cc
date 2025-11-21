@@ -60,6 +60,8 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
   benchmark_client->setMaxPendingRequests(options_.maxPendingRequests());
   benchmark_client->setMaxActiveRequests(options_.maxActiveRequests());
   benchmark_client->setMaxRequestsPerConnection(options_.maxRequestsPerConnection());
+  benchmark_client->setTimeout(options_.timeout());
+
   return benchmark_client;
 }
 
@@ -115,6 +117,8 @@ OutputFormatterPtr OutputFormatterFactoryImpl::create(
     return std::make_unique<Client::FortioPedanticOutputFormatterImpl>();
   case nighthawk::client::OutputFormat::CSV:
     return std::make_unique<Client::CsvOutputFormatterImpl>();
+  case nighthawk::client::OutputFormat::PROMETHEUS:
+    return std::make_unique<Client::PrometheusOutputFormatterImpl>();
   default:
     PANIC("not reached");
   }

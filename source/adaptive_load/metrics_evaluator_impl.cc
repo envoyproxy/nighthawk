@@ -24,8 +24,8 @@ absl::StatusOr<ReportingPeriod> GetReportingPeriod(const nighthawk::client::Outp
   // Find the reporting_period in which all workers are active and thus sending the intended amount
   // of traffic.
   ReportingPeriod reporting_period;
-  Envoy::ProtobufWkt::Timestamp max_start_time = output.results(0).execution_start();
-  Envoy::ProtobufWkt::Timestamp min_end_time =
+  Envoy::Protobuf::Timestamp max_start_time = output.results(0).execution_start();
+  Envoy::Protobuf::Timestamp min_end_time =
       output.results(0).execution_start() + output.results(0).execution_duration();
   for (const auto& result : output.results()) {
     if (result.execution_start() > max_start_time) {
