@@ -39,7 +39,7 @@ jobs:
     - uses: actions/checkout@v5.0.1
     - name: Configure repo Bazel settings
       run: |
-        echo "build:remote-envoy-engflow --config=bes-envoy-engflow" > repo.bazelrc
+        echo "build:remote-envoy-engflow --config=bes" > repo.bazelrc
     - name: Run CI script
       run: |
         ./ci/run_envoy_docker.sh './ci/do_ci.sh ${{ inputs.task }}'
