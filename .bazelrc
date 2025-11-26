@@ -20,7 +20,7 @@ build:macos --copt -UDEBUG                                                      
 # The number 3G is chosen heuristically to both support large VM and small VM with RBE.
 # Startup options cannot be selected via config.
 # TODO: Adding just to test android
-startup --host_jvm_args=-Xmx3g
+startup --host_jvm_args=-Xmx10g
 startup --host_jvm_args="-DBAZEL_TRACK_SOURCE_DIRECTORIES=1"
 
 
@@ -34,7 +34,7 @@ fetch --color=yes
 run --color=yes
 
 build --color=yes
-build --jobs=HOST_CPUS*.5
+build --jobs=HOST_CPUS-1
 build --workspace_status_command="bash bazel/get_workspace_status"
 build --incompatible_strict_action_env
 build --java_runtime_version=remotejdk_11
