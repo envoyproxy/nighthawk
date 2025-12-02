@@ -37,7 +37,11 @@ with the latest revision weekly. Nighthawk reuses large parts of Envoy's build
 system and codebase, so keeping Nighthawk up to date with Envoy's changes is an
 important maintenance task.
 
-We use a utility script that will attempt to find the latest Envoy commit that
+The update process can be completed by manually executing the steps documented on this [page]( https://github.com/envoyproxy/nighthawk/blob/69321419308f36078037a05a6b12b9819368d413/docs/root/updating_envoy_dependency.md) **or** running a utility script. The rest of this page provides instructions for using the utility script.
+
+### Run the utility script
+
+The utility script will attempt to find the latest Envoy commit that
 integrates cleanly with Nighthawk and create a Github branch with that
 integration ready to merge. If it encounters a non-trivial Envoy commit
 integration, it will prompt the user to resolve any errors before proceeding.
