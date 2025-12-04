@@ -2,8 +2,9 @@
 # This is necessary since this needs to be available before we can access                   # unique
 # the Envoy repository contents via Bazel.                                                  # unique
                                                                                             # unique
-build:asan --test_timeout=900                                                               # unique
-build:tsan --test_timeout=3600                                                              # unique
+build:asan --test_timeout=4800                                                               # unique
+build:tsan --test_timeout=4800                                                              # unique
+build:test_gcc --test_timeout=4800                                                          # unique
 # See https://github.com/envoyproxy/nighthawk/issues/405                                    # unique
 build:macos --copt -UDEBUG                                                                  # unique
                                                                                             # unique
@@ -18,6 +19,7 @@ build:macos --copt -UDEBUG                                                      
 # The number 3G is chosen heuristically to both support large VM and small VM with RBE.
 # Startup options cannot be selected via config.
 # TODO: Adding just to test android
+startup --host_jvm_args=-Xmx3g
 startup --host_jvm_args="-DBAZEL_TRACK_SOURCE_DIRECTORIES=1"
 
 common --noenable_bzlmod
@@ -109,15 +111,15 @@ build:sanitizer --linkopt -ldl
 test:sanitizer --build_tests_only
 
 # Common flags for Clang (shared between all clang variants)
-build:clang-common --action_env=BAZEL_COMPILER=clang
-build:clang-common --linkopt=-fuse-ld=lld
-build:clang-common --action_env=CC=clang --host_action_env=CC=clang
-build:clang-common --action_env=CXX=clang++ --host_action_env=CXX=clang++
-build:clang-common --incompatible_enable_cc_toolchain_resolution=false
+common:clang-common --action_env=BAZEL_COMPILER=clang
+common:clang-common --linkopt=-fuse-ld=lld
+common:clang-common --action_env=CC=clang --host_action_env=CC=clang
+common:clang-common --action_env=CXX=clang++ --host_action_env=CXX=clang++
+common:clang-common --incompatible_enable_cc_toolchain_resolution=false
 
 # Clang with libc++ (default)
-build:clang --config=clang-common
-build:clang --config=libc++
+common:clang --config=clang-common
+common:clang --config=libc++
 
 build:arm64-clang --config=clang
 
@@ -239,13 +241,13 @@ build:msan --test_env=MSAN_SYMBOLIZER_PATH
 build:msan --copt -O1
 build:msan --copt -fno-optimize-sibling-calls
 
-build:libc++ --action_env=CXXFLAGS=-stdlib=libc++
-build:libc++ --action_env=LDFLAGS=-stdlib=libc++
-build:libc++ --action_env=BAZEL_CXXOPTS=-stdlib=libc++
-build:libc++ --action_env=BAZEL_LINKLIBS=-l%:libc++.a:-l%:libc++abi.a
-build:libc++ --action_env=BAZEL_LINKOPTS=-lm:-pthread
-build:libc++ --define force_libcpp=enabled
-build:libc++ --@envoy//bazel:libc++=true
+common:libc++ --action_env=CXXFLAGS=-stdlib=libc++
+common:libc++ --action_env=LDFLAGS=-stdlib=libc++
+common:libc++ --action_env=BAZEL_CXXOPTS=-stdlib=libc++
+common:libc++ --action_env=BAZEL_LINKLIBS=-l%:libc++.a:-l%:libc++abi.a
+common:libc++ --action_env=BAZEL_LINKOPTS=-lm:-pthread
+common:libc++ --define force_libcpp=enabled
+common:libc++ --@envoy//bazel:libc++=true
 
 
 
@@ -402,7 +404,7 @@ build:compile-time-options --@envoy//source/extensions/filters/http/kill_request
 
 # Docker sandbox
 # NOTE: Update this from https://github.com/envoyproxy/envoy-build-tools/blob/main/toolchains/rbe_toolchains_config.bzl#L8
-build:docker-sandbox --experimental_docker_image=docker.io/envoyproxy/envoy-build-ubuntu:014410eea358648b3493283e0a4cf6db263bb8e2@sha256:007d4c1814628375b5e6e7e030a2d9ff132f5a0deace98c39d32182c7a72899f
+build:docker-sandbox --experimental_docker_image=docker.io/envoyproxy/envoy-build-ubuntu:4ce0cb04f941fb89d475597a640176ae64070bb1@sha256:de54e91a8d27623ffbd3fb9bd1aba8241567e41c0fb82b167128e3629c2ede18
 build:docker-sandbox --spawn_strategy=docker
 build:docker-sandbox --strategy=Javac=docker
 build:docker-sandbox --strategy=Closure=docker
@@ -575,7 +577,7 @@ common:bes-envoy-engflow --bes_timeout=3600s
 common:bes-envoy-engflow --bes_upload_mode=fully_async
 common:bes-envoy-engflow --nolegacy_important_outputs
 common:rbe-envoy-engflow --remote_executor=grpcs://mordenite.cluster.engflow.com
-common:rbe-envoy-engflow --remote_default_exec_properties=container-image=docker://gcr.io/envoy-ci/envoy-build@sha256:007d4c1814628375b5e6e7e030a2d9ff132f5a0deace98c39d32182c7a72899f
+common:rbe-envoy-engflow --remote_default_exec_properties=container-image=docker://gcr.io/envoy-ci/envoy-build@sha256:de54e91a8d27623ffbd3fb9bd1aba8241567e41c0fb82b167128e3629c2ede18
 common:rbe-envoy-engflow --jobs=200
 common:rbe-envoy-engflow --define=engflow_rbe=true
 
