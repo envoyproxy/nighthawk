@@ -48,7 +48,7 @@ cc_library(
         "-Wno-implicit-function-declaration",
         "-Wno-error",
     ],
-    deps = ["@envoy//bazel/foreign_cc:zlib",],
+    deps = ["@zlib",],
     visibility = ["//visibility:public"],
 )
   """,
