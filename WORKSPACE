@@ -41,7 +41,7 @@ load("@envoy//bazel:repo.bzl", "envoy_repo")
 
 envoy_repo()
 
-load("//bazel:toolchains.bzl", "envoy_toolchains")
+load("@envoy//bazel:toolchains.bzl", "envoy_toolchains")
 
 envoy_toolchains()
 
