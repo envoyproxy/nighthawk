@@ -26,6 +26,8 @@ MAX_AGENT_ATTEMPTS = 3
 # Files Nighthawk re-uses verbatim from its Envoy dependency.
 copied_files: list[str] = [
     ".bazelversion",
+    ".github/config.yml",
+    "ci/envoy_build_sha.sh"
     "ci/run_envoy_docker.sh",
 ]
 
