@@ -45,6 +45,10 @@ load("@envoy//bazel:toolchains.bzl", "envoy_toolchains")
 
 envoy_toolchains()
 
+load("@envoy//bazel:dependency_imports_extra.bzl", "envoy_dependency_imports_extra")
+
+envoy_dependency_imports_extra()
+
 load("//bazel:python_dependencies.bzl", "nighthawk_python_dependencies")
 
 nighthawk_python_dependencies()
