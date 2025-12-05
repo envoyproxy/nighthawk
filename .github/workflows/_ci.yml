@@ -42,7 +42,7 @@ jobs:
         echo "build:remote-envoy-engflow --config=bes" > repo.bazelrc
     - name: Run CI script
       run: |
-        ./ci/run_envoy_docker.sh './ci/do_ci.sh ${{ inputs.task }}'
+        ./ci/run_envoy_docker.sh 'CARGO_BAZEL_REPIN=true ./ci/do_ci.sh ${{ inputs.task }}'
       env:
         GITHUB_TOKEN: ${{ github.token }}
         BAZEL_BUILD_EXTRA_OPTIONS: >-
