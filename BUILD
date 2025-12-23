@@ -13,11 +13,11 @@ envoy_package()
 filegroup(
     name = "nighthawk",
     srcs = [
-        ":nighthawk_adaptive_load_client",
-        ":nighthawk_client",
-        ":nighthawk_output_transform",
-        ":nighthawk_service",
-        ":nighthawk_test_server",
+        ":nighthawk_adaptive_load_client.stripped",
+        ":nighthawk_client.stripped",
+        ":nighthawk_output_transform.stripped",
+        ":nighthawk_service.stripped",
+        ":nighthawk_test_server.stripped",
     ],
 )
 

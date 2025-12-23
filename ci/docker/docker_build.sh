@@ -23,12 +23,11 @@ echo "Preparing docker build context in ${TMP_DIR}"
 cp -r "${WORKSPACE}/ci/docker/" "${TMP_DIR}/"
 
 for BINARY in "${BINARIES[@]}"; do
-    echo "Copy and strip ${BINARY}"
+    echo "Copy ${BINARY}"
     TARGET="${TMP_DIR}/${BINARY}"
     # Docker won't follow symlinks
-    cp "${BAZEL_BIN}/${BINARY}" "${TARGET}"
+    cp "${BAZEL_BIN}/${BINARY}.stripped" "${TARGET}"
     chmod +w "${TARGET}"
-    strip --strip-debug "${TARGET}"
 done
 
 cd "${TMP_DIR}"
