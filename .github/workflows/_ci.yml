@@ -15,6 +15,7 @@ on:
         type: string
         default: >-
           --config=remote-ci
+          --config=rbe
       docker-in-docker:
         description: "Enable Docker in Docker"
         required: false
@@ -37,9 +38,27 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v6.0.1
+    - name: Set gcc
+      run: |
+        if [[ "${{ inputs.task }}" == *"gcc"* ]]; then
+          echo "build --config=gcc" >> repo.bazelrc
+        else
+          echo "common --config=clang" >> repo.bazelrc
+        fi
     - name: Configure repo Bazel settings
       run: |
-        echo "build:remote-envoy-engflow --config=bes-envoy-engflow" > repo.bazelrc
+        echo "common --jobs=200" >> repo.bazelrc
+        echo "build --config=bes" >> repo.bazelrc
+    - name: Bind mount spare disk for build artifacts
+      uses: envoyproxy/toolshed/gh-actions/bind-mounts@actions-v0.3.35
+      with:
+        mounts: |
+          - src: /mnt/envoy-docker-build
+            target: /tmp/envoy-docker-build
+            chown: runner:runner
+          - src: /mnt/bazel-shared
+            target: /tmp/bazel-shared
+            chown: runner:runner
     - name: Run CI script
       run: |
         ./ci/run_envoy_docker.sh './ci/do_ci.sh ${{ inputs.task }}'
@@ -47,7 +66,6 @@ jobs:
         GITHUB_TOKEN: ${{ github.token }}
         BAZEL_BUILD_EXTRA_OPTIONS: >-
           ${{ inputs.bazel-extra }}
-          --config=remote-envoy-engflow
         GH_BRANCH: ${{ github.ref }}
         GH_SHA1: ${{ github.sha }}
         ENVOY_DOCKER_IN_DOCKER: ${{ inputs.docker-in-docker && '1' || '' }}

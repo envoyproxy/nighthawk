@@ -1,6 +1,6 @@
 x-envoy-build-base: &envoy-build-base
   image: >-
-    ${ENVOY_BUILD_IMAGE:-docker.io/envoyproxy/envoy-build-ubuntu:4ce0cb04f941fb89d475597a640176ae64070bb1@sha256:de54e91a8d27623ffbd3fb9bd1aba8241567e41c0fb82b167128e3629c2ede18}
+    ${ENVOY_BUILD_IMAGE:?ERROR: ENVOY_BUILD_IMAGE is not set! either set it in your environment or use ci/run_envoy_docker.sh to set it}
   cpus: ${ENVOY_DOCKER_CPUS:-0}
   user: root:root
   working_dir: ${ENVOY_DOCKER_SOURCE_DIR:-/source}
@@ -81,26 +81,40 @@ x-envoy-build-base: &envoy-build-base
   - "/bin/bash"
   - "-c"
   - |
-    groupadd --gid ${DOCKER_GID:-${USER_GID:-$(id -g)}} -f envoygroup
-    useradd -o \
-        --uid ${USER_UID:-$(id -u)} \
-        --gid ${DOCKER_GID:-${USER_GID:-$(id -g)}} \
-        --no-create-home \
-        -s /bin/bash \
-        --home-dir /build envoybuild
-    usermod -a -G pcap envoybuild
-    chown envoybuild:envoygroup /build
+    set -e
+
+    if [[ -n "${USER_GID:-}" ]]; then
+        groupmod -g "$USER_GID" envoybuild >/dev/null
+    fi
+    if [[ -n "${USER_UID:-}" ]]; then
+        usermod -u "$USER_UID" envoybuild >/dev/null
+    fi
+    usermod -d /build envoybuild >/dev/null
+    if [[ -f /.build-id ]]; then
+        build_id="$(cat /.build-id)"
+        echo "Envoy build image: $${build_id}"
+    fi
+    chown envoybuild:envoybuild /build
     chown envoybuild /proc/self/fd/2 2>/dev/null || true
     [[ -e /entrypoint-extra.sh ]] && /entrypoint-extra.sh
+
+    if [ -S /var/run/docker.sock ]; then
+        DOCKER_GID=$(stat -c '%g' /var/run/docker.sock)
+        if ! getent group "$DOCKER_GID" >/dev/null; then
+            groupadd -g "$DOCKER_GID" docker_sock
+        fi
+        usermod -a -G "$(getent group "$DOCKER_GID" | cut -d: -f1)" envoybuild
+    fi
+
     sudo -EHs -u envoybuild bash -c 'cd ${ENVOY_DOCKER_SOURCE_DIR:-/source} && exec ${DOCKER_COMMAND:-bash}'
 
 services:
   envoy-build:
     <<: *envoy-build-base
     volumes:
-    - ${ENVOY_DOCKER_BUILD_DIR:-/tmp/envoy-docker-build}:/build
-    - ${SOURCE_DIR:-..}:/source
-    - ${SHARED_TMP_DIR:-/tmp/bazel-shared}:${SHARED_TMP_DIR:-/tmp/bazel-shared}
+    - ${ENVOY_DOCKER_BUILD_DIR:-/tmp/envoy-docker-build}:/build${MOUNT_ACCESS_MODE:-}
+    - ${SOURCE_DIR:-..}:/source${MOUNT_ACCESS_MODE:-}
+    - ${SHARED_TMP_DIR:-/tmp/bazel-shared}:${SHARED_TMP_DIR:-/tmp/bazel-shared}${MOUNT_ACCESS_MODE:-}
 
   envoy-build-gpg:
     <<: *envoy-build-base
@@ -117,4 +131,4 @@ services:
     - ${ENVOY_DOCKER_BUILD_DIR:-/tmp/envoy-docker-build}:/build
     - ${SOURCE_DIR:-..}:/source
     - /var/run/docker.sock:/var/run/docker.sock
-    - ${SHARED_TMP_DIR:-/tmp/bazel-shared}:${SHARED_TMP_DIR:-/tmp/bazel-shared}
+    - ${SHARED_TMP_DIR:-/tmp/bazel-shared}:${SHARED_TMP_DIR:-/tmp/bazel-shared}    - ${ENVOY_ENTRYPOINT_EXTRA:-./docker-entrypoint-extra.sh}:/entrypoint-extra.sh

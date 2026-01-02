@@ -13,18 +13,18 @@ envoy_package()
 filegroup(
     name = "nighthawk",
     srcs = [
-        ":nighthawk_adaptive_load_client",
-        ":nighthawk_client",
-        ":nighthawk_output_transform",
-        ":nighthawk_service",
-        ":nighthawk_test_server",
+        ":nighthawk_adaptive_load_client.stripped",
+        ":nighthawk_client.stripped",
+        ":nighthawk_output_transform.stripped",
+        ":nighthawk_service.stripped",
+        ":nighthawk_test_server.stripped",
     ],
 )
 
 envoy_cc_binary(
     name = "nighthawk_adaptive_load_client",
     linkopts = [
-        "-latomic",
+        "-l:libatomic.a",
         "-lrt",
     ],
     repository = "@envoy",
@@ -36,7 +36,7 @@ envoy_cc_binary(
 envoy_cc_binary(
     name = "nighthawk_client",
     linkopts = [
-        "-latomic",
+        "-l:libatomic.a",
         "-lrt",
     ],
     repository = "@envoy",
@@ -50,7 +50,7 @@ envoy_cc_binary(
 envoy_cc_binary(
     name = "nighthawk_client_testonly",
     linkopts = [
-        "-latomic",
+        "-l:libatomic.a",
         "-lrt",
     ],
     repository = "@envoy",
@@ -64,7 +64,7 @@ envoy_cc_binary(
 envoy_cc_binary(
     name = "nighthawk_test_server",
     linkopts = [
-        "-latomic",
+        "-l:libatomic.a",
         "-lrt",
     ],
     repository = "@envoy",
@@ -79,7 +79,7 @@ envoy_cc_binary(
 envoy_cc_binary(
     name = "nighthawk_service",
     linkopts = [
-        "-latomic",
+        "-l:libatomic.a",
         "-lrt",
     ],
     repository = "@envoy",
@@ -91,7 +91,7 @@ envoy_cc_binary(
 envoy_cc_binary(
     name = "nighthawk_output_transform",
     linkopts = [
-        "-latomic",
+        "-l:libatomic.a",
         "-lrt",
     ],
     repository = "@envoy",

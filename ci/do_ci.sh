@@ -310,6 +310,8 @@ export BAZEL_TEST_OPTIONS="${BAZEL_BUILD_OPTIONS} \
 --test_env=UBSAN_OPTIONS=print_stacktrace=1 \
 --cache_test_results=no --test_output=errors ${BAZEL_EXTRA_TEST_OPTIONS}"
 
+export CARGO_BAZEL_REPIN=true
+
 case "$1" in
     build)
         setup_clang_toolchain
