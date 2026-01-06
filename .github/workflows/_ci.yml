@@ -13,9 +13,6 @@ on:
         description: "Extra bazel args"
         required: false
         type: string
-        default: >-
-          --config=remote-ci
-          --config=rbe
       docker-in-docker:
         description: "Enable Docker in Docker"
         required: false
@@ -65,6 +62,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ github.token }}
         BAZEL_BUILD_EXTRA_OPTIONS: >-
+          --config=remote-ci
+          --config=rbe
           ${{ inputs.bazel-extra }}
         GH_BRANCH: ${{ github.ref }}
         GH_SHA1: ${{ github.sha }}

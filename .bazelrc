@@ -13,8 +13,7 @@ build:macos --copt -UDEBUG                                                      
 test:stress --//test/config:run_stress_tests=True                                           # unique
                                                                                             # unique
 # CI configuration                                                                          # unique
-build:remote-ci-download --config=ci                                                        # unique
-build:remote-ci-download --remote_download_toplevel                                         # unique
+build:download-toplevel --remote_download_outputs=toplevel                                  # unique
 
 #############################################################################
 # startup

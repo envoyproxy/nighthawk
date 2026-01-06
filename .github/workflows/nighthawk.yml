@@ -65,5 +65,5 @@ jobs:
     with:
       task: docker
       bazel-extra: >-
-        --config=remote-ci-download
+        --config=download-toplevel
       docker-in-docker: true
