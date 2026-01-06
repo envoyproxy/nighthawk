@@ -2,7 +2,7 @@
 # This is necessary since this needs to be available before we can access                   # unique
 # the Envoy repository contents via Bazel.                                                  # unique
                                                                                             # unique
-build:asan --test_timeout=4800                                                               # unique
+build:asan --test_timeout=4800                                                              # unique
 build:tsan --test_timeout=4800                                                              # unique
 build:test_gcc --test_timeout=4800                                                          # unique
 # See https://github.com/envoyproxy/nighthawk/issues/405                                    # unique
@@ -15,15 +15,6 @@ test:stress --//test/config:run_stress_tests=True                               
 # CI configuration                                                                          # unique
 build:remote-ci-download --config=ci                                                        # unique
 build:remote-ci-download --remote_download_toplevel                                         # unique
-
-# DO NOT SUBMIT -->
-# Explicitly set the --host_action_env for clang build since we are not building            # unique
-# rbe-toolchain-clang that Envoy builds.                                                    # unique
-# This value is the same for different VMs, thus cache hits can be shared among machines.   # unique
-build --host_action_env=PATH=/usr/sbin:/usr/bin:/opt/llvm/bin                               # unique
-# To make our own CI green, we do need that flag on Windows though.
-build:windows --action_env=PATH --host_action_env=PATH
-# <--
 
 #############################################################################
 # startup

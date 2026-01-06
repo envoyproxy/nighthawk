@@ -183,6 +183,8 @@ function setup_clang_toolchain() {
     export CXX=clang++
     export ASAN_SYMBOLIZER_PATH=/opt/llvm/bin/llvm-symbolizer
     export BAZEL_COMPILER=clang
+    BAZEL_BUILD_OPTIONS="$BAZEL_BUILD_OPTIONS --config=clang"
+    BAZEL_TEST_OPTIONS="$BAZEL_TEST_OPTIONS --config=clang"
     echo "$CC/$CXX toolchain configured"
 }
 
@@ -286,6 +288,14 @@ function do_fix_format() {
     ./tools/format_python_tools.sh fix
 }
 
+function do_fix_requirements() {
+    echo "fix_requirements..."
+    cd "${SRCDIR}"
+    # Wipe the requirements file to prevent caching.
+    echo "" > tools/base/requirements.txt
+    bazel run //tools/base:requirements.update
+}
+
 if grep 'docker\|lxc' /proc/1/cgroup; then
     export BUILD_DIR=/build
     echo "Running in Docker, built binaries will be copied into ${BUILD_DIR}."
@@ -368,6 +378,11 @@ case "$1" in
         do_fix_format
         exit 0
     ;;
+    fix_requirements)
+        setup_clang_toolchain
+        do_fix_requirements
+        exit 0
+    ;;
     benchmark_with_own_binaries)
         setup_clang_toolchain
         do_benchmark_with_own_binaries
@@ -384,7 +399,7 @@ case "$1" in
         exit 0
     ;;
     *)
-        echo "must be one of [opt_build,build,test,clang_tidy,coverage,coverage_integration,asan,tsan,benchmark_with_own_binaries,docker,check_format,fix_format,test_gcc]"
+        echo "must be one of [opt_build,build,test,clang_tidy,coverage,coverage_integration,asan,tsan,benchmark_with_own_binaries,docker,check_format,fix_format,fix_requirements,test_gcc]"
         exit 1
     ;;
 esac
