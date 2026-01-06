@@ -286,6 +286,7 @@ class EnvoyCommitIntegrationStep(enum.Enum):
   TEST_NIGHTHAWK = enum.auto()
   UPDATE_CLI_README = enum.auto()
   FIX_FORMAT = enum.auto()
+  GIT_ADD_INTEGRATION = enum.auto()
 
 
 class EnvoyCommitIntegration(StepHandler[EnvoyCommitIntegrationStep]):
@@ -417,6 +418,8 @@ class EnvoyCommitIntegration(StepHandler[EnvoyCommitIntegrationStep]):
         _run_command(["./ci/do_ci.sh", "fix_docs"], cwd=self.nighthawk_git_repo_dir)
       case EnvoyCommitIntegrationStep.FIX_FORMAT:
         _run_command(["./ci/do_ci.sh", "fix_format"], cwd=self.nighthawk_git_repo_dir)
+      case EnvoyCommitIntegrationStep.GIT_ADD_INTEGRATION:
+        _run_command(["git", "add", "."], cwd=self.nighthawk_git_repo_dir)
       case _:
         raise ValueError(f"{step} is not supported.")
 
@@ -439,7 +442,6 @@ class NighthawkEnvoyUpdateStep(enum.Enum):
   GET_CURRENT_ENVOY_COMMIT = enum.auto()
   CLONE_ENVOY = enum.auto()
   CHECK_ENVOY_CLONE_DEPTH = enum.auto()
-  GET_LATEST_ENVOY_COMMIT = enum.auto()
   GET_ENVOY_COMMIT_RANGE = enum.auto()
   BAZEL_CLEAN_EXPUNGE = enum.auto()
   FIND_LATEST_TRIVIAL_MERGE = enum.auto()
@@ -456,6 +458,7 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
       branch_name: str,
       envoy_clone_depth: int,
       sync_nighthawk_repo: bool,
+      skip_bisection: bool,
       agent_invocation: str | None = None,
   ):
     """Initialize the NighthawkEnvoyUpdate.
@@ -463,8 +466,9 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
     Args:
       nighthawk_git_repo_dir: The path to the local Nighthawk git repository.
       branch_name: The name of the branch to create for the update.
-      sync_nighthawk_repo: Whether to sync the Nighthawk repo with upstream.
       envoy_clone_depth: The depth to use when cloning the Envoy repository.
+      sync_nighthawk_repo: Whether to sync the Nighthawk repo with upstream.
+      skip_bisection: Whether to skip bisection and just use the latest commit.
       agent_invocation: Command template to invoke an LLM agent to fix step
         failures.
     """
@@ -472,14 +476,13 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
     self.nighthawk_git_repo_dir = nighthawk_git_repo_dir.expanduser()
     self.branch_name = branch_name
     self.envoy_clone_depth = envoy_clone_depth
+    self.skip_bisection = skip_bisection
 
     self._envoy_tmp_dir = tempfile.TemporaryDirectory(dir=self.nighthawk_git_repo_dir.parent,
                                                       prefix="envoy-clone-")
     self.envoy_git_repo_dir = pathlib.Path(self._envoy_tmp_dir.name)
 
-    self.github_username = None
     self.current_envoy_commit = None
-    self.latest_envoy_commit = None
     self.envoy_commits_current_to_latest = None
     self.best_envoy_commit = None
     self.first_non_trivial_commit = None
@@ -540,7 +543,7 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
                              f" a remote named upstream set to {expected_upstream}.") from e
       case NighthawkEnvoyUpdateStep.CHECK_NIGHTHAWK_ORIGIN_REMOTE:
         try:
-          origin_url = _run_command(
+          _run_command(
               ["git", "remote", "get-url", "origin"],
               cwd=self.nighthawk_git_repo_dir,
           )
@@ -548,11 +551,6 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
           raise RuntimeError("Failed to get remote origin URL. Is"
                              f" {self.nighthawk_git_repo_dir} a git repository with an origin"
                              " remote configured?") from e
-        match = re.search(r"github.com[:/](.*?)/nighthawk(?:.git)?$", origin_url)
-        if match:
-          self.github_username = match.group(1)
-        else:
-          raise RuntimeError(f"Could not extract GitHub username from origin URL: {origin_url}")
       case NighthawkEnvoyUpdateStep.SYNC_NIGHTHAWK_REPO:
         _run_command(["git", "checkout", "main"], cwd=self.nighthawk_git_repo_dir)
         _run_command(
@@ -602,12 +600,6 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
                              " Nighthawk was not found in the cloned Envoy repository"
                              " history. Please try again with a larger --envoy_clone_depth"
                              f" value than {self.envoy_clone_depth}.") from e
-      case NighthawkEnvoyUpdateStep.GET_LATEST_ENVOY_COMMIT:
-        self.latest_envoy_commit = _run_command(["git", "rev-parse", "main"],
-                                                cwd=self.envoy_git_repo_dir)
-        if self.current_envoy_commit == self.latest_envoy_commit:
-          print("\n\nNighthawk is up-to-date, no new commits in Envoy repo.")
-          sys.exit(0)
       case NighthawkEnvoyUpdateStep.GET_ENVOY_COMMIT_RANGE:
         current_to_latest_raw = _run_command(
             [
@@ -615,12 +607,17 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
                 "log",
                 "--reverse",
                 "--pretty=%H",
-                f"{self.current_envoy_commit}..{self.latest_envoy_commit}",
+                f"{self.current_envoy_commit}..HEAD",
             ],
             cwd=self.envoy_git_repo_dir,
         )
 
         self.envoy_commits_current_to_latest = [c for c in current_to_latest_raw.splitlines() if c]
+        if self.current_envoy_commit == self.envoy_commits_current_to_latest[-1]:
+          print("\n\nNighthawk is up-to-date, no new commits in Envoy repo.")
+          sys.exit(0)
+        if self.skip_bisection:
+          self.envoy_commits_current_to_latest = [self.envoy_commits_current_to_latest[-1]]
       case NighthawkEnvoyUpdateStep.BAZEL_CLEAN_EXPUNGE:
         _run_command(["bazel", "clean", "--expunge"], cwd=self.nighthawk_git_repo_dir)
       case NighthawkEnvoyUpdateStep.FIND_LATEST_TRIVIAL_MERGE:
@@ -628,7 +625,6 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
 
         low = 0
         high = len(self.envoy_commits_current_to_latest) - 1
-        latest_passing_commit_index = -1
 
         # Start by testing the latest commit
         index_to_test = high
@@ -655,53 +651,50 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
 
           if clean_integration:
             statuses[index_to_test] = "PASSED"
-            latest_passing_commit_index = index_to_test
+            self.best_envoy_commit = target_envoy_commit
             low = index_to_test + 1
           else:
             statuses[index_to_test] = "FAILED"
+            self.first_non_trivial_commit = target_envoy_commit
             high = index_to_test - 1
 
           index_to_test = low + (high - low) // 2
 
-        if latest_passing_commit_index == -1:
-          # Bisecting failed to find an Envoy commit that can be trivially
-          # integrated.
-          self.best_envoy_commit = None
-          self.first_non_trivial_commit = self.envoy_commits_current_to_latest[0]
+        if not self.best_envoy_commit:
+          print('Bisecting failed to find an Envoy commit that can be trivially integrated.')
           self._set_step_not_planned(NighthawkEnvoyUpdateStep.COMMIT_AND_PUSH_UPDATE_BRANCH)
-        elif (latest_passing_commit_index == len(self.envoy_commits_current_to_latest) - 1):
-          # The latest Envoy commit can be trivially integrated.
-          self.best_envoy_commit = self.envoy_commits_current_to_latest[-1]
-          self.first_non_trivial_commit = None
+        elif self.best_envoy_commit == self.envoy_commits_current_to_latest[-1]:
+          print('The latest Envoy commit can be trivially integrated.')
           self._set_step_not_planned(NighthawkEnvoyUpdateStep.APPLY_PARTIAL_NON_TRIVIAL_MERGE)
         else:
-          # A trivially integrated Envoy commit was found and there are further
-          # Envoy commits after it.
-          self.first_non_trivial_commit = self.envoy_commits_current_to_latest[
-              latest_passing_commit_index + 1]
-
-          # Set the Nighthawk repo to the latest best commit
-          self.best_envoy_commit = self.envoy_commits_current_to_latest[latest_passing_commit_index]
-          EnvoyCommitIntegration(
-              nighthawk_git_repo_dir=self.nighthawk_git_repo_dir,
-              envoy_git_repo_dir=self.envoy_git_repo_dir,
-              current_envoy_commit=self.current_envoy_commit,
-              target_envoy_commit=self.best_envoy_commit,
-              agent_invocation=self.agent_invocation,
-          ).run_envoy_commit_integration_steps()
+          print(
+              'A trivially integrated Envoy commit was found and there are further Envoy commits after it.'
+          )
       case NighthawkEnvoyUpdateStep.COMMIT_AND_PUSH_UPDATE_BRANCH:
         if not self.best_envoy_commit:
           raise RuntimeError("Nighthawk repo attempting to commit when no trivial Envoy"
                              " merges were found.")
-        _run_command(["git", "add", "."], cwd=self.nighthawk_git_repo_dir)
+        commit_datetime = _run_command(
+            [
+                "env",
+                "TZ=UTC0",
+                "git",
+                "show",
+                "-s",
+                '--date=format-local:"%Y-%m-%dT%H:%M:%SZ"',
+                '--pretty=format:"%cd"',
+                commit,
+            ],
+            cwd=self.envoy_git_repo_dir,
+        )
         _run_command(
             [
                 "git",
                 "commit",
                 "-m",
-                ("Updating Envoy version to"
-                 f" {self.best_envoy_commit[:7]} ({datetime.datetime.now().strftime('%b %d, %Y')})"
-                ),
+                (f"Updating Envoy version to {commit[:7]} ({commit_datetime})\n"
+                 "\n"
+                 f"See https://github.com/envoyproxy/envoy/commit/{commit}."),
             ],
             cwd=self.nighthawk_git_repo_dir,
             interactive=True,
@@ -726,13 +719,6 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
         if not self.first_non_trivial_commit:
           raise RuntimeError("Nighthawk repo attempting to apply partial merge when"
                              " first_non_trivial_commit is not set.")
-        EnvoyCommitIntegration(
-            nighthawk_git_repo_dir=self.nighthawk_git_repo_dir,
-            envoy_git_repo_dir=self.envoy_git_repo_dir,
-            current_envoy_commit=self.current_envoy_commit,
-            target_envoy_commit=self.first_non_trivial_commit,
-            agent_invocation=self.agent_invocation,
-        ).run_envoy_commit_integration_steps()
         raise RuntimeError(
             _non_trivial_merge_instructions(
                 envoy_commit=self.first_non_trivial_commit,
@@ -777,6 +763,12 @@ def main() -> None:
             " the upstream remote before starting the update process."),
   )
   parser.add_argument(
+      "--skip_bisection",
+      action="store_true",
+      dest="skip_bisection",
+      help=("If set, the script will only attempt to integrate the latest Envoy commit."),
+  )
+  parser.add_argument(
       "--agent_invocation",
       type=str,
       default=None,
@@ -790,6 +782,7 @@ def main() -> None:
       branch_name=args.branch_name,
       envoy_clone_depth=args.envoy_clone_depth,
       sync_nighthawk_repo=args.sync_nighthawk_repo,
+      skip_bisection=args.skip_bisection,
       agent_invocation=args.agent_invocation,
   )
   try:
