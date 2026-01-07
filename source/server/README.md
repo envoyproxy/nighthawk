@@ -183,6 +183,7 @@ bazel-bin/nighthawk_test_server  [--stats-tag <string>] ...
 <string>] [--parent-shutdown-time-s
 <uint32_t>] [--drain-strategy <string>]
 [--drain-time-s <uint32_t>]
+[--file-flush-min-size-kb <uint32_t>]
 [--file-flush-interval-msec <uint32_t>]
 [--service-zone <string>]
 [--service-node <string>]
@@ -253,6 +254,9 @@ Hot restart drain sequence behaviour, one of 'gradual' (default) or
 
 --drain-time-s <uint32_t>
 Hot restart and LDS removal drain time in seconds
+
+--file-flush-min-size-kb <uint32_t>
+Minimum size in KB for log flushing
 
 --file-flush-interval-msec <uint32_t>
 Interval for log flushing in msec
