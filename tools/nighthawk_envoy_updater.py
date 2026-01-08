@@ -27,7 +27,7 @@ MAX_AGENT_ATTEMPTS = 3
 copied_files: list[str] = [
     ".bazelversion",
     ".github/config.yml",
-    "ci/envoy_build_sha.sh"
+    "ci/envoy_build_sha.sh",
     "ci/run_envoy_docker.sh",
 ]
 
@@ -408,19 +408,13 @@ class EnvoyCommitIntegration(StepHandler[EnvoyCommitIntegrationStep]):
               _patch_merge_conflict_instructions(self.target_envoy_commit,
                                                  self.nighthawk_git_repo_dir)) from e
       case EnvoyCommitIntegrationStep.BAZEL_UPDATE_REQUIREMENTS:
-        _run_command(
-            ["bazel", "run", "//tools/base:requirements.update"],
-            cwd=self.nighthawk_git_repo_dir,
-        )
+        _run_command(["./ci/do_ci.sh", "fix_requirements"], cwd=self.nighthawk_git_repo_dir)
       case EnvoyCommitIntegrationStep.BUILD_NIGHTHAWK:
         _run_command(["./ci/do_ci.sh", "build"], cwd=self.nighthawk_git_repo_dir)
       case EnvoyCommitIntegrationStep.TEST_NIGHTHAWK:
         _run_command(["./ci/do_ci.sh", "test"], cwd=self.nighthawk_git_repo_dir)
       case EnvoyCommitIntegrationStep.UPDATE_CLI_README:
-        _run_command(
-            ["./tools/update_cli_readme_documentation.sh", "--mode=fix"],
-            cwd=self.nighthawk_git_repo_dir,
-        )
+        _run_command(["./ci/do_ci.sh", "fix_docs"], cwd=self.nighthawk_git_repo_dir)
       case EnvoyCommitIntegrationStep.FIX_FORMAT:
         _run_command(["./ci/do_ci.sh", "fix_format"], cwd=self.nighthawk_git_repo_dir)
       case _:

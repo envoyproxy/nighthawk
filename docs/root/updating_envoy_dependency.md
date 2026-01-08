@@ -280,7 +280,7 @@ These should always be accompanied with a comment explaining them. Avoid using
 Update the dependencies by running:
 
 ```bash
-bazel run //tools/base:requirements.update
+ci/do_ci.sh fix_requirements
 ```
 
 This will use the configuration from
@@ -342,7 +342,7 @@ and retrying the format command.
 If Nighthawk command line flags have been changed, execute:
 
 ```bash
-tools/update_cli_readme_documentation.sh --mode fix
+ci/do_ci.sh fix_docs
 ```
 
 to regenerate the
