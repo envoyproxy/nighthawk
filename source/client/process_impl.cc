@@ -597,13 +597,15 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
           Envoy::Network::Utility::getLocalAddress(Envoy::Network::Address::IpVersion::v4),
           "nighthawk_service_zone", "nighthawk_service_cluster", "nighthawk_service_node")),
       secret_manager_(config_tracker_), http_context_(store_root_.symbolTable()),
+
       grpc_context_(store_root_.symbolTable()),
       singleton_manager_(std::make_unique<Envoy::Singleton::ManagerImpl>()),
-      access_log_manager_(std::chrono::milliseconds(1000), *api_, *dispatcher_, access_log_lock_,
+      access_log_manager_(std::chrono::milliseconds(1000), 0, *api_, *dispatcher_, access_log_lock_,
                           store_root_),
       dns_resolver_factory_(dns_resolver_factory),
       typed_dns_resolver_config_(std::move(typed_dns_resolver_config)),
       init_watcher_("Nighthawk", []() {}),
+
       admin_(Envoy::Network::Address::InstanceConstSharedPtr()),
       validation_context_(false, false, false, false), router_context_(store_root_.symbolTable()),
       envoy_options_(/* args = */ {"process_impl"}, HotRestartDisabled, spdlog::level::info) {
