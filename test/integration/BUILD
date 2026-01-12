@@ -20,6 +20,7 @@ py_library(
     srcs = [
         "subprocess_mixin.py",
     ],
+    strict_deps = False,
 )
 
 py_library(
@@ -27,6 +28,7 @@ py_library(
     srcs = [
         "utility.py",
     ],
+    strict_deps = False,
 )
 
 # envoy binary with Logical DNS support
@@ -58,6 +60,7 @@ py_library(
         "//test/user_defined_output/fake_plugin:fake_user_defined_output_proto_py_proto",
         "@envoy//test/config/integration/certs",
     ],
+    strict_deps = False,
     deps = [
         ":integration_test_base_lean",
     ],
@@ -76,6 +79,7 @@ py_library(
         ":test_server_configs",
         "@envoy//test/config/integration/certs",
     ],
+    strict_deps = False,
     deps = [
         ":subprocess_mixin_lib",
         ":utility_lib",
@@ -108,36 +112,42 @@ py_library(
 py_library(
     name = "test_integration_basics_lib",
     srcs = ["test_integration_basics.py"],
+    strict_deps = False,
     deps = [":integration_test_base"],
 )
 
 py_library(
     name = "test_connection_management_lib",
     srcs = ["test_connection_management.py"],
+    strict_deps = False,
     deps = [":integration_test_base"],
 )
 
 py_library(
     name = "test_integration_zipkin_lib",
     srcs = ["test_integration_zipkin.py"],
+    strict_deps = False,
     deps = [":integration_test_base"],
 )
 
 py_library(
     name = "test_grpc_service_lib",
     srcs = ["test_grpc_service.py"],
+    strict_deps = False,
     deps = [":integration_test_base"],
 )
 
 py_library(
     name = "test_remote_execution_lib",
     srcs = ["test_remote_execution.py"],
+    strict_deps = False,
     deps = [":integration_test_base"],
 )
 
 py_library(
     name = "test_output_transform_lib",
     srcs = ["test_output_transform.py"],
+    strict_deps = False,
     deps = [":integration_test_base"],
 )
 
@@ -145,12 +155,14 @@ py_library(
     name = "test_request_source_plugin_lib",
     srcs = ["test_request_source_plugin.py"],
     data = ["//test/request_source:testdata"],
+    strict_deps = False,
     deps = [":integration_test_base"],
 )
 
 py_library(
     name = "test_user_defined_output_plugins_lib",
     srcs = ["test_user_defined_output_plugins.py"],
+    strict_deps = False,
     deps = [":integration_test_base"],
 )
 

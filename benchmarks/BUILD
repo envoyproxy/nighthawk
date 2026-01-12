@@ -49,6 +49,7 @@ py_library(
         "configurations/envoy_proxy.yaml",
     ],
     srcs_version = "PY2AND3",
+    strict_deps = False,
     deps = [
         "@rules_python//python/runfiles",
     ],
@@ -67,6 +68,7 @@ py_library(
         "configurations/request_source_five_clusters.json",
     ],
     srcs_version = "PY2AND3",
+    strict_deps = False,
     deps = [
         "//api/configuration:cluster_config_manager_py_proto",
         "@rules_python//python/runfiles",
@@ -127,6 +129,7 @@ py_library(
         "templates/simple_plot.html",
     ],
     srcs_version = "PY2AND3",
+    strict_deps = False,
     deps = [
         "@rules_python//python/runfiles",
     ],
