@@ -2,9 +2,10 @@
  "count": "10",
  "id": "",
  "percentiles": [
+\
   {
    "percentile": 0,
-   "count": "0",
+   "count": "1",
    "duration": "0.000000001s"
   },
   {
@@ -87,40 +88,45 @@
    "count": "9",
    "duration": "0.000000009s"
   },
+\
   {
    "percentile": 0.925,
-   "count": "9",
+   "count": "10",
    "duration": "0.000000010s"
   },
   {
    "percentile": 0.95,
-   "count": "9",
+   "count": "10",
    "duration": "0.000000010s"
-  },
+  }
+\
   {
    "percentile": 0.975,
-   "count": "9",
+   "count": "10",
    "duration": "0.000000010s"
-  },
+  }
+\
   {
    "percentile": 0.99,
-   "count": "9",
+   "count": "10",
    "duration": "0.000000010s"
-  },
+  }
+\
   {
    "percentile": 0.995,
-   "count": "9",
+   "count": "10",
    "duration": "0.000000010s"
-  },
+  }
+\
   {
    "percentile": 0.999,
-   "count": "9",
+   "count": "10",
    "duration": "0.000000010s"
-  },
+  }
   {
    "percentile": 1,
    "count": "10",
-   "duration": "0.000000011s"
+   "duration": "0.000000010s"
   }
  ],
  "mean": "0.000000006s",
