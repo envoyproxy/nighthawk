@@ -828,7 +828,7 @@ TEST_F(OptionsImplTest, FailsWhenDeprecatedExperimentalH2UseMultipleConnectionsI
       TestUtility::createOptionsImpl(fmt::format("{} http://127.0.0.1/", client_name_));
   CommandLineOptionsPtr proto = option->toCommandLineOptions();
   proto->mutable_experimental_h2_use_multiple_connections()->set_value(true);
-  EXPECT_THROW_WITH_REGEX(std::make_unique<OptionsImpl>(*proto), MalformedArgvException,
+  EXPECT_THROW_WITH_REGEX((void)std::make_unique<OptionsImpl>(*proto), MalformedArgvException,
                           "experimental_h2_use_multiple_connections");
 }
 
@@ -983,7 +983,7 @@ TEST_F(OptionsImplTest, ProtoConstructorValidation) {
       TestUtility::createOptionsImpl(fmt::format("{} http://127.0.0.1/", client_name_));
   auto proto = option->toCommandLineOptions();
   proto->mutable_requests_per_second()->set_value(0);
-  EXPECT_THROW_WITH_REGEX(std::make_unique<OptionsImpl>(*proto), MalformedArgvException,
+  EXPECT_THROW_WITH_REGEX((void)std::make_unique<OptionsImpl>(*proto), MalformedArgvException,
                           "CommandLineOptionsValidationError.RequestsPerSecond");
 }
 
