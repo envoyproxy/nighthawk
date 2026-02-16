@@ -47,7 +47,7 @@ jobs:
         echo "common --jobs=200" >> repo.bazelrc
         echo "build --config=bes" >> repo.bazelrc
     - name: Bind mount spare disk for build artifacts
-      uses: envoyproxy/toolshed/actions/bind-mounts@actions-v0.4.3
+      uses: envoyproxy/toolshed/actions/bind-mounts@actions-v0.4.5
       with:
         mounts: |
           - src: /mnt/envoy-docker-build
