@@ -49,5 +49,5 @@ Please be conscious about using escape characters in your string.
 
 We do not use a real tokenizer for generating tokens in the requests. Instead,
 we do a naive "tokenizer" where each "token" is just a random character in the
-range of [A-Za-z0-9]. This means that the length of the requested message will
-always be 2*req_token_count-1.
+range of [A-Za-z0-9] with a space between each. This means that the length of
+the requested message will always be 2*req_token_count-1.
