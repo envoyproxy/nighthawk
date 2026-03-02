@@ -20,7 +20,7 @@
 #include "nighthawk/common/request_source.h"
 #include "nighthawk/request_source/request_source_plugin_config_factory.h"
 
-namespace nighthawk {
+namespace Nighthawk {
 
 constexpr inline absl::string_view kLlmRequestSourcePluginName = "nighthawk.request_source.llm";
 
@@ -70,7 +70,7 @@ public:
   std::string name() const override { return std::string(kLlmRequestSourcePluginName); }
 
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override {
-    return std::make_unique<LlmRequestSourcePluginConfig>();
+    return std::make_unique<nighthawk::LlmRequestSourcePluginConfig>();
   }
 
   Nighthawk::RequestSourcePtr
@@ -78,4 +78,4 @@ public:
                             Envoy::Http::RequestHeaderMapPtr header) override;
 };
 
-} // namespace nighthawk
+} // namespace Nighthawk

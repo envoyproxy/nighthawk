@@ -28,10 +28,10 @@
 #include "nighthawk/request_source/request_source_plugin_config_factory.h"
 #include "source/common/request_impl.h"
 
-namespace nighthawk {
+namespace Nighthawk {
 namespace {
 
-absl::Status ValidateConfig(const LlmRequestSourcePluginConfig& config) {
+absl::Status ValidateConfig(const nighthawk::LlmRequestSourcePluginConfig& config) {
   if (config.model_name().empty()) {
     return absl::InvalidArgumentError("Model name is required.");
   }
@@ -106,7 +106,7 @@ LlmRequestSourcePluginFactory::createRequestSourcePlugin(const Envoy::Protobuf::
                                                          Envoy::Api::Api&,
                                                          Envoy::Http::RequestHeaderMapPtr header) {
   const auto* any = Envoy::Protobuf::DynamicCastToGenerated<const Envoy::Protobuf::Any>(&message);
-  LlmRequestSourcePluginConfig llm_config;
+  nighthawk::LlmRequestSourcePluginConfig llm_config;
   THROW_IF_NOT_OK(Envoy::MessageUtil::unpackTo(*any, llm_config));
   THROW_IF_NOT_OK(ValidateConfig(llm_config));
 
@@ -126,4 +126,4 @@ LlmRequestSourcePluginFactory::createRequestSourcePlugin(const Envoy::Protobuf::
 
 REGISTER_FACTORY(LlmRequestSourcePluginFactory, Nighthawk::RequestSourcePluginConfigFactory);
 
-} // namespace nighthawk
+} // namespace Nighthawk
