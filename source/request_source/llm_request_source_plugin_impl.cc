@@ -12,14 +12,13 @@
 
 #include "source/request_source/llm_request_source_plugin.pb.h"
 
-#include "external/envoy/source/common/protobuf/protobuf.h"
-#include "external/envoy/source/common/protobuf/utility.h"
+#include "envoy/api/api.h"
 #include "envoy/config/core/v3/base.pb.h"
 #include "envoy/config/core/v3/extension.pb.h"
-#include "envoy/api/api.h"
 #include "envoy/http/header_map.h"
 #include "envoy/registry/registry.h"
 #include "external/envoy/source/common/http/header_map_impl.h"
+#include "external/envoy/source/common/protobuf/protobuf.h"
 #include "external/envoy/source/common/protobuf/utility.h"
 
 #include "api/client/options.pb.h"
@@ -41,10 +40,9 @@ absl::Status ValidateConfig(const LlmRequestSourcePluginConfig& config) {
 }
 
 std::string GenerateRandomPrompt(int num_tokens) {
-  static const char charset[] =
-      "0123456789"
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-      "abcdefghijklmnopqrstuvwxyz";
+  static const char charset[] = "0123456789"
+                                "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                "abcdefghijklmnopqrstuvwxyz";
 
   // The final string to be built.
   std::string result_string;
@@ -66,16 +64,16 @@ std::string GenerateRandomPrompt(int num_tokens) {
   return result_string;
 }
 
-}  // namespace
+} // namespace
 
 Nighthawk::RequestGenerator LlmRequestSourcePlugin::get() {
   return [this]() -> std::unique_ptr<Nighthawk::Request> {
-    Envoy::Http::RequestHeaderMapPtr headers =
-        Envoy::Http::RequestHeaderMapImpl::create();
+    Envoy::Http::RequestHeaderMapPtr headers = Envoy::Http::RequestHeaderMapImpl::create();
     Envoy::Http::HeaderMapImpl::copyFrom(*headers, *header_);
 
     // TODO(b/436267941): Add support for multiple messages.
-    std::string body = absl::StrFormat(R"json(
+    std::string body =
+        absl::StrFormat(R"json(
       {
         "model": "%s",
         "max_tokens": %d,
@@ -87,11 +85,10 @@ Nighthawk::RequestGenerator LlmRequestSourcePlugin::get() {
         ]
       }
     )json",
-                                       model_name_, resp_max_tokens_,
-                                       GenerateRandomPrompt(req_token_count_));
+                        model_name_, resp_max_tokens_, GenerateRandomPrompt(req_token_count_));
 
-    headers->setMethod(envoy::config::core::v3::RequestMethod_Name(
-        envoy::config::core::v3::RequestMethod::POST));
+    headers->setMethod(
+        envoy::config::core::v3::RequestMethod_Name(envoy::config::core::v3::RequestMethod::POST));
     headers->setContentType("application/json");
     headers->setContentLength(body.size());
 
@@ -104,9 +101,10 @@ Nighthawk::RequestGenerator LlmRequestSourcePlugin::get() {
   };
 }
 
-Nighthawk::RequestSourcePtr LlmRequestSourcePluginFactory::createRequestSourcePlugin(
-    const Envoy::Protobuf::Message& message, Envoy::Api::Api&,
-    Envoy::Http::RequestHeaderMapPtr header) {
+Nighthawk::RequestSourcePtr
+LlmRequestSourcePluginFactory::createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
+                                                         Envoy::Api::Api&,
+                                                         Envoy::Http::RequestHeaderMapPtr header) {
   const auto* any = Envoy::Protobuf::DynamicCastToGenerated<const Envoy::Protobuf::Any>(&message);
   LlmRequestSourcePluginConfig llm_config;
   THROW_IF_NOT_OK(Envoy::MessageUtil::unpackTo(*any, llm_config));
@@ -116,18 +114,16 @@ Nighthawk::RequestSourcePtr LlmRequestSourcePluginFactory::createRequestSourcePl
        llm_config.options_list().options()) {
     for (const envoy::config::core::v3::HeaderValueOption& option_header :
          request_option.request_headers()) {
-      auto lower_case_key =
-          Envoy::Http::LowerCaseString(option_header.header().key());
+      auto lower_case_key = Envoy::Http::LowerCaseString(option_header.header().key());
       header->setCopy(lower_case_key, option_header.header().value());
     }
   }
 
-  return std::make_unique<LlmRequestSourcePlugin>(
-      std::string(llm_config.model_name()), llm_config.req_token_count(),
-      llm_config.resp_max_tokens(), std::move(header));
+  return std::make_unique<LlmRequestSourcePlugin>(std::string(llm_config.model_name()),
+                                                  llm_config.req_token_count(),
+                                                  llm_config.resp_max_tokens(), std::move(header));
 };
 
-REGISTER_FACTORY(LlmRequestSourcePluginFactory,
-                 Nighthawk::RequestSourcePluginConfigFactory);
+REGISTER_FACTORY(LlmRequestSourcePluginFactory, Nighthawk::RequestSourcePluginConfigFactory);
 
-}  // namespace nighthawk
+} // namespace nighthawk

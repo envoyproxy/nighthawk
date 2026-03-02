@@ -10,8 +10,8 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 
-#include "envoy/config/core/v3/extension.pb.h"
 #include "envoy/api/api.h"
+#include "envoy/config/core/v3/extension.pb.h"
 #include "envoy/http/header_map.h"
 #include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"
@@ -22,8 +22,7 @@
 
 namespace nighthawk {
 
-constexpr inline absl::string_view kLlmRequestSourcePluginName =
-	"nighthawk.request_source.llm";
+constexpr inline absl::string_view kLlmRequestSourcePluginName = "nighthawk.request_source.llm";
 
 // A Nighthawk RequestSource that generates requests for LLM inference.
 //
@@ -42,23 +41,19 @@ constexpr inline absl::string_view kLlmRequestSourcePluginName =
 //     - Content-Type: application/json
 //     - Content-Length: The length of the request body.
 //     - :path: /v1/completions
-class LlmRequestSourcePlugin
-    : public Nighthawk::RequestSource,
-      public Envoy::Logger::Loggable<Envoy::Logger::Id::http> {
- public:
-  explicit LlmRequestSourcePlugin(std::string model_name, int req_token_count,
-                            int resp_max_tokens,
-                            Envoy::Http::RequestHeaderMapPtr header)
-      : model_name_(model_name),
-        req_token_count_(req_token_count),
-        resp_max_tokens_(resp_max_tokens),
-        header_(std::move(header)) {};
+class LlmRequestSourcePlugin : public Nighthawk::RequestSource,
+                               public Envoy::Logger::Loggable<Envoy::Logger::Id::http> {
+public:
+  explicit LlmRequestSourcePlugin(std::string model_name, int req_token_count, int resp_max_tokens,
+                                  Envoy::Http::RequestHeaderMapPtr header)
+      : model_name_(model_name), req_token_count_(req_token_count),
+        resp_max_tokens_(resp_max_tokens), header_(std::move(header)) {};
 
   Nighthawk::RequestGenerator get() override;
   void initOnThread() override {};
   void destroyOnThread() override {};
 
- private:
+private:
   // Model to use for the request.
   std::string model_name_;
   // Number of tokens to generate in the request.
@@ -70,20 +65,17 @@ class LlmRequestSourcePlugin
   Envoy::Http::RequestHeaderMapPtr header_;
 };
 
-class LlmRequestSourcePluginFactory
-    : public virtual Nighthawk::RequestSourcePluginConfigFactory {
- public:
-  std::string name() const override {
-    return std::string(kLlmRequestSourcePluginName);
-  }
+class LlmRequestSourcePluginFactory : public virtual Nighthawk::RequestSourcePluginConfigFactory {
+public:
+  std::string name() const override { return std::string(kLlmRequestSourcePluginName); }
 
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override {
     return std::make_unique<LlmRequestSourcePluginConfig>();
   }
 
-  Nighthawk::RequestSourcePtr createRequestSourcePlugin(
-      const Envoy::Protobuf::Message&, Envoy::Api::Api&,
-      Envoy::Http::RequestHeaderMapPtr header) override;
+  Nighthawk::RequestSourcePtr
+  createRequestSourcePlugin(const Envoy::Protobuf::Message&, Envoy::Api::Api&,
+                            Envoy::Http::RequestHeaderMapPtr header) override;
 };
 
-}  // namespace nighthawk
+} // namespace nighthawk
