@@ -31,7 +31,7 @@ This is generated based on input you provide. The 4 inputs are:
     - This allows you to add headers and choose request method of the requests
     - Header 'Content-Type: application/json' added by default
     - Ignore the "request_body_size" and "json_body" in this field
-    - Must use ":authority" header instead of ":host"
+    - If a host name is required, use ":authority" header instead of ":host"
 
 It's also important to note that all requests are routed to the path "/v1/completions".
 There is not currently a way to override this through the CLI. If you need to use
