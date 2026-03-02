@@ -14,18 +14,18 @@
 
 #include "external/envoy/source/common/protobuf/protobuf.h"
 #include "external/envoy/source/common/protobuf/utility.h"
-#include "external/envoy/src/api/envoy/config/core/v3/base.pb.h"
-#include "external/envoy/src/api/envoy/config/core/v3/extension.pb.h"
-#include "external/envoy/src/envoy/api/api.h"
-#include "external/envoy/src/envoy/http/header_map.h"
-#include "external/envoy/src/envoy/registry/registry.h"
-#include "external/envoy/src/source/common/http/header_map_impl.h"
-#include "external/envoy/src/source/common/protobuf/utility.h"
+#include "envoy/config/core/v3/base.pb.h"
+#include "envoy/config/core/v3/extension.pb.h"
+#include "envoy/api/api.h"
+#include "envoy/http/header_map.h"
+#include "envoy/registry/registry.h"
+#include "external/envoy/source/common/http/header_map_impl.h"
+#include "external/envoy/source/common/protobuf/utility.h"
 
 #include "api/client/options.pb.h"
 #include "api/request_source/request_source_plugin.pb.h"
-#include "source/common/request.h"
-#include "source/common/request_source.h"
+#include "nighthawk/common/request.h"
+#include "nighthawk/common/request_source.h"
 #include "nighthawk/request_source/request_source_plugin_config_factory.h"
 #include "source/common/request_impl.h"
 
@@ -98,6 +98,8 @@ Nighthawk::RequestGenerator LlmRequestSourcePlugin::get() {
     auto path_key = Envoy::Http::LowerCaseString(":path");
     headers->setCopy(path_key, "/v1/completions");
 
+    ENVOY_LOG(info, body);
+
     return std::make_unique<Nighthawk::RequestImpl>(std::move(headers), body);
   };
 }
@@ -107,7 +109,7 @@ Nighthawk::RequestSourcePtr LlmRequestSourcePluginFactory::createRequestSourcePl
     Envoy::Http::RequestHeaderMapPtr header) {
   const auto* any = Envoy::Protobuf::DynamicCastToGenerated<const Envoy::Protobuf::Any>(&message);
   LlmRequestSourcePluginConfig llm_config;
-  THROW_IF_NOT_OK(Envoy::MessageUtil::unpackTo(any, llm_config));
+  THROW_IF_NOT_OK(Envoy::MessageUtil::unpackTo(*any, llm_config));
   THROW_IF_NOT_OK(ValidateConfig(llm_config));
 
   for (const nighthawk::client::RequestOptions& request_option :

@@ -10,12 +10,11 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 
-#include "external/envoy/src/api/envoy/config/core/v3/extension.pb.h"
-#include "external/envoy/src/envoy/api/api.h"
-#include "external/envoy/src/envoy/http/header_map.h"
-#include "external/envoy/src/source/common/common/logger.h"
-#include "external/envoy/src/source/common/protobuf/protobuf.h"
+#include "envoy/config/core/v3/extension.pb.h"
+#include "envoy/api/api.h"
+#include "envoy/http/header_map.h"
 #include "external/envoy/source/common/common/logger.h"
+#include "external/envoy/source/common/protobuf/protobuf.h"
 
 #include "api/client/options.pb.h"
 #include "nighthawk/common/request_source.h"

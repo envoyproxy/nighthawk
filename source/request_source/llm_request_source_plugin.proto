@@ -1,10 +1,8 @@
-edition = "2024";
+syntax = "proto3";
 
 package nighthawk;
 
 import "api/client/options.proto";
-
-option features.utf8_validation = NONE;
 
 // Config for `LlmRequestSourcePlugin`.
 message LlmRequestSourcePluginConfig {
@@ -12,10 +10,10 @@ message LlmRequestSourcePluginConfig {
   string model_name = 1;
 
   // Number of tokens to generate in the request.
-  int32 req_token_count = 2 [default = 10];
+  int32 req_token_count = 2;
 
   // Maximum number of tokens to return in the response.
-  int32 resp_max_tokens = 3 [default = 10];
+  int32 resp_max_tokens = 3;
 
   // The options_list will be used to apply headers to the request.
   nighthawk.client.RequestOptionsList options_list = 4;

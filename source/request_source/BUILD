@@ -34,6 +34,17 @@ envoy_cc_library(
     ],
 )
 
+api_cc_py_proto_library(
+    name = "llm_request_source_plugin",
+    srcs = [
+        "llm_request_source_plugin.proto",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//api/client:base",
+    ],
+)
+
 envoy_cc_library(
     name = "llm_request_source_plugin_impl",
     srcs = [
@@ -45,6 +56,7 @@ envoy_cc_library(
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
+	":llm_request_source_plugin_cc_proto",
         "//include/nighthawk/request_source:request_source_plugin_config_factory_lib",
         "//source/common:nighthawk_common_lib",
         "//source/common:request_impl_lib",
@@ -65,12 +77,3 @@ envoy_cc_library(
     ],
 )
 
-api_cc_py_proto_library(
-    name = "llm_request_source_plugin_proto",
-    srcs = [
-        "llm_request_source_plugin.proto",
-    ],
-    deps = [
-	"//api/client:base",
-    ],
-)
