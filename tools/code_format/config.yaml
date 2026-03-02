@@ -38,6 +38,7 @@ paths:
   excluded:
   # this exclusion prevents all of our files from being formatted              # unique
   # - .                                                                        # unique
+  - bazel/external/c-ares/
   - bazel/external/http_parser/
   - bazel/rbe/toolchains/configs/
   - bazel-
@@ -66,6 +67,7 @@ paths:
     - bazel/BUILD
     - bazel/external/
     - bazel/toolchains/
+    - docs
 
   # `build_urls`:
   #   We want all URL references to exist in repository_locations.bzl files and have
@@ -81,6 +83,7 @@ paths:
     - api/bazel/repository_locations.bzl
     - bazel/external/cargo/crates.bzl
     - bazel/repository_locations.bzl
+    - docs/bazel/repository_locations.bzl
 
   exception:
     include:
@@ -148,6 +151,8 @@ paths:
     # Extensions can exempt entire directories but new extensions
     # points should ideally use StatusOr
     - source/extensions/access_loggers
+    # Bootstrap extension factories must throw per interface documentation.
+    - source/extensions/bootstrap/dynamic_modules/factory.cc
     - source/extensions/clusters/eds/
     - source/extensions/clusters/logical_dns
     - source/extensions/clusters/original_dst
