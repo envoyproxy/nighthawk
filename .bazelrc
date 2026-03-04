@@ -531,5 +531,3 @@ try-import %workspace%/repo.bazelrc
 try-import %workspace%/clang.bazelrc
 try-import %workspace%/user.bazelrc
 try-import %workspace%/local_tsan.bazelrc
-
-common --credential_helper=us-python.pkg.dev=/usr/local/google/home/graysonlafleur/gar_cred_helper.sh
