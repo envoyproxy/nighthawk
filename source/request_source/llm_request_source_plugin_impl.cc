@@ -39,11 +39,12 @@ absl::Status ValidateConfig(const nighthawk::LlmRequestSourcePluginConfig& confi
   return absl::OkStatus();
 }
 
-std::string GenerateRandomPrompt(int num_tokens) {
-  static const char charset[] = "0123456789"
-                                "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                                "abcdefghijklmnopqrstuvwxyz";
+constexpr absl::string_view kCharset =
+	"0123456789"
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	"abcdefghijklmnopqrstuvwxyz";
 
+std::string GenerateRandomPrompt(int num_tokens) {
   // The final string to be built.
   std::string result_string;
 
@@ -52,7 +53,7 @@ std::string GenerateRandomPrompt(int num_tokens) {
 
   for (int i = 0; i < num_tokens; ++i) {
     // Append a random character from the charset.
-    result_string += charset[absl::Uniform(bitgen, 0, 62)];
+    result_string += kCharset[absl::Uniform<size_t>(bitgen, 0, kCharset.length())];
 
     // Add a space between tokens. This is a naive way to calculate the number
     // of tokens in the string as generally spaces delineate tokens.
@@ -71,7 +72,6 @@ Nighthawk::RequestGenerator LlmRequestSourcePlugin::get() {
     Envoy::Http::RequestHeaderMapPtr headers = Envoy::Http::RequestHeaderMapImpl::create();
     Envoy::Http::HeaderMapImpl::copyFrom(*headers, *header_);
 
-    // TODO(b/436267941): Add support for multiple messages.
     std::string body =
         absl::StrFormat(R"json(
       {
@@ -94,8 +94,6 @@ Nighthawk::RequestGenerator LlmRequestSourcePlugin::get() {
 
     auto path_key = Envoy::Http::LowerCaseString(":path");
     headers->setCopy(path_key, "/v1/completions");
-
-    ENVOY_LOG(info, body);
 
     return std::make_unique<Nighthawk::RequestImpl>(std::move(headers), body);
   };

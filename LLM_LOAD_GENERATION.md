@@ -3,8 +3,9 @@
 ## Overview
 
 If you would like to perform a load test against an LLM backend, using
-LLM-formatted requests, there is an LLM Request Source plugin that can
-emulate that workload. These request bodies looks like the following:
+the [Completions API spec](https://developers.openai.com/api/docs/guides/completions/),
+there is an LLM Request Source plugin that can emulate that workload.
+These request bodies looks like the following:
 
 ```
 {
@@ -29,13 +30,12 @@ This is generated based on input you provide. The 4 inputs are:
     - Maximum number of tokens for the model to respond with
 4. [Request Options List](https://github.com/envoyproxy/nighthawk/blob/09d64d769972513989a95766a98e28f5d6bb05c2/api/client/options.proto#L32) (optional)
     - This allows you to add headers and choose request method of the requests
-    - Header 'Content-Type: application/json' added by default
-    - Ignore the "request_body_size" and "json_body" in this field
-    - If a host name is required, use ":authority" header instead of ":host"
 
-It's also important to note that all requests are routed to the path "/v1/completions".
-There is not currently a way to override this through the CLI. If you need to use
-a different path, you will need to edit it in source/request_source/llm_request_source_plugin_impl.cc.
+A few additional details about the request options list:
+
+1. Header 'Content-Type: application/json' added by default
+2. Ignore the "request_body_size" and "json_body" in this field
+3. If a host name is required, use ":authority" header instead of ":host"
 
 The config for running with this request source is passed into the "--request-source-plugin-config" flag.
 Here is an example of how that flag might look for running a load test with this LLM Request Source plugin:
