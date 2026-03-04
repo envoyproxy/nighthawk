@@ -39,10 +39,9 @@ absl::Status ValidateConfig(const nighthawk::LlmRequestSourcePluginConfig& confi
   return absl::OkStatus();
 }
 
-constexpr absl::string_view kCharset =
-	"0123456789"
-	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	"abcdefghijklmnopqrstuvwxyz";
+constexpr absl::string_view kCharset = "0123456789"
+                                       "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                       "abcdefghijklmnopqrstuvwxyz";
 
 std::string GenerateRandomPrompt(int num_tokens) {
   // The final string to be built.
