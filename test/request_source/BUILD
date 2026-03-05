@@ -64,12 +64,12 @@ envoy_cc_test(
     srcs = ["llm_request_source_plugin_test.cc"],
     repository = "@envoy",
     deps = [
-        "//test/test_common:proto_matchers",
-	"//source/common:request_impl_lib",
+        "//source/common:request_impl_lib",
         "//source/common:request_source_impl_lib",
-	"//source/request_source:llm_request_source_plugin_impl",
-	"//source/request_source:llm_request_source_plugin_cc_proto",
-	"@envoy//source/common/http:header_map_lib_with_external_headers",
-	"@envoy//test/mocks/api:api_mocks",
+        "//source/request_source:llm_request_source_plugin_cc_proto",
+        "//source/request_source:llm_request_source_plugin_impl",
+        "//test/test_common:proto_matchers",
+        "@envoy//source/common/http:header_map_lib_with_external_headers",
+        "@envoy//test/mocks/api:api_mocks",
     ],
 )
