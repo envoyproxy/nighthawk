@@ -14,6 +14,7 @@
 #include "source/common/json/json_loader.h"
 
 #include "external/envoy/source/common/http/header_map_impl.h"
+#include "external/envoy/source/common/protobuf/protobuf.h"
 #include "external/envoy/test/mocks/api/mocks.h"
 
 #include "gmock/gmock.h"
