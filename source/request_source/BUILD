@@ -65,7 +65,7 @@ envoy_cc_library(
         "@com_google_absl//absl/random",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
-	"@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/strings:string_view",
         "@envoy//source/common/common:thread_lib_with_external_headers",
