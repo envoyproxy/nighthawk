@@ -54,7 +54,7 @@ std::string GenerateRandomPrompt(int num_tokens) {
     // Add a space between tokens. This is a naive way to calculate the number
     // of tokens in the string as generally spaces delineate tokens.
     if (i < num_tokens - 1) {
-        result_string += ' ';
+      result_string += ' ';
     }
   }
 
