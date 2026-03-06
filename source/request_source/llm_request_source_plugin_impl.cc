@@ -8,6 +8,7 @@
 #include "absl/random/random.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 
 #include "source/request_source/llm_request_source_plugin.pb.h"
@@ -49,12 +50,12 @@ std::string GenerateRandomPrompt(int num_tokens) {
 
   for (int i = 0; i < num_tokens; ++i) {
     // Append a random character from the charset.
-    result_string += kCharset[absl::Uniform<size_t>(bitgen, 0, kCharset.length())];
+    absl::StrAppend(&result_string, std::string(1, kCharset[absl::Uniform<size_t>(bitgen, 0, kCharset.length())]));
 
     // Add a space between tokens. This is a naive way to calculate the number
     // of tokens in the string as generally spaces delineate tokens.
     if (i < num_tokens - 1) {
-      result_string += ' ';
+      absl::StrAppend(&result_string, " ");
     }
   }
 

@@ -70,6 +70,7 @@ envoy_cc_test(
         "//source/request_source:llm_request_source_plugin_impl",
         "//test/test_common:proto_matchers",
         "@envoy//source/common/http:header_map_lib_with_external_headers",
+	"@envoy//source/common/protobuf:protobuf_with_external_headers",
         "@envoy//test/mocks/api:api_mocks",
     ],
 )
