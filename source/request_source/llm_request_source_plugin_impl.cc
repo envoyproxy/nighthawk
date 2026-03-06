@@ -51,7 +51,7 @@ std::string GenerateRandomPrompt(int num_tokens) {
   for (int i = 0; i < num_tokens; ++i) {
     // Append a random character from the charset.
     absl::StrAppend(&result_string,
-		    std::string(1, kCharset[absl::Uniform<size_t>(bitgen, 0, kCharset.length())]));
+                    std::string(1, kCharset[absl::Uniform<size_t>(bitgen, 0, kCharset.length())]));
 
     // Add a space between tokens. This is a naive way to calculate the number
     // of tokens in the string as generally spaces delineate tokens.
