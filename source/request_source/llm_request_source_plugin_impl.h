@@ -24,7 +24,7 @@ namespace Nighthawk {
 
 constexpr inline absl::string_view kLlmRequestSourcePluginName = "nighthawk.request_source.llm";
 
-// A Nighthawk RequestSource that generates requests for LLM inference.
+// A Nighthawk RequestSource that generates completions API requests.
 //
 // The request source generates requests with the following characteristics:
 //   - The request body is a JSON object with the following fields:
@@ -62,9 +62,11 @@ private:
   int resp_max_tokens_;
   // The options_list will be used to apply headers to the request.
   std::unique_ptr<const nighthawk::client::RequestOptionsList> options_list_;
+  // Headers for the request.
   Envoy::Http::RequestHeaderMapPtr header_;
 };
 
+// Factory class for creating LlmRequestSourcePlugin objects.
 class LlmRequestSourcePluginFactory : public virtual Nighthawk::RequestSourcePluginConfigFactory {
 public:
   std::string name() const override { return std::string(kLlmRequestSourcePluginName); }

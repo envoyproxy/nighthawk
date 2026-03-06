@@ -9,10 +9,10 @@ message LlmRequestSourcePluginConfig {
   // Model to use for the request. This field is required.
   string model_name = 1;
 
-  // Number of tokens to generate in the request.
+  // Number of tokens to generate in the request. Defaults to 0.
   int32 req_token_count = 2;
 
-  // Maximum number of tokens to return in the response.
+  // Maximum number of tokens to return in the response. Defaults to 0.
   int32 resp_max_tokens = 3;
 
   // The options_list will be used to apply headers to the request.

@@ -44,10 +44,7 @@ constexpr absl::string_view kCharset = "0123456789"
                                        "abcdefghijklmnopqrstuvwxyz";
 
 std::string GenerateRandomPrompt(int num_tokens) {
-  // The final string to be built.
   std::string result_string;
-
-  // Random number generator for selecting characters from the charset.
   absl::BitGen bitgen;
 
   for (int i = 0; i < num_tokens; ++i) {
@@ -57,7 +54,7 @@ std::string GenerateRandomPrompt(int num_tokens) {
     // Add a space between tokens. This is a naive way to calculate the number
     // of tokens in the string as generally spaces delineate tokens.
     if (i < num_tokens - 1) {
-      result_string += ' ';
+        result_string += ' ';
     }
   }
 
