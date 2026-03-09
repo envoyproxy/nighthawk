@@ -58,3 +58,21 @@ envoy_cc_test(
         "@envoy//test/mocks/api:api_mocks",
     ],
 )
+
+envoy_cc_test(
+    name = "llm_request_source_plugin_test",
+    srcs = ["llm_request_source_plugin_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/common:request_impl_lib",
+        "//source/common:request_source_impl_lib",
+        "//source/request_source:llm_request_source_plugin_cc_proto",
+        "//source/request_source:llm_request_source_plugin_impl",
+        "@envoy//source/common/common:assert_lib_with_external_headers",
+        "@envoy//source/common/http:header_map_lib_with_external_headers",
+        "@envoy//source/common/json:json_loader_lib",
+        "@envoy//source/common/protobuf:protobuf_with_external_headers",
+        "@envoy//source/common/protobuf:utility_lib_with_external_headers",
+        "@envoy//test/mocks/api:api_mocks",
+    ],
+)
