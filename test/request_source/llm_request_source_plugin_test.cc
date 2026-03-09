@@ -6,8 +6,6 @@
 #include "source/request_source/llm_request_source_plugin.pb.h"
 #include "source/request_source/llm_request_source_plugin_impl.h"
 
-#include "test/test_common/proto_matchers.h"
-
 #include "nighthawk/common/request.h"
 #include "nighthawk/common/request_source.h"
 #include "source/common/common/assert.h"
@@ -43,7 +41,7 @@ TEST(LlmRequestSourcePluginTest, TestLlmRequestSourcePlugin) {
   Envoy::Http::RequestHeaderMapPtr headers = Envoy::Http::RequestHeaderMapImpl::create();
   LlmRequestSourcePluginFactory factory;
   NiceMock<Envoy::Api::MockApi> mock_api;
-  google::protobuf::Any config_wrapper;
+  Envoy::Protobuf::Any config_wrapper;
   config_wrapper.PackFrom(config);
   Nighthawk::RequestSourcePtr llm_request_source =
       factory.createRequestSourcePlugin(config_wrapper, mock_api, std::move(headers));
@@ -83,7 +81,7 @@ TEST(LlmRequestSourcePluginTest, TestLlmRequestSourcePluginFactory) {
   Envoy::Http::RequestHeaderMapPtr headers = Envoy::Http::RequestHeaderMapImpl::create();
   LlmRequestSourcePluginFactory factory;
   NiceMock<Envoy::Api::MockApi> mock_api;
-  google::protobuf::Any config_wrapper;
+  Envoy::Protobuf::Any config_wrapper;
   config_wrapper.PackFrom(config);
   Nighthawk::RequestSourcePtr llm_request_source =
       factory.createRequestSourcePlugin(config_wrapper, mock_api, std::move(headers));
