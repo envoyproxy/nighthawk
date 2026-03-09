@@ -8,10 +8,10 @@
 
 #include "nighthawk/common/request.h"
 #include "nighthawk/common/request_source.h"
-#include "source/common/common/assert.h"
-#include "source/common/json/json_loader.h"
 
+#include "external/envoy/source/common/common/assert.h"
 #include "external/envoy/source/common/http/header_map_impl.h"
+#include "external/envoy/source/common/json/json_loader.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"
 #include "external/envoy/source/common/protobuf/utility.h"
 #include "external/envoy/test/mocks/api/mocks.h"
