@@ -147,6 +147,10 @@ to fire off should look like. A couple of implementations exist:
 - a request source
   [plugin](https://github.com/envoyproxy/nighthawk/blob/9f97c2d9cb86b84a158ccba33832d135e1b96c7a/source/request_source/request_options_list_plugin_impl.h#L94)
   which replays requests from memory.
+- a request source
+  [plugin](https://github.com/envoyproxy/nighthawk/blob/9f97c2d9cb86b84a158ccba33832d135e1b96c7a/source/request_source/llm_request_source_plugin_impl.h)
+  which creates requests based on the Completions API spec. See
+  [howto](howto/LLM_LOAD_GENERATION.md) for more details.
 
 ### StreamDecoder
 
