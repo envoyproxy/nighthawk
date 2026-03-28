@@ -205,7 +205,7 @@ public:
   Envoy::Server::ServerLifecycleNotifier& lifecycleNotifier() override {
     return lifecycle_notifier_;
   }
-\
+
   Envoy::Regex::Engine& regexEngine() override { return regex_engine_; }
 
   Envoy::Init::Manager& initManager() override {
@@ -213,7 +213,6 @@ public:
   };
 
   Envoy::Grpc::Context& grpcContext() override { return server_.grpcContext(); };
-
 
   Envoy::Router::Context& routerContext() override { return server_.routerContext(); };
 
