@@ -209,7 +209,7 @@ public:
   Envoy::Regex::Engine& regexEngine() override { return regex_engine_; }
 
   Envoy::Init::Manager& initManager() override {
-    PANIC("NighthawkServerFactoryContext::initManager not implemented");
+    return server_.initManager();
   };
 
   Envoy::Grpc::Context& grpcContext() override { return server_.grpcContext(); };
