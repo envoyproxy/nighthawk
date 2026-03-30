@@ -208,9 +208,7 @@ public:
 
   Envoy::Regex::Engine& regexEngine() override { return regex_engine_; }
 
-  Envoy::Init::Manager& initManager() override {
-    return server_.initManager();
-  };
+  Envoy::Init::Manager& initManager() override { return server_.initManager(); };
 
   Envoy::Grpc::Context& grpcContext() override { return server_.grpcContext(); };
 
