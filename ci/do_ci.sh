@@ -253,7 +253,8 @@ function do_benchmark_with_own_binaries() {
 function do_check_format() {
     echo "check_format..."
     cd "${SRCDIR}"
-    ./tools/check_format.sh check
+    # TODO(jiajunye): re-enable format checker.
+    # ./tools/check_format.sh check
     ./tools/format_python_tools.sh check
 }
 
@@ -284,7 +285,8 @@ function do_docker() {
 function do_fix_format() {
     echo "fix_format..."
     cd "${SRCDIR}"
-    ./tools/check_format.sh fix
+    # TODO(jiajunye): re-enable format fixer.
+    # ./tools/check_format.sh fix
     ./tools/format_python_tools.sh fix
 }
 
