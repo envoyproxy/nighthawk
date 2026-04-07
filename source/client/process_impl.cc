@@ -272,8 +272,7 @@ private:
 class NighthawkServerInstance : public Envoy::Server::Instance {
 public:
   NighthawkServerInstance(Envoy::OptRef<Envoy::Server::Admin> admin, Envoy::Api::Api& api,
-		          Envoy::Init::Manager& init_manager,
-                          Envoy::Event::Dispatcher& dispatcher,
+                          Envoy::Init::Manager& init_manager, Envoy::Event::Dispatcher& dispatcher,
                           Envoy::AccessLog::AccessLogManager& log_manager,
                           Envoy::Server::Options& options, Envoy::Runtime::Loader& runtime,
                           Envoy::Singleton::Manager& singleton_manager,
@@ -283,11 +282,11 @@ public:
                           Envoy::Grpc::Context& grpc_context, Envoy::Http::Context& http_context,
                           Envoy::Router::Context& router_context, Envoy::Stats::StoreRoot& store,
                           Envoy::Secret::SecretManagerImpl& secret_manager)
-      : admin_(admin), api_(api), init_manager_(init_manager), dispatcher_(dispatcher), log_manager_(log_manager),
-        options_(options), runtime_(runtime), singleton_manager_(singleton_manager),
-        stats_store_(store), tls_(tls), local_info_(local_info),
-        validation_context_(validation_context), grpc_context_(grpc_context),
-        http_context_(http_context), router_context_(router_context),
+      : admin_(admin), api_(api), init_manager_(init_manager), dispatcher_(dispatcher),
+        log_manager_(log_manager), options_(options), runtime_(runtime),
+        singleton_manager_(singleton_manager), stats_store_(store), tls_(tls),
+        local_info_(local_info), validation_context_(validation_context),
+        grpc_context_(grpc_context), http_context_(http_context), router_context_(router_context),
         server_factory_context_(*this),
         http_server_properties_cache_manager_(
             server_factory_context_, Envoy::ProtobufMessage::getStrictValidationVisitor(), tls),
@@ -999,9 +998,9 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
       runtime_loader_ = *std::move(loader);
 
       server_ = std::make_unique<NighthawkServerInstance>(
-          admin_, *api_, init_manager_, *dispatcher_, access_log_manager_, envoy_options_, *runtime_loader_.get(),
-          *singleton_manager_, tls_, *local_info_, validation_context_, grpc_context_,
-          http_context_, router_context_, store_root_, secret_manager_);
+          admin_, *api_, init_manager_, *dispatcher_, access_log_manager_, envoy_options_,
+          *runtime_loader_.get(), *singleton_manager_, tls_, *local_info_, validation_context_,
+          grpc_context_, http_context_, router_context_, store_root_, secret_manager_);
       ssl_context_manager_ =
           std::make_unique<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>(
               server_->serverFactoryContext());
