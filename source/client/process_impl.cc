@@ -208,9 +208,7 @@ public:
 
   Envoy::Regex::Engine& regexEngine() override { return regex_engine_; }
 
-  Envoy::Init::Manager& initManager() override {
-    PANIC("NighthawkServerFactoryContext::initManager not implemented");
-  };
+  Envoy::Init::Manager& initManager() override { return server_.initManager(); };
 
   Envoy::Grpc::Context& grpcContext() override { return server_.grpcContext(); };
 
@@ -274,6 +272,7 @@ private:
 class NighthawkServerInstance : public Envoy::Server::Instance {
 public:
   NighthawkServerInstance(Envoy::OptRef<Envoy::Server::Admin> admin, Envoy::Api::Api& api,
+		          Envoy::Init::Manager& init_manager,
                           Envoy::Event::Dispatcher& dispatcher,
                           Envoy::AccessLog::AccessLogManager& log_manager,
                           Envoy::Server::Options& options, Envoy::Runtime::Loader& runtime,
@@ -284,7 +283,7 @@ public:
                           Envoy::Grpc::Context& grpc_context, Envoy::Http::Context& http_context,
                           Envoy::Router::Context& router_context, Envoy::Stats::StoreRoot& store,
                           Envoy::Secret::SecretManagerImpl& secret_manager)
-      : admin_(admin), api_(api), dispatcher_(dispatcher), log_manager_(log_manager),
+      : admin_(admin), api_(api), init_manager_(init_manager), dispatcher_(dispatcher), log_manager_(log_manager),
         options_(options), runtime_(runtime), singleton_manager_(singleton_manager),
         stats_store_(store), tls_(tls), local_info_(local_info),
         validation_context_(validation_context), grpc_context_(grpc_context),
@@ -331,9 +330,7 @@ public:
   Envoy::Server::HotRestart& hotRestart() override {
     PANIC("NighthawkServerInstance::hotRestart not implemented");
   }
-  Envoy::Init::Manager& initManager() override {
-    PANIC("NighthawkServerInstance::initManager not implemented");
-  }
+  Envoy::Init::Manager& initManager() override { return init_manager_; }
   Envoy::Server::ListenerManager& listenerManager() override {
     PANIC("NighthawkServerInstance::listenerManager not implemented");
   }
@@ -405,6 +402,7 @@ public:
 private:
   Envoy::OptRef<Envoy::Server::Admin> admin_;
   Envoy::Api::Api& api_;
+  Envoy::Init::Manager& init_manager_;
   Envoy::Event::Dispatcher& dispatcher_;
   Envoy::AccessLog::AccessLogManager& log_manager_;
   Envoy::Server::Options& options_;
@@ -1001,7 +999,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
       runtime_loader_ = *std::move(loader);
 
       server_ = std::make_unique<NighthawkServerInstance>(
-          admin_, *api_, *dispatcher_, access_log_manager_, envoy_options_, *runtime_loader_.get(),
+          admin_, *api_, init_manager_, *dispatcher_, access_log_manager_, envoy_options_, *runtime_loader_.get(),
           *singleton_manager_, tls_, *local_info_, validation_context_, grpc_context_,
           http_context_, router_context_, store_root_, secret_manager_);
       ssl_context_manager_ =
