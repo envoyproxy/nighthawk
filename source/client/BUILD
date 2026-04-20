@@ -103,6 +103,8 @@ envoy_cc_library(
         "//source/common:nighthawk_common_lib",
         "//source/common:nighthawk_service_client_impl",
         "//source/common:request_source_impl_lib",
+        "//source/request_source:llm_request_source_plugin_cc_proto",
+        "//source/request_source:llm_request_source_plugin_impl",
         "//source/request_source:request_options_list_plugin_impl",
         "//source/user_defined_output:user_defined_output_plugin_creator",
         "@envoy//envoy/config:xds_manager_interface",
@@ -194,9 +196,9 @@ envoy_cc_library(
         "//api/client/transform:transform_cc_proto",
         "//include/nighthawk/client:client_includes",
         "//source/common:nighthawk_common_lib",
-        "@com_google_googletest//:gtest",
         "@envoy//source/common/network:utility_lib_with_external_headers",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
+        "@googletest//:gtest",
     ],
 )
 

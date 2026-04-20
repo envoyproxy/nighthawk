@@ -18,6 +18,11 @@ Nighthawk currently offers:
 See [navigating the codebase](docs/root/navigating_the_codebase.md) for a
 description of the directory structure.
 
+## Additional Documentation
+
+See the [howto](docs/root/howto) directory for documentation aimed at specific
+use-cases.
+
 ## Building Nighthawk
 
 ### Prerequisites
