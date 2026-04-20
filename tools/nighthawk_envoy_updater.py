@@ -66,16 +66,21 @@ def _run_command(
   cmd = f"{cwd if cwd else pathlib.Path.cwd()} $ {shlex.join(command)}"
   logging.info(cmd)
   try:
+    kwargs = {
+        "cwd": cwd,
+        "input": input_str,
+        "shell": shell,
+        "text": True,
+        "check": True,
+    }
+    if not interactive:
+      kwargs["capture_output"] = True
+
     result = subprocess.run(
         command,
-        cwd=cwd,
-        input=input_str,
-        shell=shell,
-        capture_output=True,
-        text=True,
-        check=True,
+        **kwargs,
     )
-    return result.stdout.strip() if result.stdout else ""
+    return result.stdout.strip() if not interactive and result.stdout else ""
   except subprocess.CalledProcessError as e:
     logging.info(e)
     # Update the captured command to include the subprocess's working directory.
