@@ -130,7 +130,7 @@ def test_http_h2_mini_stress_test_with_client_side_queueing(http_test_server_fix
       "--termination-predicate", "benchmark.http_2xx:99", "--simple-warmup"
   ])
   asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 1)
-  asserts.assertCounterGreaterEqual(counters, "upstream_rq_pending_overflow", 10)
+  asserts.assertCounterGreaterEqual(counters, "upstream_rq_active_overflow", 10)
 
 
 def test_http_h2_mini_stress_test_without_client_side_queueing(http_test_server_fixture):
@@ -1013,7 +1013,7 @@ def test_http_request_release_timing(http_test_server_fixture, qps_parameterizat
 
     # The actual duration is a float, flooring if here allows us to use
     # the GreaterEqual matchers below.
-    total_requests = qps_parameterization_fixture * concurrency * math.floor(actual_duration)
+    total_requests = qps_parameterization_fixture * concurrency * math.floor(actual_duration) 
     asserts.assertGreaterEqual(
         int(global_histograms["benchmark_http_client.request_to_response"]["count"]),
         total_requests)
