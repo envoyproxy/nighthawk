@@ -178,7 +178,7 @@ class DynamicClusterConfigManager(DynamicConfigManager):
       raise NotImplementedError(f'Action: {action} is not implemented.')
 
   def getLastMutateActionForTesting(self):
-    """Provide the last mutation action that occured for testing."""
+    """Provide the last mutation action that occurred for testing."""
     return self._last_mutate_action
 
   def timeBeforeNextUpdate(self):
@@ -285,7 +285,7 @@ class DynamicEndpointsConfigManager(DynamicConfigManager):
       self._inactive_endpoints.append(removed_endpoint)
 
   def getLastMutateActionForTesting(self):
-    """Provide the last mutation action that occured for testing."""
+    """Provide the last mutation action that occurred for testing."""
     return self._last_mutate_action
 
   def timeBeforeNextUpdate(self):
