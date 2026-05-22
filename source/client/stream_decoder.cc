@@ -181,7 +181,9 @@ StreamDecoder::streamResetReasonToResponseFlag(Envoy::Http::StreamResetReason re
   case Envoy::Http::StreamResetReason::ConnectError:
   case Envoy::Http::StreamResetReason::RemoteReset:
   case Envoy::Http::StreamResetReason::RemoteRefusedStreamReset:
+  case Envoy::Http::StreamResetReason::RemoteResetNoError:
     return Envoy::StreamInfo::CoreResponseFlag::UpstreamRemoteReset;
+
   case Envoy::Http::StreamResetReason::ProtocolError:
     return Envoy::StreamInfo::CoreResponseFlag::UpstreamProtocolError;
   case Envoy::Http::StreamResetReason::OverloadManager:
