@@ -36,6 +36,7 @@ void FlushWorkerImpl::shutdownThread() {
 }
 
 void FlushWorkerImpl::flushStats() {
+  Envoy::Thread::SkipAsserts skip;
   // Create a snapshot and flush to all sinks. Even if there are no sinks,
   // creating the snapshot has the important property that it latches all counters on a periodic
   // basis.
