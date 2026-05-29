@@ -26,6 +26,8 @@ typed_config:
 
 constexpr absl::string_view kNoConfigProto = R"EOF(
 name: test-server
+typed_config:
+  "@type": type.googleapis.com/nighthawk.server.ResponseOptions
 )EOF";
 
 class HttpTestServerIntegrationTest : public HttpFilterIntegrationTestBase,
