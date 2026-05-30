@@ -31,7 +31,8 @@ public:
   ResponseOrigin getHappyFlowResponseOrigin() {
     // Modulo the test-server, extensions are expected to need an upstream to synthesize a reply
     // when the effective configuration is valid.
-    return config_.find("name: test-server") != std::string::npos ? ResponseOrigin::EXTENSION : ResponseOrigin::UPSTREAM;
+    return config_.find("name: test-server") != std::string::npos ? ResponseOrigin::EXTENSION
+	                                                          : ResponseOrigin::UPSTREAM;
   }
 
 protected:
