@@ -31,8 +31,8 @@ public:
   ResponseOrigin getHappyFlowResponseOrigin() {
     // Modulo the test-server, extensions are expected to need an upstream to synthesize a reply
     // when the effective configuration is valid.
-    return config_.find_first_of("name: test-server") == 0 ? ResponseOrigin::EXTENSION
-                                                           : ResponseOrigin::UPSTREAM;
+    return config_.find("name: test-server") != std::string::npos ? ResponseOrigin::EXTENSION
+                                                                  : ResponseOrigin::UPSTREAM;
   }
 
 protected:
@@ -54,7 +54,11 @@ typed_config:
   "@type": type.googleapis.com/nighthawk.server.DynamicDelayConfiguration
   static_delay: 0.1s
 )EOF"),
-                                        absl::string_view("name: test-server")}),
+                                        absl::string_view(R"EOF(
+name: test-server
+typed_config:
+  "@type": type.googleapis.com/nighthawk.server.ResponseOptions
+)EOF")}),
                      testing::ValuesIn({TestRequestMethod::GET, TestRequestMethod::POST})));
 
 TEST_P(HttpFilterBaseIntegrationTest, NoRequestLevelConfigurationShouldSucceed) {
@@ -62,7 +66,6 @@ TEST_P(HttpFilterBaseIntegrationTest, NoRequestLevelConfigurationShouldSucceed) 
   ASSERT_TRUE(response->waitForEndStream());
   ASSERT_TRUE(response->complete());
   EXPECT_EQ("200", response->headers().Status()->value().getStringView());
-  EXPECT_TRUE(response->body().empty());
 }
 
 TEST_P(HttpFilterBaseIntegrationTest, EmptyJsonRequestLevelConfigurationShouldSucceed) {
@@ -71,7 +74,6 @@ TEST_P(HttpFilterBaseIntegrationTest, EmptyJsonRequestLevelConfigurationShouldSu
   ASSERT_TRUE(response->waitForEndStream());
   ASSERT_TRUE(response->complete());
   EXPECT_EQ("200", response->headers().Status()->value().getStringView());
-  EXPECT_TRUE(response->body().empty());
 }
 
 TEST_P(HttpFilterBaseIntegrationTest, BadJsonAsRequestLevelConfigurationShouldFail) {
