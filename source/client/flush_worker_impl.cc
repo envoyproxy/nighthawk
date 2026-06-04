@@ -39,8 +39,8 @@ void FlushWorkerImpl::flushStats() {
   Envoy::Thread::SkipAsserts skip;
 
   // Create a snapshot and flush to all sinks.
-  Envoy::Server::InstanceUtil::flushMetricsToSinks(
-      stats_sinks_, store_, cluster_manager_, time_source_);
+  Envoy::Server::InstanceUtil::flushMetricsToSinks(stats_sinks_, store_, cluster_manager_,
+                                                   time_source_);
 
   if (stat_flush_timer_ != nullptr) {
     stat_flush_timer_->enableTimer(stats_flush_interval_);
