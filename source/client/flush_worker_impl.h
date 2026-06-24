@@ -10,6 +10,7 @@
 #include "envoy/stats/sink.h"
 #include "envoy/stats/store.h"
 #include "envoy/thread_local/thread_local.h"
+#include "envoy/upstream/cluster_manager.h"
 
 #include "source/common/worker_impl.h"
 
