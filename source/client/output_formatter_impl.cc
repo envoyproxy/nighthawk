@@ -3,6 +3,7 @@
 #include <google/protobuf/util/time_util.h>
 
 #include <chrono>
+#include <optional>
 #include <regex>
 #include <sstream>
 #include <string>
@@ -315,7 +316,7 @@ FortioOutputFormatterImpl::getGlobalResult(const nighthawk::client::Output& outp
     }
   }
 
-  return absl::nullopt;
+  return std::nullopt;
 }
 
 uint64_t FortioOutputFormatterImpl::getCounterValue(const nighthawk::client::Result& result,
