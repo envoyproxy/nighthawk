@@ -6,6 +6,7 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <random>
 
 #include "envoy/common/optref.h"
@@ -541,7 +542,7 @@ public:
           host, priority, dispatcher, options, transport_socket_options,
           context_.api().randomGenerator(), state,
           [](Envoy::Http::HttpConnPoolImplBase* pool) {
-            return std::make_unique<Envoy::Http::Http1::ActiveClient>(*pool, absl::nullopt);
+            return std::make_unique<Envoy::Http::Http1::ActiveClient>(*pool, std::nullopt);
           },
           [](Envoy::Upstream::Host::CreateConnectionData& data,
              Envoy::Http::HttpConnPoolImplBase* pool) {
@@ -1094,7 +1095,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
 
   int i = 0;
   std::chrono::nanoseconds total_execution_duration = 0ns;
-  absl::optional<Envoy::SystemTime> first_acquisition_time = absl::nullopt;
+  absl::optional<Envoy::SystemTime> first_acquisition_time = std::nullopt;
   // Maps registered user defined output plugin name to the output results for every worker's plugin
   // of that name.
   absl::flat_hash_map<std::string, std::vector<nighthawk::client::UserDefinedOutput>>
