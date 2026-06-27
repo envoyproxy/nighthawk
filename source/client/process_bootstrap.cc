@@ -56,9 +56,9 @@ Cluster createRequestSourceClusterForWorker(const Client::Options& options,
 
   envoy::extensions::upstreams::http::v3::HttpProtocolOptions http_options;
   http_options.mutable_explicit_http_config()->mutable_http2_protocol_options();
-  (*cluster.mutable_typed_extension_protocol_options())
-      ["envoy.extensions.upstreams.http.v3.HttpProtocolOptions"]
-          .PackFrom(http_options);
+  std::ignore = (*cluster.mutable_typed_extension_protocol_options())
+                    ["envoy.extensions.upstreams.http.v3.HttpProtocolOptions"]
+                        .PackFrom(http_options);
 
   cluster.set_name(fmt::format("{}.requestsource", worker_number));
   cluster.set_type(Cluster::STATIC);
@@ -100,7 +100,7 @@ absl::StatusOr<TransportSocket> createTransportSocket(const Client::Options& opt
   if (options.protocol() == Envoy::Http::Protocol::Http2) {
     transport_socket.set_name("envoy.transport_sockets.tls");
     common_tls_context->add_alpn_protocols("h2");
-    transport_socket.mutable_typed_config()->PackFrom(upstream_tls_context);
+    std::ignore = transport_socket.mutable_typed_config()->PackFrom(upstream_tls_context);
 
   } else if (options.protocol() == Envoy::Http::Protocol::Http3) {
     transport_socket.set_name("envoy.transport_sockets.quic");
@@ -108,12 +108,12 @@ absl::StatusOr<TransportSocket> createTransportSocket(const Client::Options& opt
 
     QuicUpstreamTransport quic_upstream_transport;
     *quic_upstream_transport.mutable_upstream_tls_context() = upstream_tls_context;
-    transport_socket.mutable_typed_config()->PackFrom(quic_upstream_transport);
+    std::ignore = transport_socket.mutable_typed_config()->PackFrom(quic_upstream_transport);
 
   } else {
     transport_socket.set_name("envoy.transport_sockets.tls");
     common_tls_context->add_alpn_protocols("http/1.1");
-    transport_socket.mutable_typed_config()->PackFrom(upstream_tls_context);
+    std::ignore = transport_socket.mutable_typed_config()->PackFrom(upstream_tls_context);
   }
 
   return transport_socket;
@@ -171,9 +171,9 @@ Cluster createNighthawkClusterForWorker(const Client::Options& options,
     http_options.mutable_explicit_http_config()->mutable_http_protocol_options();
   }
 
-  (*cluster.mutable_typed_extension_protocol_options())
-      ["envoy.extensions.upstreams.http.v3.HttpProtocolOptions"]
-          .PackFrom(http_options);
+  std::ignore = (*cluster.mutable_typed_extension_protocol_options())
+                    ["envoy.extensions.upstreams.http.v3.HttpProtocolOptions"]
+                        .PackFrom(http_options);
 
   *cluster.mutable_circuit_breakers() = createCircuitBreakers(options);
 
@@ -342,7 +342,7 @@ createEncapBootstrap(const Client::Options& options, UriImpl& tunnel_uri,
         "type.googleapis.com/envoy.extensions.filters.udp.udp_proxy.v3.Route");
     envoy::extensions::filters::udp::udp_proxy::v3::Route route_config;
     route_config.set_cluster("cluster_0");
-    action->mutable_typed_config()->PackFrom(route_config);
+    std::ignore = action->mutable_typed_config()->PackFrom(route_config);
 
     auto* session_filter = udp_proxy_config.mutable_session_filters()->Add();
     session_filter->set_name("envoy.filters.udp.session.http_capsule");
@@ -351,7 +351,7 @@ createEncapBootstrap(const Client::Options& options, UriImpl& tunnel_uri,
         "envoy.extensions.filters.udp.udp_proxy.session.http_capsule.v3.FilterConfig");
     envoy::extensions::filters::udp::udp_proxy::session::http_capsule::v3::FilterConfig
         session_filter_config;
-    session_filter->mutable_typed_config()->PackFrom(session_filter_config);
+    std::ignore = session_filter->mutable_typed_config()->PackFrom(session_filter_config);
 
     auto* tunneling_config = udp_proxy_config.mutable_tunneling_config();
     *tunneling_config->mutable_proxy_host() = "%FILTER_STATE(proxy.host.key:PLAIN)%";
@@ -366,7 +366,7 @@ createEncapBootstrap(const Client::Options& options, UriImpl& tunnel_uri,
     headers_to_add->mutable_header()->set_key("original_dst_port");
     headers_to_add->mutable_header()->set_value("%DOWNSTREAM_LOCAL_PORT%");
 
-    filter->mutable_typed_config()->PackFrom(udp_proxy_config);
+    std::ignore = filter->mutable_typed_config()->PackFrom(udp_proxy_config);
 
   } else {
     address->mutable_socket_address()->set_protocol(envoy::config::core::v3::SocketAddress::TCP);
@@ -382,7 +382,7 @@ createEncapBootstrap(const Client::Options& options, UriImpl& tunnel_uri,
     auto* header_to_add = tunneling_config->add_headers_to_add();
     header_to_add->mutable_header()->set_key("original_dst_port");
     header_to_add->mutable_header()->set_value("%DOWNSTREAM_LOCAL_PORT%");
-    filter->mutable_typed_config()->PackFrom(tcp_proxy_config);
+    std::ignore = filter->mutable_typed_config()->PackFrom(tcp_proxy_config);
   }
 
   auto* cluster = encap_bootstrap.mutable_static_resources()->add_clusters();
@@ -398,7 +398,7 @@ createEncapBootstrap(const Client::Options& options, UriImpl& tunnel_uri,
     transport_socket->set_name("envoy.transport_sockets.quic");
     envoy::extensions::transport_sockets::quic::v3::QuicUpstreamTransport quic_upstream_transport;
     *quic_upstream_transport.mutable_upstream_tls_context() = upstream_tls_context;
-    transport_socket->mutable_typed_config()->PackFrom(quic_upstream_transport);
+    std::ignore = transport_socket->mutable_typed_config()->PackFrom(quic_upstream_transport);
 
   } else if (tunnel_protocol == Envoy::Http::Protocol::Http2) {
     protocol_options.mutable_explicit_http_config()->mutable_http2_protocol_options();
@@ -406,7 +406,7 @@ createEncapBootstrap(const Client::Options& options, UriImpl& tunnel_uri,
       auto* transport_socket = cluster->mutable_transport_socket();
       envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext upstream_tls_context =
           *options.tunnelTlsContext();
-      transport_socket->mutable_typed_config()->PackFrom(upstream_tls_context);
+      std::ignore = transport_socket->mutable_typed_config()->PackFrom(upstream_tls_context);
       transport_socket->set_name("envoy.transport_sockets.tls");
     }
   } else {
@@ -415,14 +415,14 @@ createEncapBootstrap(const Client::Options& options, UriImpl& tunnel_uri,
       auto* transport_socket = cluster->mutable_transport_socket();
       envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext upstream_tls_context =
           *options.tunnelTlsContext();
-      transport_socket->mutable_typed_config()->PackFrom(upstream_tls_context);
+      std::ignore = transport_socket->mutable_typed_config()->PackFrom(upstream_tls_context);
       transport_socket->set_name("envoy.transport_sockets.tls");
     }
   }
 
-  (*cluster->mutable_typed_extension_protocol_options())
-      ["envoy.extensions.upstreams.http.v3.HttpProtocolOptions"]
-          .PackFrom(protocol_options);
+  std::ignore = (*cluster->mutable_typed_extension_protocol_options())
+                    ["envoy.extensions.upstreams.http.v3.HttpProtocolOptions"]
+                        .PackFrom(protocol_options);
 
   *cluster->mutable_load_assignment()->mutable_cluster_name() = "cluster_0";
   auto* endpoint = cluster->mutable_load_assignment()

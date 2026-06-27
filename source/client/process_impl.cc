@@ -830,7 +830,7 @@ void ProcessImpl::setupTracingImplementation(envoy::config::bootstrap::v3::Boots
   config.mutable_collector_endpoint()->assign(std::string(uri.path()));
   config.set_collector_endpoint_version(envoy::config::trace::v3::ZipkinConfig::HTTP_JSON);
   config.mutable_shared_span_context()->set_value(true);
-  http->mutable_typed_config()->PackFrom(config);
+  std::ignore = http->mutable_typed_config()->PackFrom(config);
 #else
   ENVOY_LOG(error, "Not build with any tracing support");
   UNREFERENCED_PARAMETER(bootstrap);

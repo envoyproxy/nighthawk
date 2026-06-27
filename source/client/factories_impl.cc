@@ -55,7 +55,6 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
       api, dispatcher, scope, statistic, options_.protocol(), cluster_manager, tracer, cluster_name,
       request_generator.get(), !options_.openLoop(), options_.responseHeaderWithLatencyInput(),
       std::move(user_defined_output_plugins));
-  auto request_options = options_.toCommandLineOptions()->request_options();
   benchmark_client->setConnectionLimit(options_.connections());
   benchmark_client->setMaxPendingRequests(options_.maxPendingRequests());
   benchmark_client->setMaxActiveRequests(options_.maxActiveRequests());

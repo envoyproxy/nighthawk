@@ -117,7 +117,7 @@ absl::StatusOr<std::unique_ptr<std::istream>> SimpleStatistic::serializeNative()
   proto.set_sum_x_2(sum_x2_);
 
   std::string tmp;
-  proto.SerializeToString(&tmp);
+  std::ignore = proto.SerializeToString(&tmp);
   auto write_stream = std::make_unique<std::stringstream>();
   *write_stream << tmp;
   return write_stream;
@@ -187,7 +187,7 @@ absl::StatusOr<std::unique_ptr<std::istream>> StreamingStatistic::serializeNativ
   proto.set_accumulated_variance(accumulated_variance_);
 
   std::string tmp;
-  proto.SerializeToString(&tmp);
+  std::ignore = proto.SerializeToString(&tmp);
   auto write_stream = std::make_unique<std::stringstream>();
   *write_stream << tmp;
   return write_stream;
