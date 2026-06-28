@@ -72,20 +72,26 @@ void HttpTestServerDecoderFilter::sendReply(const ResponseOptions& options) {
       absl::nullopt, "");
 }
 
+bool HttpTestServerDecoderFilter::maybeSendReply() {
+  if (config_->validateOrSendError(effective_config_.status(), *decoder_callbacks_)) {
+    return false;
+  }
+  sendReply(*effective_config_.value());
+  return true;
+}
+
 Envoy::Http::FilterHeadersStatus
 HttpTestServerDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& headers,
                                            bool end_stream) {
   effective_config_ =
       computeEffectiveConfiguration(config_->getStartupFilterConfiguration(), headers);
   if (end_stream) {
-    if (!config_->validateOrSendError(effective_config_.status(), *decoder_callbacks_)) {
-      if (effective_config_.value()->echo_request_headers()) {
-        std::stringstream headers_dump;
-        headers_dump << "\nRequest Headers:\n" << headers;
-        request_headers_dump_ = headers_dump.str();
-      }
-      sendReply(*effective_config_.value());
+    if (effective_config_.ok() && effective_config_.value()->echo_request_headers()) {
+      std::stringstream headers_dump;
+      headers_dump << "\nRequest Headers:\n" << headers;
+      request_headers_dump_ = headers_dump.str();
     }
+    maybeSendReply();
   }
   return Envoy::Http::FilterHeadersStatus::StopIteration;
 }
@@ -93,16 +99,15 @@ HttpTestServerDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& header
 Envoy::Http::FilterDataStatus HttpTestServerDecoderFilter::decodeData(Envoy::Buffer::Instance&,
                                                                       bool end_stream) {
   if (end_stream) {
-    if (!config_->validateOrSendError(effective_config_.status(), *decoder_callbacks_)) {
-      sendReply(*effective_config_.value());
-    }
+    maybeSendReply();
   }
   return Envoy::Http::FilterDataStatus::StopIterationNoBuffer;
 }
 
 Envoy::Http::FilterTrailersStatus
 HttpTestServerDecoderFilter::decodeTrailers(Envoy::Http::RequestTrailerMap&) {
-  return Envoy::Http::FilterTrailersStatus::Continue;
+  maybeSendReply();
+  return Envoy::Http::FilterTrailersStatus::StopIteration;
 }
 
 void HttpTestServerDecoderFilter::setDecoderFilterCallbacks(

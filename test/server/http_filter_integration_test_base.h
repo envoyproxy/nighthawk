@@ -97,6 +97,14 @@ protected:
    */
   Envoy::IntegrationStreamDecoderPtr getResponse(ResponseOrigin expected_origin);
 
+  /**
+   * Fetch a response after sending request trailers.
+   * @param expected_origin Indicate which component will be expected to reply.
+   * @return Envoy::IntegrationStreamDecoderPtr Pointer to the integration stream decoder, which can
+   * be used to inspect the response.
+   */
+  Envoy::IntegrationStreamDecoderPtr getResponseWithTrailers(ResponseOrigin expected_origin);
+
 private:
   Envoy::Http::TestRequestHeaderMapImpl request_headers_;
 };

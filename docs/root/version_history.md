@@ -15,6 +15,7 @@ Version history
 ### Changelist
 
 - Introducing termination predicates (https://github.com/envoyproxy/nighthawk/pull/167) and https://github.com/envoyproxy/nighthawk/pull/176
+- Fixed the test server so requests that terminate with HTTP trailers receive a response.
 
 0.2 (July 16, 2019)
 =========================
