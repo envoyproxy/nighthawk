@@ -308,7 +308,7 @@ DottedStringOutputFormatterImpl::formatProto(const nighthawk::client::Output& ou
   return ss.str();
 }
 
-absl::optional<const nighthawk::client::Result>
+std::optional<const nighthawk::client::Result>
 FortioOutputFormatterImpl::getGlobalResult(const nighthawk::client::Output& output) const {
   for (const auto& nh_result : output.results()) {
     if (nh_result.name() == "global") {
@@ -393,7 +393,7 @@ FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) 
   fortio_output.set_numthreads(output.options().connections().value() * number_of_workers);
 
   // Get the result that represents all workers (global)
-  absl::optional<const nighthawk::client::Result> nh_global_result_optional =
+  std::optional<const nighthawk::client::Result> nh_global_result_optional =
       getGlobalResult(output);
   if (!nh_global_result_optional.has_value()) {
     return absl::Status(absl::StatusCode::kNotFound, "formatProto global result not found");

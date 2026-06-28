@@ -52,7 +52,7 @@ TEST_F(OutputCollectorTest, AddResultCanAddUserDefinedOutputs) {
   collector.addResult(/*name = */ "worker_1",
                       /*statistics=*/{},
                       /*counters=*/empty_map, execution_duration,
-                      /*first_acquisition_time=*/absl::nullopt, user_defined_outputs);
+                      /*first_acquisition_time=*/std::nullopt, user_defined_outputs);
 
   nighthawk::client::Output full_output = collector.toProto();
   EXPECT_EQ(full_output.results_size(), 1);
@@ -73,7 +73,7 @@ TEST_F(OutputCollectorTest, AddResultWorksWithNoUserDefinedOutputs) {
   collector.addResult(/*name = */ "worker_1",
                       /*statistics=*/{},
                       /*counters=*/empty_map, execution_duration,
-                      /*first_acquisition_time=*/absl::nullopt, user_defined_outputs);
+                      /*first_acquisition_time=*/std::nullopt, user_defined_outputs);
 
   nighthawk::client::Output full_output = collector.toProto();
   EXPECT_EQ(full_output.results_size(), 1);

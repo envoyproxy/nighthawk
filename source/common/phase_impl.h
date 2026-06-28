@@ -1,12 +1,12 @@
 #pragma once
 
+#include <optional>
+
 #include "envoy/common/time.h"
 
 #include "nighthawk/common/phase.h"
 
 #include "external/envoy/source/common/common/logger.h"
-
-#include "absl/types/optional.h"
 
 namespace Nighthawk {
 

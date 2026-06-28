@@ -38,18 +38,18 @@ bool BurstingRateLimiter::tryAcquireOne() {
     }
   }
 
-  previously_releasing_ = absl::nullopt;
+  previously_releasing_ = std::nullopt;
   return false;
 }
 
 void BurstingRateLimiter::releaseOne() {
   ASSERT(accumulated_ < burst_size_);
-  ASSERT(previously_releasing_ != absl::nullopt && previously_releasing_ == true);
+  ASSERT(previously_releasing_ != std::nullopt && previously_releasing_ == true);
   // The caller wasn't able to put its earlier successfull acquisition to good use, so we restore
   // state to what it was prior to that.
   accumulated_++;
   releasing_ = true; // release_ could only have been set earlier.
-  previously_releasing_ = absl::nullopt;
+  previously_releasing_ = std::nullopt;
 }
 
 ScheduledStartingRateLimiter::ScheduledStartingRateLimiter(

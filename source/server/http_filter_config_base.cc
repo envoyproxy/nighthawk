@@ -15,7 +15,7 @@ bool FilterConfigurationBase::validateOrSendError(
     decoder_callbacks.sendLocalReply(static_cast<Envoy::Http::Code>(500),
                                      fmt::format("{} didn't understand the request: {}",
                                                  filter_name_, effective_config.message()),
-                                     nullptr, absl::nullopt, "");
+                                     nullptr, std::nullopt, "");
     return true;
   }
   return false;

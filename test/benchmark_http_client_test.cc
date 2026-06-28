@@ -135,7 +135,7 @@ public:
           decoders_.push_back(&decoder);
           NiceMock<Envoy::StreamInfo::MockStreamInfo> stream_info;
           callbacks.onPoolReady(stream_encoder_, Envoy::Upstream::HostDescriptionConstSharedPtr{},
-                                stream_info, {} /*absl::optional<Envoy::Http::Protocol> protocol*/);
+                                stream_info, {} /*std::optional<Envoy::Http::Protocol> protocol*/);
           return nullptr;
         });
 

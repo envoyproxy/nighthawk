@@ -1,13 +1,12 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 
 #include "envoy/common/pure.h"
 #include "envoy/common/time.h"
 
 #include "nighthawk/common/statistic.h"
-
-#include "absl/types/optional.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -34,7 +33,7 @@ public:
       absl::string_view name, const std::vector<StatisticPtr>& statistics,
       const std::map<std::string, uint64_t>& counters,
       const std::chrono::nanoseconds execution_duration,
-      const absl::optional<Envoy::SystemTime>& first_acquisition_time,
+      const std::optional<Envoy::SystemTime>& first_acquisition_time,
       const std::vector<nighthawk::client::UserDefinedOutput>& user_defined_output_results) PURE;
   /**
    * Directly sets the output value.

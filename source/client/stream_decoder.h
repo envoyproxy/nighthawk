@@ -99,7 +99,7 @@ public:
   void onPoolReady(Envoy::Http::RequestEncoder& encoder,
                    Envoy::Upstream::HostDescriptionConstSharedPtr host,
                    Envoy::StreamInfo::StreamInfo& stream_info,
-                   absl::optional<Envoy::Http::Protocol> protocol) override;
+                   std::optional<Envoy::Http::Protocol> protocol) override;
 
   static Envoy::StreamInfo::CoreResponseFlag
   streamResetReasonToResponseFlag(Envoy::Http::StreamResetReason reset_reason);

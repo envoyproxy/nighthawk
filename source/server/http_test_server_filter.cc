@@ -69,7 +69,7 @@ void HttpTestServerDecoderFilter::sendReply(const ResponseOptions& options) {
       [options](Envoy::Http::ResponseHeaderMap& direct_response_headers) {
         Configuration::applyConfigToResponseHeaders(direct_response_headers, options);
       },
-      absl::nullopt, "");
+      std::nullopt, "");
 }
 
 Envoy::Http::FilterHeadersStatus

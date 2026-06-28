@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 
 #include "envoy/common/time.h"
 
@@ -15,7 +16,6 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
-#include "absl/types/optional.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -101,7 +101,7 @@ protected:
    * @param output the Nighthawk output proto
    * @return the corresponding global result, or absl::Status if failed
    */
-  absl::optional<const nighthawk::client::Result>
+  std::optional<const nighthawk::client::Result>
   getGlobalResult(const nighthawk::client::Output& output) const;
 
   /**

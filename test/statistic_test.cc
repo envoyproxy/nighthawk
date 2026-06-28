@@ -446,7 +446,7 @@ TYPED_TEST(SinkableStatisticTest, EmptySinkableStatistic) {
   EXPECT_FALSE(stat.used());
   EXPECT_EQ("", stat.name());
   EXPECT_EQ("", stat.tagExtractedName());
-  EXPECT_EQ(absl::nullopt, stat.worker_id());
+  EXPECT_EQ(std::nullopt, stat.worker_id());
 }
 
 TYPED_TEST(SinkableStatisticTest, SimpleSinkableStatistic) {

@@ -55,7 +55,7 @@ TEST_F(FactoriesTest, CreateBenchmarkClient) {
 }
 
 TEST_F(FactoriesTest, CreateRequestSourcePluginWithWorkingJsonReturnsWorkingRequestSource) {
-  absl::optional<envoy::config::core::v3::TypedExtensionConfig> request_source_plugin_config;
+  std::optional<envoy::config::core::v3::TypedExtensionConfig> request_source_plugin_config;
   std::string request_source_plugin_config_json =
       "{"
       "name:\"nighthawk.in-line-options-list-request-source-plugin\","
@@ -96,7 +96,7 @@ TEST_F(FactoriesTest, CreateRequestSourcePluginWithWorkingJsonReturnsWorkingRequ
 }
 
 TEST_F(FactoriesTest, CreateRequestSourcePluginWithNonWorkingJsonThrowsError) {
-  absl::optional<envoy::config::core::v3::TypedExtensionConfig> request_source_plugin_config;
+  std::optional<envoy::config::core::v3::TypedExtensionConfig> request_source_plugin_config;
   std::string request_source_plugin_config_json =
       "{"
       R"(name:"nighthawk.file-based-request-source-plugin",)"
@@ -135,7 +135,7 @@ TEST_F(FactoriesTest, CreateRequestSourcePluginWithNonWorkingJsonThrowsError) {
 }
 
 TEST_F(FactoriesTest, CreateRequestSource) {
-  absl::optional<envoy::config::core::v3::TypedExtensionConfig> request_source_plugin_config;
+  std::optional<envoy::config::core::v3::TypedExtensionConfig> request_source_plugin_config;
   EXPECT_CALL(options_, requestMethod());
   EXPECT_CALL(options_, requestBodySize());
   EXPECT_CALL(options_, uri()).Times(2).WillRepeatedly(Return("http://foo/"));
@@ -157,7 +157,7 @@ TEST_F(FactoriesTest, CreateRequestSource) {
 }
 
 TEST_F(FactoriesTest, CreateRemoteRequestSource) {
-  absl::optional<envoy::config::core::v3::TypedExtensionConfig> request_source_plugin_config;
+  std::optional<envoy::config::core::v3::TypedExtensionConfig> request_source_plugin_config;
   EXPECT_CALL(options_, requestMethod());
   EXPECT_CALL(options_, requestBodySize());
   EXPECT_CALL(options_, uri()).Times(2).WillRepeatedly(Return("http://foo/"));

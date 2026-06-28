@@ -48,7 +48,6 @@
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_replace.h"
-#include "absl/types/optional.h"
 
 // TODO(oschaaf): See if we can leverage a static module registration like Envoy does to avoid the
 // ifdefs in this file.
@@ -521,7 +520,7 @@ public:
   Envoy::Http::ConnectionPool::InstancePtr allocateConnPool(
       Envoy::Event::Dispatcher& dispatcher, Envoy::Upstream::HostConstSharedPtr host,
       Envoy::Upstream::ResourcePriority priority, std::vector<Envoy::Http::Protocol>& protocols,
-      const absl::optional<envoy::config::core::v3::AlternateProtocolsCacheOptions>&
+      const std::optional<envoy::config::core::v3::AlternateProtocolsCacheOptions>&
           alternate_protocol_options,
       const Envoy::Network::ConnectionSocket::OptionsSharedPtr& options,
       const Envoy::Network::TransportSocketOptionsConstSharedPtr& transport_socket_options,
@@ -705,7 +704,7 @@ bool ProcessImpl::requestExecutionCancellation() {
 
 Envoy::MonotonicTime
 ProcessImpl::computeFirstWorkerStart(Envoy::Event::TimeSystem& time_system,
-                                     const absl::optional<Envoy::SystemTime>& scheduled_start,
+                                     const std::optional<Envoy::SystemTime>& scheduled_start,
                                      const uint32_t concurrency) {
   const std::chrono::nanoseconds first_worker_delay =
       scheduled_start.has_value() ? scheduled_start.value() - time_system.systemTime()
@@ -722,7 +721,7 @@ std::chrono::nanoseconds ProcessImpl::computeInterWorkerDelay(const uint32_t con
 }
 
 absl::Status ProcessImpl::createWorkers(const uint32_t concurrency,
-                                        const absl::optional<Envoy::SystemTime>& scheduled_start) {
+                                        const std::optional<Envoy::SystemTime>& scheduled_start) {
   ASSERT(workers_.empty());
   const Envoy::MonotonicTime first_worker_start =
       computeFirstWorkerStart(time_system_, scheduled_start, concurrency);
@@ -880,7 +879,7 @@ void ProcessImpl::setupStatsSinks(const envoy::config::bootstrap::v3::Bootstrap&
 
 bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_uri,
                               const Envoy::Network::DnsResolverSharedPtr& dns_resolver,
-                              const absl::optional<Envoy::SystemTime>& scheduled_start) {
+                              const std::optional<Envoy::SystemTime>& scheduled_start) {
   const Envoy::SystemTime now = time_system_.systemTime();
   std::shared_ptr<Envoy::MainCommonBase> encap_main_common = nullptr;
 
@@ -1095,14 +1094,14 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
 
   int i = 0;
   std::chrono::nanoseconds total_execution_duration = 0ns;
-  absl::optional<Envoy::SystemTime> first_acquisition_time = std::nullopt;
+  std::optional<Envoy::SystemTime> first_acquisition_time = std::nullopt;
   // Maps registered user defined output plugin name to the output results for every worker's plugin
   // of that name.
   absl::flat_hash_map<std::string, std::vector<nighthawk::client::UserDefinedOutput>>
       user_defined_outputs_by_plugin{};
   for (auto& worker : workers_) {
     auto sequencer_execution_duration = worker->phase().sequencer().executionDuration();
-    absl::optional<Envoy::SystemTime> worker_first_acquisition_time =
+    std::optional<Envoy::SystemTime> worker_first_acquisition_time =
         worker->phase().sequencer().rate_limiter().firstAcquisitionTime();
     if (worker_first_acquisition_time.has_value()) {
       first_acquisition_time =

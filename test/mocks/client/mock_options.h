@@ -1,8 +1,9 @@
 #pragma once
 
+#include <optional>
+
 #include "nighthawk/client/options.h"
 
-#include "absl/types/optional.h"
 #include "gmock/gmock.h"
 
 namespace Nighthawk {
@@ -15,10 +16,10 @@ public:
   MOCK_METHOD(uint32_t, connections, (), (const, override));
   MOCK_METHOD(std::chrono::seconds, duration, (), (const, override));
   MOCK_METHOD(std::chrono::seconds, timeout, (), (const, override));
-  MOCK_METHOD(absl::optional<std::string>, uri, (), (const, override));
+  MOCK_METHOD(std::optional<std::string>, uri, (), (const, override));
   MOCK_METHOD(bool, h2, (), (const));
   MOCK_METHOD(Envoy::Http::Protocol, protocol, (), (const, override));
-  MOCK_METHOD(absl::optional<envoy::config::core::v3::Http3ProtocolOptions>&, http3ProtocolOptions,
+  MOCK_METHOD(std::optional<envoy::config::core::v3::Http3ProtocolOptions>&, http3ProtocolOptions,
               (), (const, override));
 
   // HTTP CONNECT/CONNECT-UDP Tunneling related options.
@@ -26,9 +27,9 @@ public:
   MOCK_METHOD(std::string, tunnelUri, (), (const PURE));
   MOCK_METHOD(uint32_t, encapPort, (), (const PURE));
   MOCK_METHOD(
-      const absl::optional<envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext>,
+      const std::optional<envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext>,
       tunnelTlsContext, (), (const PURE));
-  MOCK_METHOD(const absl::optional<envoy::config::core::v3::Http3ProtocolOptions>&,
+  MOCK_METHOD(const std::optional<envoy::config::core::v3::Http3ProtocolOptions>&,
               tunnelHttp3ProtocolOptions, (), (const PURE));
 
   MOCK_METHOD(std::string, tunnelConcurrency, (), (const PURE));
@@ -45,9 +46,9 @@ public:
   MOCK_METHOD(uint32_t, requestBodySize, (), (const, override));
   MOCK_METHOD(envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext&, tlsContext, (),
               (const, override));
-  MOCK_METHOD(absl::optional<envoy::config::core::v3::BindConfig>&, upstreamBindConfig, (),
+  MOCK_METHOD(std::optional<envoy::config::core::v3::BindConfig>&, upstreamBindConfig, (),
               (const, override));
-  MOCK_METHOD(absl::optional<envoy::config::core::v3::TransportSocket>&, transportSocket, (),
+  MOCK_METHOD(std::optional<envoy::config::core::v3::TransportSocket>&, transportSocket, (),
               (const, override));
   MOCK_METHOD(uint32_t, maxPendingRequests, (), (const, override));
   MOCK_METHOD(uint32_t, maxActiveRequests, (), (const, override));
@@ -57,7 +58,7 @@ public:
   MOCK_METHOD(nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions,
               sequencerIdleStrategy, (), (const, override));
   MOCK_METHOD(std::string, requestSource, (), (const, override));
-  MOCK_METHOD(absl::optional<envoy::config::core::v3::TypedExtensionConfig>&,
+  MOCK_METHOD(std::optional<envoy::config::core::v3::TypedExtensionConfig>&,
               requestSourcePluginConfig, (), (const, override));
   MOCK_METHOD(std::string, trace, (), (const, override));
   MOCK_METHOD(nighthawk::client::H1ConnectionReuseStrategy::H1ConnectionReuseStrategyOptions,
@@ -82,8 +83,8 @@ public:
   MOCK_METHOD(Envoy::Protobuf::Duration, statsFlushIntervalDuration, (), (const, override));
   MOCK_METHOD(std::string, responseHeaderWithLatencyInput, (), (const, override));
   MOCK_METHOD(bool, allowEnvoyDeprecatedV2Api, (), (const));
-  MOCK_METHOD(absl::optional<Envoy::SystemTime>, scheduled_start, (), (const, override));
-  MOCK_METHOD(absl::optional<std::string>, executionId, (), (const, override));
+  MOCK_METHOD(std::optional<Envoy::SystemTime>, scheduled_start, (), (const, override));
+  MOCK_METHOD(std::optional<std::string>, executionId, (), (const, override));
   MOCK_METHOD(const std::vector<envoy::config::core::v3::TypedExtensionConfig>&,
               userDefinedOutputPluginConfigs, (), (const, override));
 };
