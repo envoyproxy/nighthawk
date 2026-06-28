@@ -67,7 +67,7 @@ MakeFakeInputVariableSetterConfig(uint32_t adjustment_factor) {
   outer_config.set_name("nighthawk.fake_input_variable_setter");
   nighthawk::adaptive_load::FakeInputVariableSetterConfig config;
   config.set_adjustment_factor(adjustment_factor);
-  outer_config.mutable_typed_config()->PackFrom(config);
+  std::ignore = outer_config.mutable_typed_config()->PackFrom(config);
   return outer_config;
 }
 
@@ -80,7 +80,7 @@ envoy::config::core::v3::TypedExtensionConfig MakeFakeInputVariableSetterConfigW
       static_cast<int>(artificial_validation_error.code()));
   config.mutable_artificial_validation_failure()->set_message(
       std::string(artificial_validation_error.message()));
-  outer_config.mutable_typed_config()->PackFrom(config);
+  std::ignore = outer_config.mutable_typed_config()->PackFrom(config);
   return outer_config;
 }
 
