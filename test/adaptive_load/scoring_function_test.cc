@@ -36,7 +36,7 @@ TEST(LinearScoringFunctionConfigFactory, CreateEmptyConfigProtoCreatesCorrectTyp
 TEST(BinaryScoringFunctionConfigFactory, FactoryRegistrationUsesCorrectPluginName) {
   nighthawk::adaptive_load::BinaryScoringFunctionConfig config;
   Envoy::Protobuf::Any config_any;
-  config_any.PackFrom(config);
+  std::ignore = config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(
           "nighthawk.binary_scoring");
@@ -46,7 +46,7 @@ TEST(BinaryScoringFunctionConfigFactory, FactoryRegistrationUsesCorrectPluginNam
 TEST(BinaryScoringFunctionConfigFactory, CreateScoringFunctionCreatesCorrectPluginType) {
   nighthawk::adaptive_load::BinaryScoringFunctionConfig config;
   Envoy::Protobuf::Any config_any;
-  config_any.PackFrom(config);
+  std::ignore = config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(
           "nighthawk.binary_scoring");
@@ -58,7 +58,7 @@ TEST(BinaryScoringFunctionConfigFactory, CreateScoringFunctionThrowsExceptionWit
   // LinearScoringFunctionConfig is the wrong type for BinaryScoringFunction, so it will not unpack.
   nighthawk::adaptive_load::LinearScoringFunctionConfig config;
   Envoy::Protobuf::Any config_any;
-  config_any.PackFrom(config);
+  std::ignore = config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(
           "nighthawk.binary_scoring");
@@ -68,7 +68,7 @@ TEST(BinaryScoringFunctionConfigFactory, CreateScoringFunctionThrowsExceptionWit
 TEST(LinearScoringFunctionConfigFactory, FactoryRegistrationUsesCorrectPluginName) {
   nighthawk::adaptive_load::LinearScoringFunctionConfig config;
   Envoy::Protobuf::Any config_any;
-  config_any.PackFrom(config);
+  std::ignore = config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(
           "nighthawk.linear_scoring");
@@ -78,7 +78,7 @@ TEST(LinearScoringFunctionConfigFactory, FactoryRegistrationUsesCorrectPluginNam
 TEST(LinearScoringFunctionConfigFactory, CreateScoringFunctionCreatesCorrectPluginType) {
   nighthawk::adaptive_load::LinearScoringFunctionConfig config;
   Envoy::Protobuf::Any config_any;
-  config_any.PackFrom(config);
+  std::ignore = config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(
           "nighthawk.linear_scoring");
@@ -90,7 +90,7 @@ TEST(LinearScoringFunctionConfigFactory, CreateScoringFunctionThrowsExceptionWit
   // BinaryScoringFunctionConfig is the wrong type for LinearScoringFunction, so it will not unpack.
   nighthawk::adaptive_load::BinaryScoringFunctionConfig config;
   Envoy::Protobuf::Any config_any;
-  config_any.PackFrom(config);
+  std::ignore = config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(
           "nighthawk.linear_scoring");

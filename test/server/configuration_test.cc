@@ -29,9 +29,9 @@ using ::testing::HasSubstr;
 
 TEST(MergeJsonConfig, AddsInUnsetValuesToConfig) {
   ResponseOptions options;
-  TextFormat::ParseFromString("response_body_size: 23", &options);
+  std::ignore = TextFormat::ParseFromString("response_body_size: 23", &options);
   ResponseOptions expected_options;
-  TextFormat::ParseFromString(R"(
+  std::ignore = TextFormat::ParseFromString(R"(
     response_body_size: 23
     echo_request_headers: true
   )",
@@ -44,13 +44,13 @@ TEST(MergeJsonConfig, AddsInUnsetValuesToConfig) {
 
 TEST(MergeJsonConfig, OverridesSetValues) {
   ResponseOptions options;
-  TextFormat::ParseFromString(R"(
+  std::ignore = TextFormat::ParseFromString(R"(
     response_body_size: 23
     echo_request_headers: false
   )",
                               &options);
   ResponseOptions expected_options;
-  TextFormat::ParseFromString(R"(
+  std::ignore = TextFormat::ParseFromString(R"(
     response_body_size: 23
     echo_request_headers: true
   )",
@@ -63,7 +63,7 @@ TEST(MergeJsonConfig, OverridesSetValues) {
 
 TEST(MergeJsonConfig, ErrorsGracefullyForInvalidJsonConfig) {
   ResponseOptions options;
-  TextFormat::ParseFromString(R"(
+  std::ignore = TextFormat::ParseFromString(R"(
     response_body_size: 23
     echo_request_headers: false
   )",
@@ -75,7 +75,7 @@ TEST(MergeJsonConfig, ErrorsGracefullyForInvalidJsonConfig) {
 
 TEST(MergeJsonConfig, AppendsHeadersWhenCalledFor) {
   ResponseOptions options;
-  TextFormat::ParseFromString(R"(
+  std::ignore = TextFormat::ParseFromString(R"(
     v3_response_headers {
       header {
         key: "foo"
@@ -85,7 +85,7 @@ TEST(MergeJsonConfig, AppendsHeadersWhenCalledFor) {
   )",
                               &options);
   ResponseOptions expected_options;
-  TextFormat::ParseFromString(R"(
+  std::ignore = TextFormat::ParseFromString(R"(
     v3_response_headers {
       header {
         key: "foo"

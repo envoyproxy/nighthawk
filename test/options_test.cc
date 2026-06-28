@@ -236,7 +236,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
   EXPECT_EQ(1234, options->requestBodySize());
 
   envoy::config::core::v3::TransportSocket expected_transport_socket;
-  TextFormat::ParseFromString(
+  std::ignore = TextFormat::ParseFromString(
       R"pb(name: "envoy.transport_sockets.tls"
            typed_config {
              [type.googleapis.com/
@@ -271,7 +271,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
   EXPECT_EQ(10, options->statsFlushInterval());
   ASSERT_EQ(2, options->statsSinks().size());
   envoy::config::metrics::v3::StatsSink expected_stats_sink1;
-  TextFormat::ParseFromString(
+  std::ignore = TextFormat::ParseFromString(
       R"pb(name: "envoy.stat_sinks.statsd"
            typed_config {
              [type.googleapis.com/envoy.config.metrics.v3.StatsdSink] {
@@ -281,7 +281,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
       &expected_stats_sink1);
   EXPECT_THAT(options->statsSinks()[0], EqualsProto(expected_stats_sink1));
   envoy::config::metrics::v3::StatsSink expected_stats_sink2;
-  TextFormat::ParseFromString(
+  std::ignore = TextFormat::ParseFromString(
       R"pb(name: "envoy.stat_sinks.statsd"
            typed_config {
              [type.googleapis.com/envoy.config.metrics.v3.StatsdSink] {
@@ -530,7 +530,7 @@ TEST_F(OptionsImplTest, TlsContext) {
                   good_test_uri_));
 
   envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext expected_tls_context;
-  TextFormat::ParseFromString(
+  std::ignore = TextFormat::ParseFromString(
       R"pb(common_tls_context {
              tls_params { cipher_suites: "-ALL:ECDHE-RSA-AES256-GCM-SHA384" }
            })pb",

@@ -23,7 +23,7 @@ TEST(RequestsPerSecondInputVariableSetterConfigFactory, CreateEmptyConfigProtoCr
 TEST(RequestsPerSecondInputVariableSetterConfigFactory, FactoryRegistrationUsesCorrectPluginName) {
   const nighthawk::adaptive_load::RequestsPerSecondInputVariableSetterConfig config;
   Envoy::Protobuf::Any config_any;
-  config_any.PackFrom(config);
+  std::ignore = config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(
           "nighthawk.rps");
@@ -34,7 +34,7 @@ TEST(RequestsPerSecondInputVariableSetterConfigFactory,
      CreateInputVariableSetterCreatesCorrectPluginType) {
   const nighthawk::adaptive_load::RequestsPerSecondInputVariableSetterConfig config;
   Envoy::Protobuf::Any config_any;
-  config_any.PackFrom(config);
+  std::ignore = config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(
           "nighthawk.rps");

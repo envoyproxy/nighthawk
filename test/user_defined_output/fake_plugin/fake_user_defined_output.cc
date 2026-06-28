@@ -52,7 +52,7 @@ absl::StatusOr<Envoy::Protobuf::Any> FakeUserDefinedOutputPlugin::getPerWorkerOu
   output.set_worker_name(absl::StrCat("worker_", worker_metadata_.worker_number));
 
   Envoy::Protobuf::Any output_any;
-  output_any.PackFrom(output);
+  std::ignore = output_any.PackFrom(output);
   return output_any;
 }
 
@@ -105,7 +105,7 @@ absl::StatusOr<Envoy::Protobuf::Any> FakeUserDefinedOutputPluginFactory::Aggrega
   global_output.set_headers_called(headers_called);
 
   Envoy::Protobuf::Any global_any;
-  global_any.PackFrom(global_output);
+  std::ignore = global_any.PackFrom(global_output);
   return global_any;
 }
 

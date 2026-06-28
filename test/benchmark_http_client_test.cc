@@ -464,7 +464,7 @@ TEST_F(BenchmarkClientHttpTest, DrainTimeoutFires) {
 UserDefinedOutputPluginPtr
 CreateTestUserDefinedOutputPlugin(const std::string& typed_config_textproto) {
   TypedExtensionConfig typed_config;
-  TextFormat::ParseFromString(typed_config_textproto, &typed_config);
+  std::ignore = TextFormat::ParseFromString(typed_config_textproto, &typed_config);
 
   auto* factory = Envoy::Config::Utility::getAndCheckFactory<UserDefinedOutputPluginFactory>(
       typed_config, false);

@@ -33,14 +33,14 @@ TEST_F(OutputCollectorTest, AddResultCanAddUserDefinedOutputs) {
   std::chrono::nanoseconds execution_duration = std::chrono::nanoseconds::zero();
 
   UserDefinedOutput output1;
-  TextFormat::ParseFromString(R"pb(name: "nighthawk.fake_user_defined_output"
+  std::ignore = TextFormat::ParseFromString(R"pb(name: "nighthawk.fake_user_defined_output"
     typed_config {
       [type.googleapis.com/nighthawk.FakeUserDefinedOutput] {worker_name: "test_worker"}
     }
   )pb",
                               &output1);
   UserDefinedOutput output2;
-  TextFormat::ParseFromString(R"pb(name: "nighthawk.fake_user_defined_output"
+  std::ignore = TextFormat::ParseFromString(R"pb(name: "nighthawk.fake_user_defined_output"
     typed_config {
       [type.googleapis.com/google.protobuf.StringValue] {value: "my_test_value"}
     }
