@@ -38,14 +38,14 @@ TEST_F(OutputCollectorTest, AddResultCanAddUserDefinedOutputs) {
       [type.googleapis.com/nighthawk.FakeUserDefinedOutput] {worker_name: "test_worker"}
     }
   )pb",
-                              &output1);
+                                            &output1);
   UserDefinedOutput output2;
   std::ignore = TextFormat::ParseFromString(R"pb(name: "nighthawk.fake_user_defined_output"
     typed_config {
       [type.googleapis.com/google.protobuf.StringValue] {value: "my_test_value"}
     }
   )pb",
-                              &output2);
+                                            &output2);
   user_defined_outputs.push_back(output1);
   user_defined_outputs.push_back(output2);
 

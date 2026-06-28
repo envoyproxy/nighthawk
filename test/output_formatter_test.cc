@@ -119,7 +119,7 @@ TEST_F(OutputCollectorTest, JsonFormatter) {
   nighthawk::client::Output expected_output_proto, output_proto;
   std::ignore = TextFormat::ParseFromString(expected_str, &expected_output_proto);
   std::ignore = TextFormat::ParseFromString((formatter.formatProto(collector_->toProto())).value(),
-                              &output_proto);
+                                            &output_proto);
   EXPECT_THAT(output_proto, EqualsProto(expected_output_proto));
 }
 
@@ -130,7 +130,7 @@ TEST_F(OutputCollectorTest, YamlFormatter) {
   nighthawk::client::Output expected_output_proto, output_proto;
   std::ignore = TextFormat::ParseFromString(expected_str, &expected_output_proto);
   std::ignore = TextFormat::ParseFromString((formatter.formatProto(collector_->toProto())).value(),
-                              &output_proto);
+                                            &output_proto);
   EXPECT_THAT(output_proto, EqualsProto(expected_output_proto));
 }
 
@@ -235,7 +235,8 @@ TEST_F(MediumOutputCollectorTest, FortioFormatter) {
   nighthawk::client::Output expected_output_proto, output_proto;
   std::ignore = TextFormat::ParseFromString(expected_str, &expected_output_proto);
   FortioOutputFormatterImpl formatter;
-  std::ignore = TextFormat::ParseFromString((formatter.formatProto(input_proto)).value(), &output_proto);
+  std::ignore =
+      TextFormat::ParseFromString((formatter.formatProto(input_proto)).value(), &output_proto);
   EXPECT_THAT(output_proto, EqualsProto(expected_output_proto));
 }
 
@@ -296,7 +297,8 @@ TEST_F(MediumOutputCollectorTest, FortioPedanticFormatter) {
   nighthawk::client::Output expected_output_proto, output_proto;
   std::ignore = TextFormat::ParseFromString(expected_str, &expected_output_proto);
   FortioPedanticOutputFormatterImpl formatter;
-  std::ignore = TextFormat::ParseFromString((formatter.formatProto(input_proto)).value(), &output_proto);
+  std::ignore =
+      TextFormat::ParseFromString((formatter.formatProto(input_proto)).value(), &output_proto);
   EXPECT_THAT(output_proto, EqualsProto(expected_output_proto));
 }
 

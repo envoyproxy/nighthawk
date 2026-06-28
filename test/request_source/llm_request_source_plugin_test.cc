@@ -37,7 +37,7 @@ TEST(LlmRequestSourcePluginTest, TestLlmRequestSourcePlugin) {
       }
     }
   )pb",
-                              &config);
+                                            &config);
   Envoy::Http::RequestHeaderMapPtr headers = Envoy::Http::RequestHeaderMapImpl::create();
   LlmRequestSourcePluginFactory factory;
   NiceMock<Envoy::Api::MockApi> mock_api;
@@ -77,7 +77,7 @@ TEST(LlmRequestSourcePluginTest, TestLlmRequestSourcePluginFactory) {
       }
     }
   )pb",
-                              &config);
+                                            &config);
   Envoy::Http::RequestHeaderMapPtr headers = Envoy::Http::RequestHeaderMapImpl::create();
   LlmRequestSourcePluginFactory factory;
   NiceMock<Envoy::Api::MockApi> mock_api;

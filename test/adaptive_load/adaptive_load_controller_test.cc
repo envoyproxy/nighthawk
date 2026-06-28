@@ -104,9 +104,9 @@ AdaptiveLoadSessionSpec MakeValidAdaptiveLoadSessionSpec() {
   expected_spec_with_threshold->mutable_threshold_spec()->mutable_scoring_function()->set_name(
       "nighthawk.binary_scoring");
   std::ignore = expected_spec_with_threshold->mutable_threshold_spec()
-      ->mutable_scoring_function()
-      ->mutable_typed_config()
-      ->PackFrom(nighthawk::adaptive_load::BinaryScoringFunctionConfig());
+                    ->mutable_scoring_function()
+                    ->mutable_typed_config()
+                    ->PackFrom(nighthawk::adaptive_load::BinaryScoringFunctionConfig());
   return spec;
 }
 
