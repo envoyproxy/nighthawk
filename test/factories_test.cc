@@ -44,8 +44,6 @@ TEST_F(FactoriesTest, CreateBenchmarkClient) {
   EXPECT_CALL(options_, openLoop());
   EXPECT_CALL(options_, responseHeaderWithLatencyInput());
   EXPECT_CALL(options_, timeout());
-  auto cmd = std::make_unique<nighthawk::client::CommandLineOptions>();
-  EXPECT_CALL(options_, toCommandLineOptions()).WillOnce(Return(ByMove(std::move(cmd))));
   StaticRequestSourceImpl request_generator(
       std::make_unique<Envoy::Http::TestRequestHeaderMapImpl>());
   auto benchmark_client =
