@@ -259,21 +259,21 @@ TEST_P(ProcessTest, ReturnsUserDefinedOutputsInResults) {
   EXPECT_TRUE(runProcess(RunExpectation::EXPECT_FAILURE).ok());
 
   nighthawk::client::UserDefinedOutput expected_fake_user_defined_output;
-  TextFormat::ParseFromString(R"(plugin_name: "nighthawk.fake_user_defined_output"
+  std::ignore = TextFormat::ParseFromString(R"(plugin_name: "nighthawk.fake_user_defined_output"
                                  typed_output {
                                    [type.googleapis.com/nighthawk.FakeUserDefinedOutput] {
                                      worker_name: "global"
                                    }
                                  }
                                  )",
-                              &expected_fake_user_defined_output);
+                                            &expected_fake_user_defined_output);
   nighthawk::client::UserDefinedOutput expected_logging_output;
-  TextFormat::ParseFromString(R"(plugin_name: "nighthawk.log_response_headers_plugin"
+  std::ignore = TextFormat::ParseFromString(R"(plugin_name: "nighthawk.log_response_headers_plugin"
                                  typed_output {
                                    [type.googleapis.com/nighthawk.LogResponseHeadersOutput] {}
                                  }
                                  )",
-                              &expected_logging_output);
+                                            &expected_logging_output);
 
   ASSERT_EQ(output_proto_.results_size(), 1);
   const nighthawk::client::Result& result = output_proto_.results(0);
@@ -308,12 +308,12 @@ TEST_P(ProcessTest, ReturnsUserDefinedOutputErrorWhenAggregateFails) {
   EXPECT_TRUE(runProcess(RunExpectation::EXPECT_FAILURE).ok());
 
   nighthawk::client::UserDefinedOutput expected_logging_output;
-  TextFormat::ParseFromString(R"(plugin_name: "nighthawk.log_response_headers_plugin"
+  std::ignore = TextFormat::ParseFromString(R"(plugin_name: "nighthawk.log_response_headers_plugin"
                                  typed_output {
                                    [type.googleapis.com/nighthawk.LogResponseHeadersOutput] {}
                                  }
                                  )",
-                              &expected_logging_output);
+                                            &expected_logging_output);
 
   ASSERT_EQ(output_proto_.results_size(), 1);
   const nighthawk::client::Result& result = output_proto_.results(0);

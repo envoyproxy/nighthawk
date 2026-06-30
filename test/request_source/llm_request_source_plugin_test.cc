@@ -27,7 +27,7 @@ using ::testing::NiceMock;
 
 TEST(LlmRequestSourcePluginTest, TestLlmRequestSourcePlugin) {
   nighthawk::LlmRequestSourcePluginConfig config;
-  TextFormat::ParseFromString(R"pb(
+  std::ignore = TextFormat::ParseFromString(R"pb(
     model_name: "test_model"
     req_token_count: 100
     resp_max_tokens: 100
@@ -37,12 +37,12 @@ TEST(LlmRequestSourcePluginTest, TestLlmRequestSourcePlugin) {
       }
     }
   )pb",
-                              &config);
+                                            &config);
   Envoy::Http::RequestHeaderMapPtr headers = Envoy::Http::RequestHeaderMapImpl::create();
   LlmRequestSourcePluginFactory factory;
   NiceMock<Envoy::Api::MockApi> mock_api;
   Envoy::Protobuf::Any config_wrapper;
-  config_wrapper.PackFrom(config);
+  std::ignore = config_wrapper.PackFrom(config);
   Nighthawk::RequestSourcePtr llm_request_source =
       factory.createRequestSourcePlugin(config_wrapper, mock_api, std::move(headers));
   ASSERT_NE(llm_request_source, nullptr);
@@ -67,7 +67,7 @@ TEST(LlmRequestSourcePluginTest, TestLlmRequestSourcePlugin) {
 
 TEST(LlmRequestSourcePluginTest, TestLlmRequestSourcePluginFactory) {
   nighthawk::LlmRequestSourcePluginConfig config;
-  TextFormat::ParseFromString(R"pb(
+  std::ignore = TextFormat::ParseFromString(R"pb(
     model_name: "test_model"
     req_token_count: 100
     resp_max_tokens: 100
@@ -77,12 +77,12 @@ TEST(LlmRequestSourcePluginTest, TestLlmRequestSourcePluginFactory) {
       }
     }
   )pb",
-                              &config);
+                                            &config);
   Envoy::Http::RequestHeaderMapPtr headers = Envoy::Http::RequestHeaderMapImpl::create();
   LlmRequestSourcePluginFactory factory;
   NiceMock<Envoy::Api::MockApi> mock_api;
   Envoy::Protobuf::Any config_wrapper;
-  config_wrapper.PackFrom(config);
+  std::ignore = config_wrapper.PackFrom(config);
   Nighthawk::RequestSourcePtr llm_request_source =
       factory.createRequestSourcePlugin(config_wrapper, mock_api, std::move(headers));
   ASSERT_NE(llm_request_source, nullptr);

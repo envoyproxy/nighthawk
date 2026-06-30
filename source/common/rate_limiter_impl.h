@@ -1,6 +1,7 @@
 #pragma once
 
 #include <list>
+#include <optional>
 #include <random>
 
 #include "envoy/common/time.h"
@@ -13,7 +14,6 @@
 
 #include "absl/random/random.h"
 #include "absl/random/zipf_distribution.h"
-#include "absl/types/optional.h"
 
 namespace Nighthawk {
 
@@ -29,21 +29,21 @@ public:
   std::chrono::nanoseconds elapsed() override {
     // TODO(oschaaf): consider adding an explicit start() call to the interface.
     const auto now = time_source_.monotonicTime();
-    if (start_time_ == absl::nullopt) {
+    if (start_time_ == std::nullopt) {
       first_acquisition_time_ = time_source_.systemTime();
       start_time_ = now;
     }
     return now - start_time_.value();
   }
 
-  absl::optional<Envoy::SystemTime> firstAcquisitionTime() const override {
+  std::optional<Envoy::SystemTime> firstAcquisitionTime() const override {
     return first_acquisition_time_;
   }
 
 private:
   Envoy::TimeSource& time_source_;
-  absl::optional<Envoy::MonotonicTime> start_time_;
-  absl::optional<Envoy::SystemTime> first_acquisition_time_;
+  std::optional<Envoy::MonotonicTime> start_time_;
+  std::optional<Envoy::SystemTime> first_acquisition_time_;
 };
 
 /**
@@ -92,7 +92,7 @@ public:
       : rate_limiter_(std::move(rate_limiter)) {}
   Envoy::TimeSource& timeSource() override { return rate_limiter_->timeSource(); }
   std::chrono::nanoseconds elapsed() override { return rate_limiter_->elapsed(); }
-  absl::optional<Envoy::SystemTime> firstAcquisitionTime() const override {
+  std::optional<Envoy::SystemTime> firstAcquisitionTime() const override {
     return rate_limiter_->firstAcquisitionTime();
   }
 
@@ -119,7 +119,7 @@ private:
   const uint64_t burst_size_;
   uint64_t accumulated_{0};
   bool releasing_{};
-  absl::optional<bool> previously_releasing_; // Solely used for sanity checking.
+  std::optional<bool> previously_releasing_; // Solely used for sanity checking.
 };
 
 /**

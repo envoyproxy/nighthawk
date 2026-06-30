@@ -49,7 +49,7 @@ private:
   const HttpTestServerDecoderFilterConfigSharedPtr config_;
   absl::StatusOr<std::shared_ptr<const nighthawk::server::ResponseOptions>> effective_config_;
   Envoy::Http::StreamDecoderFilterCallbacks* decoder_callbacks_;
-  absl::optional<std::string> request_headers_dump_;
+  std::optional<std::string> request_headers_dump_;
 };
 
 } // namespace Server

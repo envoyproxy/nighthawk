@@ -25,7 +25,7 @@ CreateFactoryConfigPair(const std::string& plugin_name,
                         const Envoy::Protobuf::Message& plugin_config) {
   TypedExtensionConfig typed_config;
   *typed_config.mutable_name() = plugin_name;
-  typed_config.mutable_typed_config()->PackFrom(plugin_config);
+  std::ignore = typed_config.mutable_typed_config()->PackFrom(plugin_config);
 
   auto* factory = Envoy::Config::Utility::getAndCheckFactory<UserDefinedOutputPluginFactory>(
       typed_config, false);
@@ -45,11 +45,11 @@ TEST(CreateUserDefinedOutputPlugins, ReturnsEmptyVectorWhenNoConfigs) {
 TEST(CreateUserDefinedOutputPlugins, CreatesPluginsForEachConfig) {
   std::vector<UserDefinedOutputConfigFactoryPair> config_factory_pairs{};
   FakeUserDefinedOutputConfig fake_config;
-  TextFormat::ParseFromString("fail_per_worker_output: false", &fake_config);
+  std::ignore = TextFormat::ParseFromString("fail_per_worker_output: false", &fake_config);
   config_factory_pairs.push_back(
       CreateFactoryConfigPair("nighthawk.fake_user_defined_output", fake_config));
   LogResponseHeadersConfig logging_config;
-  TextFormat::ParseFromString("logging_mode:LM_LOG_ALL_RESPONSES", &logging_config);
+  std::ignore = TextFormat::ParseFromString("logging_mode:LM_LOG_ALL_RESPONSES", &logging_config);
   config_factory_pairs.push_back(
       CreateFactoryConfigPair("nighthawk.log_response_headers_plugin", logging_config));
 
@@ -66,7 +66,7 @@ TEST(CreateUserDefinedOutputPlugins, CreatesPluginsForEachConfig) {
 TEST(CreateUserDefinedOutputPlugins, PropagatesCreationFailures) {
   std::vector<UserDefinedOutputConfigFactoryPair> config_factory_pairs{};
   LogResponseHeadersConfig invalid_logging_config;
-  TextFormat::ParseFromString("", &invalid_logging_config);
+  std::ignore = TextFormat::ParseFromString("", &invalid_logging_config);
   config_factory_pairs.push_back(
       CreateFactoryConfigPair("nighthawk.log_response_headers_plugin", invalid_logging_config));
 

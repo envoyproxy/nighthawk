@@ -197,7 +197,7 @@ public:
   // Calling HistogramImplHelper(SymbolTable& symbol_table) constructor to construct an empty
   // MetricImpl. This is to bypass the complicated logic of setting up SymbolTable/StatName in
   // Envoy.
-  SinkableStatistic(Envoy::Stats::Scope& scope, absl::optional<int> worker_id);
+  SinkableStatistic(Envoy::Stats::Scope& scope, std::optional<int> worker_id);
   ~SinkableStatistic() override;
 
   // Currently Envoy Histogram Unit supports {Unspecified, Bytes, Microseconds, Milliseconds}. By
@@ -206,9 +206,9 @@ public:
   Envoy::Stats::Histogram::Unit unit() const override;
   Envoy::Stats::SymbolTable& symbolTable() override;
   // Return the id of the worker where this statistic is defined. Per worker
-  // statistic should always set worker_id. Return absl::nullopt when the
+  // statistic should always set worker_id. Return std::nullopt when the
   // statistic is not defined per worker.
-  const absl::optional<int> worker_id() const { return worker_id_; }
+  const std::optional<int> worker_id() const { return worker_id_; }
 
 protected:
   // This is used in child class for delivering the histogram data to sinks.
@@ -216,7 +216,7 @@ protected:
 
 private:
   // worker_id can be used in downstream stats Sinks as the stats tag.
-  absl::optional<int> worker_id_;
+  std::optional<int> worker_id_;
 };
 
 // Implementation of sinkable Nighthawk Statistic with HdrHistogram.
@@ -224,7 +224,7 @@ class SinkableHdrStatistic : public SinkableStatistic, public HdrStatistic {
 public:
   // The constructor takes the Scope reference which is used to flush a histogram value to
   // downstream stats Sinks through deliverHistogramToSinks().
-  SinkableHdrStatistic(Envoy::Stats::Scope& scope, absl::optional<int> worker_id = absl::nullopt);
+  SinkableHdrStatistic(Envoy::Stats::Scope& scope, std::optional<int> worker_id = std::nullopt);
 
   // Envoy::Stats::Histogram
   void recordValue(uint64_t value) override;
@@ -247,7 +247,7 @@ public:
   // The constructor takes the Scope reference which is used to flush a histogram value to
   // downstream stats Sinks through deliverHistogramToSinks().
   SinkableCircllhistStatistic(Envoy::Stats::Scope& scope,
-                              absl::optional<int> worker_id = absl::nullopt);
+                              std::optional<int> worker_id = std::nullopt);
 
   // Envoy::Stats::Histogram
   void recordValue(uint64_t value) override;

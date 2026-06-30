@@ -27,10 +27,10 @@ using ::testing::HasSubstr;
 absl::StatusOr<UserDefinedOutputPluginPtr> CreatePlugin(const std::string& config_textproto,
                                                         int worker_number) {
   FakeUserDefinedOutputConfig config;
-  TextFormat::ParseFromString(config_textproto, &config);
+  std::ignore = TextFormat::ParseFromString(config_textproto, &config);
 
   Envoy::Protobuf::Any config_any;
-  config_any.PackFrom(config);
+  std::ignore = config_any.PackFrom(config);
   auto& factory = Envoy::Config::Utility::getAndCheckFactoryByName<UserDefinedOutputPluginFactory>(
       "nighthawk.fake_user_defined_output");
   WorkerMetadata metadata;
@@ -42,10 +42,10 @@ absl::StatusOr<UserDefinedOutputPluginPtr> CreatePlugin(const std::string& confi
 // Packs a FakeUserDefinedOutput into an Any.
 Envoy::Protobuf::Any CreateOutputAny(const std::string& textproto) {
   FakeUserDefinedOutput output;
-  TextFormat::ParseFromString(textproto, &output);
+  std::ignore = TextFormat::ParseFromString(textproto, &output);
 
   Envoy::Protobuf::Any output_any;
-  output_any.PackFrom(output);
+  std::ignore = output_any.PackFrom(output);
 
   return output_any;
 }
@@ -69,7 +69,7 @@ TEST(FakeUserDefinedOutputPluginFactory, CreateEmptyConfigProtoCreatesCorrectTyp
 TEST(FakeUserDefinedOutputPluginFactory, FactoryRegistersUnderCorrectName) {
   FakeUserDefinedOutputConfig config;
   Envoy::Protobuf::Any config_any;
-  config_any.PackFrom(config);
+  std::ignore = config_any.PackFrom(config);
   auto& factory = Envoy::Config::Utility::getAndCheckFactoryByName<UserDefinedOutputPluginFactory>(
       "nighthawk.fake_user_defined_output");
   EXPECT_EQ(factory.name(), "nighthawk.fake_user_defined_output");
@@ -78,7 +78,7 @@ TEST(FakeUserDefinedOutputPluginFactory, FactoryRegistersUnderCorrectName) {
 TEST(FakeUserDefinedOutputPluginFactory, CreateUserDefinedOutputPluginCreatesCorrectPluginType) {
   FakeUserDefinedOutputConfig config;
   Envoy::Protobuf::Any config_any;
-  config_any.PackFrom(config);
+  std::ignore = config_any.PackFrom(config);
   auto& factory = Envoy::Config::Utility::getAndCheckFactoryByName<UserDefinedOutputPluginFactory>(
       "nighthawk.fake_user_defined_output");
   absl::StatusOr<UserDefinedOutputPluginPtr> plugin =
@@ -205,7 +205,7 @@ TEST(AggregateGlobalOutput, BuildsOutputsCorrectly) {
 TEST(AggregateGlobalOutput, FailsElegantlyWithIncorrectInput) {
   Envoy::Protobuf::Any invalid_any;
   FakeUserDefinedOutputConfig wrong_type;
-  invalid_any.PackFrom(wrong_type);
+  std::ignore = invalid_any.PackFrom(wrong_type);
   nighthawk::client::UserDefinedOutput user_defined_output;
   *user_defined_output.mutable_typed_output() = invalid_any;
   std::vector<nighthawk::client::UserDefinedOutput> per_worker_outputs = {user_defined_output};

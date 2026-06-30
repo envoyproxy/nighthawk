@@ -40,8 +40,7 @@ TEST(FakeInputVariableSetterConfigFactory, FactoryRegistersUnderCorrectName) {
 TEST(FakeInputVariableSetterConfigFactory, CreateInputVariableSetterCreatesCorrectPluginType) {
   FakeInputVariableSetterConfig config;
   Envoy::Protobuf::Any config_any;
-  config_any.PackFrom(config);
-  CommandLineOptions options;
+  std::ignore = config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(
           "nighthawk.fake_input_variable_setter");
@@ -66,7 +65,7 @@ TEST(FakeInputVariableSetterConfigFactory,
   config.mutable_artificial_validation_failure()->set_code(kExpectedStatusCode);
   config.mutable_artificial_validation_failure()->set_message(kExpectedStatusMessage);
   Envoy::Protobuf::Any config_any;
-  config_any.PackFrom(config);
+  std::ignore = config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(
           "nighthawk.fake_input_variable_setter");
@@ -78,7 +77,7 @@ TEST(FakeInputVariableSetterConfigFactory,
 TEST(FakeInputVariableSetterConfigFactory, ValidateConfigWithDefaultConfigReturnsOk) {
   FakeInputVariableSetterConfig config;
   Envoy::Protobuf::Any config_any;
-  config_any.PackFrom(config);
+  std::ignore = config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(
           "nighthawk.fake_input_variable_setter");
@@ -90,7 +89,7 @@ TEST(FakeInputVariableSetterConfigFactory, ValidateConfigWithValidConfigReturnsO
   FakeInputVariableSetterConfig config;
   config.set_adjustment_factor(1.0);
   Envoy::Protobuf::Any config_any;
-  config_any.PackFrom(config);
+  std::ignore = config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(
           "nighthawk.fake_input_variable_setter");

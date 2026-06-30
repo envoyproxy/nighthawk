@@ -76,7 +76,7 @@ absl::Status validateConfig(const LogResponseHeadersConfig& config) {
 Envoy::Protobuf::Any createEmptyOutput() {
   nighthawk::LogResponseHeadersOutput output;
   Envoy::Protobuf::Any any;
-  any.PackFrom(output);
+  std::ignore = any.PackFrom(output);
   return any;
 }
 

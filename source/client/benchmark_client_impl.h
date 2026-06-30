@@ -147,7 +147,7 @@ public:
   void handleResponseData(const Envoy::Buffer::Instance& response_data) override;
 
   // Helpers
-  absl::optional<::Envoy::Upstream::HttpPoolData> pool() {
+  std::optional<::Envoy::Upstream::HttpPoolData> pool() {
     const auto thread_local_cluster = cluster_manager_->getThreadLocalCluster(cluster_name_);
     Envoy::Upstream::HostConstSharedPtr host =
         Envoy::Upstream::LoadBalancer::onlyAllowSynchronousHostSelection(

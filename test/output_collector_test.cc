@@ -33,26 +33,26 @@ TEST_F(OutputCollectorTest, AddResultCanAddUserDefinedOutputs) {
   std::chrono::nanoseconds execution_duration = std::chrono::nanoseconds::zero();
 
   UserDefinedOutput output1;
-  TextFormat::ParseFromString(R"pb(name: "nighthawk.fake_user_defined_output"
+  std::ignore = TextFormat::ParseFromString(R"pb(name: "nighthawk.fake_user_defined_output"
     typed_config {
       [type.googleapis.com/nighthawk.FakeUserDefinedOutput] {worker_name: "test_worker"}
     }
   )pb",
-                              &output1);
+                                            &output1);
   UserDefinedOutput output2;
-  TextFormat::ParseFromString(R"pb(name: "nighthawk.fake_user_defined_output"
+  std::ignore = TextFormat::ParseFromString(R"pb(name: "nighthawk.fake_user_defined_output"
     typed_config {
       [type.googleapis.com/google.protobuf.StringValue] {value: "my_test_value"}
     }
   )pb",
-                              &output2);
+                                            &output2);
   user_defined_outputs.push_back(output1);
   user_defined_outputs.push_back(output2);
 
   collector.addResult(/*name = */ "worker_1",
                       /*statistics=*/{},
                       /*counters=*/empty_map, execution_duration,
-                      /*first_acquisition_time=*/absl::nullopt, user_defined_outputs);
+                      /*first_acquisition_time=*/std::nullopt, user_defined_outputs);
 
   nighthawk::client::Output full_output = collector.toProto();
   EXPECT_EQ(full_output.results_size(), 1);
@@ -73,7 +73,7 @@ TEST_F(OutputCollectorTest, AddResultWorksWithNoUserDefinedOutputs) {
   collector.addResult(/*name = */ "worker_1",
                       /*statistics=*/{},
                       /*counters=*/empty_map, execution_duration,
-                      /*first_acquisition_time=*/absl::nullopt, user_defined_outputs);
+                      /*first_acquisition_time=*/std::nullopt, user_defined_outputs);
 
   nighthawk::client::Output full_output = collector.toProto();
   EXPECT_EQ(full_output.results_size(), 1);

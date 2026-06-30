@@ -2,11 +2,10 @@
 
 #include <chrono>
 #include <memory>
+#include <optional>
 
 #include "envoy/common/pure.h"
 #include "envoy/common/time.h"
-
-#include "absl/types/optional.h"
 
 namespace Nighthawk {
 
@@ -35,9 +34,9 @@ public:
   virtual Envoy::TimeSource& timeSource() PURE;
 
   /**
-   * @return absl::optional<Envoy::SystemTime> Time of the first acquisition, if any.
+   * @return std::optional<Envoy::SystemTime> Time of the first acquisition, if any.
    */
-  virtual absl::optional<Envoy::SystemTime> firstAcquisitionTime() const PURE;
+  virtual std::optional<Envoy::SystemTime> firstAcquisitionTime() const PURE;
 
   /**
    * @return std::chrono::nanoseconds elapsed since the first call to tryAcquireOne(). Used by some

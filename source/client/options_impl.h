@@ -3,6 +3,7 @@
 #include <chrono>
 #include <cmath>
 #include <cstdint>
+#include <optional>
 #include <string>
 
 #include "nighthawk/client/options.h"
@@ -11,7 +12,6 @@
 #include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
-#include "absl/types/optional.h"
 #include "tclap/CmdLine.h"
 
 namespace Nighthawk {
@@ -36,19 +36,19 @@ public:
   uint32_t connections() const override { return connections_; }
   std::chrono::seconds duration() const override { return std::chrono::seconds(duration_); }
   std::chrono::seconds timeout() const override { return std::chrono::seconds(timeout_); }
-  absl::optional<std::string> uri() const override { return uri_; }
+  std::optional<std::string> uri() const override { return uri_; }
 
   Envoy::Http::Protocol protocol() const override;
 
   Envoy::Http::Protocol tunnelProtocol() const override;
   std::string tunnelUri() const override { return tunnel_uri_; }
   uint32_t encapPort() const override { return encap_port_; }
-  virtual const absl::optional<envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext>
+  virtual const std::optional<envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext>
   tunnelTlsContext() const override {
     return tunnel_tls_context_;
   }
 
-  const absl::optional<envoy::config::core::v3::Http3ProtocolOptions>&
+  const std::optional<envoy::config::core::v3::Http3ProtocolOptions>&
   http3ProtocolOptions() const override {
     return http3_protocol_options_;
   }
@@ -70,10 +70,10 @@ public:
   tlsContext() const override {
     return tls_context_;
   };
-  const absl::optional<envoy::config::core::v3::BindConfig>& upstreamBindConfig() const override {
+  const std::optional<envoy::config::core::v3::BindConfig>& upstreamBindConfig() const override {
     return upstream_bind_config_;
   }
-  const absl::optional<envoy::config::core::v3::TransportSocket>& transportSocket() const override {
+  const std::optional<envoy::config::core::v3::TransportSocket>& transportSocket() const override {
     return transport_socket_;
   }
   uint32_t maxPendingRequests() const override { return max_pending_requests_; }
@@ -85,7 +85,7 @@ public:
     return sequencer_idle_strategy_;
   }
   std::string requestSource() const override { return request_source_; }
-  const absl::optional<envoy::config::core::v3::TypedExtensionConfig>&
+  const std::optional<envoy::config::core::v3::TypedExtensionConfig>&
   requestSourcePluginConfig() const override {
     return request_source_plugin_config_;
   }
@@ -121,8 +121,8 @@ public:
   std::string responseHeaderWithLatencyInput() const override {
     return latency_response_header_name_;
   };
-  absl::optional<Envoy::SystemTime> scheduled_start() const override { return scheduled_start_; }
-  absl::optional<std::string> executionId() const override { return execution_id_; }
+  std::optional<Envoy::SystemTime> scheduled_start() const override { return scheduled_start_; }
+  std::optional<std::string> executionId() const override { return execution_id_; }
 
   const std::vector<envoy::config::core::v3::TypedExtensionConfig>&
   userDefinedOutputPluginConfigs() const override {
@@ -140,11 +140,11 @@ private:
   uint32_t connections_{100};
   uint32_t duration_{5};
   uint32_t timeout_{30};
-  absl::optional<std::string> uri_;
+  std::optional<std::string> uri_;
 
   bool h2_{false}; // Deprecated.
   nighthawk::client::Protocol::ProtocolOptions protocol_{nighthawk::client::Protocol::HTTP1};
-  absl::optional<envoy::config::core::v3::Http3ProtocolOptions> http3_protocol_options_;
+  std::optional<envoy::config::core::v3::Http3ProtocolOptions> http3_protocol_options_;
 
   std::string concurrency_;
 
@@ -152,7 +152,7 @@ private:
   nighthawk::client::Protocol::ProtocolOptions tunnel_protocol_{nighthawk::client::Protocol::HTTP1};
   std::string tunnel_uri_;
   uint32_t encap_port_{0};
-  absl::optional<envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext>
+  std::optional<envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext>
       tunnel_tls_context_;
 
   nighthawk::client::Verbosity::VerbosityOptions verbosity_{nighthawk::client::Verbosity::WARN};
@@ -167,9 +167,9 @@ private:
   std::vector<std::string> request_headers_;
   uint32_t request_body_size_{0};
   envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext tls_context_;
-  absl::optional<envoy::config::core::v3::BindConfig> upstream_bind_config_;
-  absl::optional<envoy::config::core::v3::TransportSocket> transport_socket_;
-  absl::optional<envoy::config::core::v3::TypedExtensionConfig> request_source_plugin_config_;
+  std::optional<envoy::config::core::v3::BindConfig> upstream_bind_config_;
+  std::optional<envoy::config::core::v3::TransportSocket> transport_socket_;
+  std::optional<envoy::config::core::v3::TypedExtensionConfig> request_source_plugin_config_;
 
   uint32_t max_pending_requests_{0};
   // This default is based the minimum recommendation for SETTINGS_MAX_CONCURRENT_STREAMS over at
@@ -200,8 +200,8 @@ private:
   uint32_t stats_flush_interval_{5};
   Envoy::Protobuf::Duration stats_flush_interval_duration_;
   std::string latency_response_header_name_;
-  absl::optional<Envoy::SystemTime> scheduled_start_;
-  absl::optional<std::string> execution_id_;
+  std::optional<Envoy::SystemTime> scheduled_start_;
+  std::optional<std::string> execution_id_;
   std::vector<envoy::config::core::v3::TypedExtensionConfig> user_defined_output_plugin_configs_;
 };
 

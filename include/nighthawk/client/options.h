@@ -3,6 +3,7 @@
 #include <chrono>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 
 #include "envoy/common/pure.h"
@@ -19,8 +20,6 @@
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
 #include "api/client/options.pb.h"
-
-#include "absl/types/optional.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -39,21 +38,21 @@ public:
   virtual std::chrono::seconds duration() const PURE;
   virtual std::chrono::seconds timeout() const PURE;
   // URI is absent when the user specified --multi-target-* instead.
-  virtual absl::optional<std::string> uri() const PURE;
+  virtual std::optional<std::string> uri() const PURE;
 
   // The protocol to encapsulate requests in.
   // Defaults to HTTP/1.1 if the user doesn't make an explicit selection.
   virtual Envoy::Http::Protocol protocol() const PURE;
 
   // The following sets specific protocol options for http3.
-  virtual const absl::optional<envoy::config::core::v3::Http3ProtocolOptions>&
+  virtual const std::optional<envoy::config::core::v3::Http3ProtocolOptions>&
   http3ProtocolOptions() const PURE;
 
   // HTTP CONNECT/CONNECT-UDP Tunneling related options.
   virtual Envoy::Http::Protocol tunnelProtocol() const PURE;
   virtual std::string tunnelUri() const PURE;
   virtual uint32_t encapPort() const PURE;
-  virtual const absl::optional<envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext>
+  virtual const std::optional<envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext>
   tunnelTlsContext() const PURE;
 
   virtual std::string concurrency() const PURE;
@@ -67,9 +66,8 @@ public:
   virtual uint32_t requestBodySize() const PURE;
   virtual const envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext&
   tlsContext() const PURE;
-  virtual const absl::optional<envoy::config::core::v3::BindConfig>&
-  upstreamBindConfig() const PURE;
-  virtual const absl::optional<envoy::config::core::v3::TransportSocket>&
+  virtual const std::optional<envoy::config::core::v3::BindConfig>& upstreamBindConfig() const PURE;
+  virtual const std::optional<envoy::config::core::v3::TransportSocket>&
   transportSocket() const PURE;
   virtual uint32_t maxPendingRequests() const PURE;
   virtual uint32_t maxActiveRequests() const PURE;
@@ -82,7 +80,7 @@ public:
   virtual nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions
   sequencerIdleStrategy() const PURE;
   virtual std::string requestSource() const PURE;
-  virtual const absl::optional<envoy::config::core::v3::TypedExtensionConfig>&
+  virtual const std::optional<envoy::config::core::v3::TypedExtensionConfig>&
   requestSourcePluginConfig() const PURE;
   virtual std::string trace() const PURE;
   virtual nighthawk::client::H1ConnectionReuseStrategy::H1ConnectionReuseStrategyOptions
@@ -104,8 +102,8 @@ public:
   virtual Envoy::Protobuf::Duration statsFlushIntervalDuration() const PURE;
   virtual std::string responseHeaderWithLatencyInput() const PURE;
 
-  virtual absl::optional<Envoy::SystemTime> scheduled_start() const PURE;
-  virtual absl::optional<std::string> executionId() const PURE;
+  virtual std::optional<Envoy::SystemTime> scheduled_start() const PURE;
+  virtual std::optional<std::string> executionId() const PURE;
   virtual const std::vector<envoy::config::core::v3::TypedExtensionConfig>&
   userDefinedOutputPluginConfigs() const PURE;
 
