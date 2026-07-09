@@ -87,19 +87,29 @@ bool Main::run() {
   OutputCollectorImpl output_collector(time_system, *options_);
   bool result;
   {
+    // The SignalHandler scope covers process->shutdown() as well: the shutdown/drain phase
+    // is the most likely to hang, and signals must keep being handled there. Requesting
+    // execution cancellation on an already-finished run is safe: worker cancellation and
+    // shutdown() serialize on the same lock inside ProcessImpl (encap subprocess
+    // termination is guarded by the runner's own mutex), and RemoteProcessImpl logs that
+    // cancellation is unsupported. The SignalHandler restores the previous (typically
+    // default) dispositions as soon as it consumes the first signal, so any further signal
+    // terminates the process (escalation) even if the cancellation callback blocks on a
+    // hung shutdown.
     auto signal_handler =
         std::make_unique<SignalHandler>([&process]() { process->requestExecutionCancellation(); });
     result = process->run(output_collector);
+    auto formatter = output_formatter_factory.create(options_->outputFormat());
+    absl::StatusOr<std::string> formatted_proto =
+        formatter->formatProto(output_collector.toProto());
+    if (!formatted_proto.ok()) {
+      ENVOY_LOG(error, "An error occurred while formatting proto");
+      result = false;
+    } else {
+      std::cout << *formatted_proto;
+    }
+    process->shutdown();
   }
-  auto formatter = output_formatter_factory.create(options_->outputFormat());
-  absl::StatusOr<std::string> formatted_proto = formatter->formatProto(output_collector.toProto());
-  if (!formatted_proto.ok()) {
-    ENVOY_LOG(error, "An error occurred while formatting proto");
-    result = false;
-  } else {
-    std::cout << *formatted_proto;
-  }
-  process->shutdown();
   if (!result) {
     ENVOY_LOG(error, "An error occurred.");
   } else {
