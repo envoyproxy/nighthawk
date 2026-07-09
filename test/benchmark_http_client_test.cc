@@ -440,6 +440,8 @@ TEST_F(BenchmarkClientHttpTest, RequestGeneratorProvidingDifferentPathsSendsRequ
 TEST_F(BenchmarkClientHttpTest, DrainTimeoutFires) {
   RequestGenerator default_request_generator = getDefaultRequestGenerator();
   setupBenchmarkClient(default_request_generator);
+  // Keep the test fast; the default drain timeout is 30 seconds of real time.
+  client_->setTimeout(std::chrono::seconds(2));
   EXPECT_CALL(pool_, newStream(_, _, _))
       .WillOnce([this](Envoy::Http::ResponseDecoder& decoder,
                        Envoy::Http::ConnectionPool::Callbacks&,
@@ -454,11 +456,127 @@ TEST_F(BenchmarkClientHttpTest, DrainTimeoutFires) {
       });
   EXPECT_CALL(pool_, hasActiveConnections()).WillOnce([]() -> bool { return true; });
   EXPECT_CALL(pool_, addIdleCallback(_));
+  // terminate() actively drains the pool; in this test no stream ever completes, so
+  // draining doesn't make the pool idle and the drain timeout still fires.
+  EXPECT_CALL(pool_, drainConnections(Envoy::ConnectionPool::DrainBehavior::DrainAndDelete));
   // We don't expect the callback that we pass here to fire.
   client_->tryStartRequest([](bool, bool) { EXPECT_TRUE(false); });
   // To get past this, the drain timeout within the benchmark client must execute.
   dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
   EXPECT_EQ(0, getCounter("http_2xx"));
+}
+
+// Regression test: BenchmarkClientHttpImpl::terminate() used to block for the full drain
+// timeout (timeout_) whenever an in-flight request completed onto a keep-alive connection
+// during the drain, because the pool idle callback never fired. terminate() now actively
+// drains the pool (drainConnections()), so completed keep-alive connections are closed,
+// the pool can become idle, and terminate() returns promptly.
+//
+// Background: terminate() registers an idle callback via HttpPoolData::addIdleCallback()
+// and then runs the dispatcher until either that callback or a drain timer (timeout_)
+// exits it. In Envoy (@ c821577, source/common/conn_pool/conn_pool_base.cc),
+// ConnPoolImplBase::isIdleImpl() is:
+//   pending_streams_.empty() && ready_clients_.empty() && busy_clients_.empty() &&
+//   connecting_clients_.empty() && early_data_clients_.empty()
+// and checkForIdleAndNotify() only invokes idle callbacks when that predicate holds.
+// When an in-flight request completes, its connection moves from busy_clients_ to
+// ready_clients_ (keep-alive) - so the pool never becomes idle unless something closes
+// the ready connections. Nighthawk never calls drainConnections(), so the idle callback
+// never fires and terminate() only returns when the drain timer hard-exits after the
+// full timeout, logging "Wait for the connection pool drain timed out...".
+//
+// The mock pool below models exactly those semantics: the captured idle callback is
+// invoked once the last stream has completed, but only if the pool was told to drain
+// (drainConnections()); without draining, a completed stream leaves a ready keep-alive
+// client behind and the pool stays non-idle forever, faithful to the real pool.
+TEST_F(BenchmarkClientHttpTest, TerminateReturnsPromptlyWhenRequestCompletesDuringDrain) {
+  RequestGenerator default_request_generator = getDefaultRequestGenerator();
+  setupBenchmarkClient(default_request_generator);
+  // Small drain timeout to bound the runtime of this test while it is red. The margin
+  // between the fast path (~0.25s) and the timeout path (5s) is seconds wide, so the
+  // timing assertion below is robust on loaded CI machines.
+  client_->setTimeout(std::chrono::seconds(5));
+
+  // Start a single request and capture its response decoder so we can complete the
+  // response later, while terminate() is draining.
+  Envoy::Http::ResponseDecoder* decoder = nullptr;
+  EXPECT_CALL(pool_, newStream(_, _, _))
+      .WillOnce([this, &decoder](Envoy::Http::ResponseDecoder& response_decoder,
+                                 Envoy::Http::ConnectionPool::Callbacks& callbacks,
+                                 const Envoy::Http::ConnectionPool::Instance::StreamOptions&)
+                    -> Envoy::Http::ConnectionPool::Cancellable* {
+        decoder = &response_decoder;
+        NiceMock<Envoy::StreamInfo::MockStreamInfo> stream_info;
+        callbacks.onPoolReady(stream_encoder_, Envoy::Upstream::HostDescriptionConstSharedPtr{},
+                              stream_info, {} /*std::optional<Envoy::Http::Protocol> protocol*/);
+        return nullptr;
+      });
+  EXPECT_CALL(stream_encoder_, encodeHeaders(_, _));
+
+  bool stream_completed = false;
+  ASSERT_TRUE(
+      client_->tryStartRequest([&stream_completed](bool, bool) { stream_completed = true; }));
+  ASSERT_NE(nullptr, decoder);
+
+  // Model of the real pool state, following ConnPoolImplBase::isIdleImpl() semantics
+  // described above: after the stream completes the connection becomes a ready
+  // keep-alive client, so the pool is only considered idle - and the idle callback is
+  // only invoked - if the pool has additionally been told to drain its connections.
+  bool drain_requested = false;
+  bool idle_callback_invoked = false;
+  Envoy::Http::ConnectionPool::Instance::IdleCb idle_cb;
+  auto maybe_fire_idle_callback = [&]() {
+    if (stream_completed && drain_requested && !idle_callback_invoked && idle_cb != nullptr) {
+      idle_callback_invoked = true;
+      idle_cb();
+    }
+  };
+  // One active stream exists when terminate() starts.
+  EXPECT_CALL(pool_, hasActiveConnections()).WillOnce([]() -> bool { return true; });
+  EXPECT_CALL(pool_, addIdleCallback(_))
+      .WillOnce([&idle_cb](Envoy::Http::ConnectionPool::Instance::IdleCb cb) { idle_cb = cb; });
+  // Only a DrainAndDelete drain closes stream-less keep-alive connections in the real
+  // pool, which is what allows the modeled pool to go idle once the last stream
+  // completes; requiring the exact behavior here guards against regressing to another
+  // enumerator.
+  EXPECT_CALL(pool_, drainConnections(Envoy::ConnectionPool::DrainBehavior::DrainAndDelete))
+      .Times(AnyNumber())
+      .WillRepeatedly([&](Envoy::ConnectionPool::DrainBehavior) {
+        drain_requested = true;
+        maybe_fire_idle_callback();
+      });
+
+  // Arm a timer that completes the in-flight response shortly after terminate() starts
+  // draining. This puts the pool in the exact state under test: zero active streams,
+  // one ready keep-alive connection.
+  Envoy::Event::TimerPtr response_timer = dispatcher_->createTimer([&]() {
+    Envoy::Http::ResponseHeaderMapPtr response_headers{
+        new Envoy::Http::TestResponseHeaderMapImpl{{":status", "200"}}};
+    decoder->decodeHeaders(std::move(response_headers), false);
+    Envoy::Buffer::OwnedImpl buffer(std::string(97, 'a'));
+    decoder->decodeData(buffer, true);
+    // The stream is done; the connection transitions busy -> ready (keep-alive).
+    maybe_fire_idle_callback();
+  });
+  response_timer->enableTimer(std::chrono::milliseconds(250));
+
+  const Envoy::MonotonicTime start_time = time_system_.monotonicTime();
+  client_->terminate();
+  const Envoy::MonotonicTime end_time = time_system_.monotonicTime();
+  const int64_t terminate_duration_ms =
+      std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
+
+  // Premise checks: the in-flight request really did complete during the drain.
+  EXPECT_TRUE(stream_completed);
+  EXPECT_EQ(1, getCounter("http_2xx"));
+  // Core assertion: terminate() must return comfortably before the 5s drain timeout,
+  // since the pool held zero active streams from ~250ms onwards. While the bug exists,
+  // terminate() blocks until the drain timer fires (~5000ms), failing this check.
+  EXPECT_LT(terminate_duration_ms, 2500);
+  // Second angle: the dispatcher should have been exited by the pool idle callback path
+  // rather than by the hard-shutdown drain timer path. While the bug exists the idle
+  // callback is never invoked (the pool is never drained, so it never goes idle).
+  EXPECT_TRUE(idle_callback_invoked);
 }
 
 UserDefinedOutputPluginPtr

@@ -62,8 +62,10 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       false, 0, "uint32_t", cmd);
   TCLAP::ValueArg<uint32_t> timeout(
       "", "timeout",
-      fmt::format("Connection connect timeout period in seconds. Default: {}.", timeout_), false, 0,
-      "uint32_t", cmd);
+      fmt::format("Connection connect timeout period in seconds. Also used as the upper bound "
+                  "on the time spent draining in-flight requests during shutdown. Default: {}.",
+                  timeout_),
+      false, 0, "uint32_t", cmd);
 
   TCLAP::SwitchArg h2(
       "", "h2",

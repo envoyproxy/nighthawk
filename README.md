@@ -442,7 +442,9 @@ Mutually exclusive with --protocol. Requests are encapsulated in
 HTTP/1 by default when neither of --h2 or --protocol is used.
 
 --timeout <uint32_t>
-Connection connect timeout period in seconds. Default: 30.
+Connection connect timeout period in seconds. Also used as the upper
+bound on the time spent draining in-flight requests during shutdown.
+Default: 30.
 
 --duration <uint32_t>
 The number of seconds that the test should run. Default: 5. Mutually
