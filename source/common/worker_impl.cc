@@ -14,10 +14,19 @@ WorkerImpl::WorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Instance& tls,
 
 WorkerImpl::~WorkerImpl() { RELEASE_ASSERT(shutdown_, "Call shutdown() before destruction."); }
 
-void WorkerImpl::shutdown() {
+void WorkerImpl::initiateShutdown() {
   shutdown_ = true;
-  signal_thread_to_exit_.set_value();
-  thread_.join();
+  if (!exit_signaled_) {
+    exit_signaled_ = true;
+    signal_thread_to_exit_.set_value();
+  }
+}
+
+void WorkerImpl::shutdown() {
+  initiateShutdown();
+  if (thread_.joinable()) {
+    thread_.join();
+  }
 }
 
 void WorkerImpl::start() {

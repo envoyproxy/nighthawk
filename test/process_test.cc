@@ -1,9 +1,18 @@
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <poll.h>
+#include <sys/socket.h>
+#include <unistd.h>
+
+#include <atomic>
 #include <chrono>
+#include <cstring>
 #include <thread>
 #include <vector>
 
 #include "nighthawk/common/exception.h"
 
+#include "external/envoy/source/common/common/assert.h"
 #include "external/envoy/source/common/common/statusor.h"
 #include "external/envoy/test/mocks/network/mocks.h"
 #include "external/envoy/test/test_common/environment.h"
@@ -69,6 +78,76 @@ public:
   }
 
   std::string name() const override { return "nighthawk.fake_stats_sink"; }
+};
+
+// WedgedTcpServer is a minimal TCP server which accepts connections but never writes a
+// response and never closes accepted sockets. Any HTTP request sent to it therefore remains
+// in flight forever. This forces BenchmarkClientHttpImpl::terminate() to wait for the full
+// connection pool drain timeout (--timeout) when a worker shuts down.
+class WedgedTcpServer {
+public:
+  explicit WedgedTcpServer(Envoy::Network::Address::IpVersion ip_version) {
+    const bool is_v4 = ip_version == Envoy::Network::Address::IpVersion::v4;
+    listen_fd_ = ::socket(is_v4 ? AF_INET : AF_INET6, SOCK_STREAM, 0);
+    RELEASE_ASSERT(listen_fd_ >= 0, "WedgedTcpServer: socket() failed");
+    sockaddr_storage addr;
+    memset(&addr, 0, sizeof(addr));
+    socklen_t addr_len;
+    if (is_v4) {
+      auto* addr4 = reinterpret_cast<sockaddr_in*>(&addr);
+      addr4->sin_family = AF_INET;
+      addr4->sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+      addr4->sin_port = 0;
+      addr_len = sizeof(sockaddr_in);
+    } else {
+      auto* addr6 = reinterpret_cast<sockaddr_in6*>(&addr);
+      addr6->sin6_family = AF_INET6;
+      addr6->sin6_addr = in6addr_loopback;
+      addr6->sin6_port = 0;
+      addr_len = sizeof(sockaddr_in6);
+    }
+    RELEASE_ASSERT(::bind(listen_fd_, reinterpret_cast<sockaddr*>(&addr), addr_len) == 0,
+                   "WedgedTcpServer: bind() failed");
+    RELEASE_ASSERT(::listen(listen_fd_, 128) == 0, "WedgedTcpServer: listen() failed");
+    addr_len = sizeof(addr);
+    RELEASE_ASSERT(::getsockname(listen_fd_, reinterpret_cast<sockaddr*>(&addr), &addr_len) == 0,
+                   "WedgedTcpServer: getsockname() failed");
+    port_ = ntohs(is_v4 ? reinterpret_cast<sockaddr_in*>(&addr)->sin_port
+                        : reinterpret_cast<sockaddr_in6*>(&addr)->sin6_port);
+    accept_thread_ = std::thread([this]() { acceptLoop(); });
+  }
+
+  ~WedgedTcpServer() {
+    stopping_ = true;
+    accept_thread_.join();
+    for (const int fd : accepted_fds_) {
+      ::close(fd);
+    }
+    ::close(listen_fd_);
+  }
+
+  uint32_t port() const { return port_; }
+
+private:
+  void acceptLoop() {
+    while (!stopping_) {
+      pollfd poll_fd{listen_fd_, POLLIN, 0};
+      const int rc = ::poll(&poll_fd, 1, /*timeout=*/50);
+      if (rc > 0 && (poll_fd.revents & POLLIN) != 0) {
+        const int fd = ::accept(listen_fd_, nullptr, nullptr);
+        if (fd >= 0) {
+          // Deliberately never read from or write to the socket, so any request wedges.
+          accepted_fds_.push_back(fd);
+        }
+      }
+    }
+  }
+
+  int listen_fd_{-1};
+  uint32_t port_{0};
+  std::atomic<bool> stopping_{false};
+  std::vector<int> accepted_fds_;
+  std::thread accept_thread_;
 };
 
 // TODO(https://github.com/envoyproxy/nighthawk/issues/179): Mock Process in client_test, and move
@@ -372,6 +451,71 @@ TEST_P(ProcessTest, TestWithEncapsulation) {
                   loopback_address_, loopback_address_));
   EXPECT_TRUE(runProcess(RunExpectation::EXPECT_FAILURE).ok());
 }
+
+// Regression test: ProcessImpl::shutdown() used to serialize per-worker drains, making
+// shutdown take ~concurrency x timeout instead of ~1 x timeout. worker->shutdown() fired
+// signal_thread_to_exit_ AND joined the thread for one worker before moving on to the next,
+// and a signaled worker thread runs ClientWorkerImpl::shutdownThread() ->
+// BenchmarkClientHttpImpl::terminate(), which blocks for up to --timeout while waiting for
+// the connection pool to drain. The wedged server below never responds, so the pool never
+// goes idle and every worker's drain hits the full timeout; shutdown() now signals all
+// workers before joining any, so the drains overlap.
+TEST_P(ProcessTest, ShutdownDrainsWorkersConcurrently) {
+  constexpr int kConcurrency = 3;
+  constexpr int kDrainTimeoutSeconds = 2;
+  WedgedTcpServer wedged_server(GetParam());
+  // The failure predicate wipes the stock ones, so that execution terminates on --duration only
+  // and requests are guaranteed to still be in flight when shutdown starts. Note the plain http
+  // scheme: TCP connects to the wedged server succeed immediately (--timeout doubles as the
+  // connect timeout), requests are then written and never answered.
+  options_ = TestUtility::createOptionsImpl(
+      fmt::format("foo --duration 1 --rps 5 --timeout {} --concurrency {} --failure-predicate "
+                  "foo:0 -v error http://{}:{}/",
+                  kDrainTimeoutSeconds, kConcurrency, loopback_address_, wedged_server.port()));
+
+  TypedExtensionConfig typed_dns_resolver_config;
+  Envoy::Network::DnsResolverFactory& dns_resolver_factory =
+      Envoy::Network::createDefaultDnsResolverFactory(typed_dns_resolver_config);
+  absl::StatusOr<ProcessPtr> process_or_status = ProcessImpl::CreateProcessImpl(
+      *options_, dns_resolver_factory, std::move(typed_dns_resolver_config), time_system_);
+  ASSERT_TRUE(process_or_status.ok());
+  ProcessPtr process = std::move(process_or_status.value());
+  OutputCollectorImpl collector(time_system_, *options_);
+  EXPECT_TRUE(process->run(collector));
+  output_proto_ = collector.toProto();
+
+  // Sanity check: every worker issued at least one request against the wedged server. The server
+  // never responds, so all issued requests are still in flight at shutdown, forcing each worker's
+  // connection pool drain to run into the full --timeout.
+  int workers_with_in_flight_requests = 0;
+  for (const auto& result : output_proto_.results()) {
+    if (result.name() == "global") {
+      continue;
+    }
+    for (const auto& counter : result.counters()) {
+      if (counter.name() == "upstream_rq_total" && counter.value() > 0) {
+        workers_with_in_flight_requests++;
+      }
+    }
+  }
+  EXPECT_EQ(workers_with_in_flight_requests, kConcurrency);
+
+  const Envoy::MonotonicTime shutdown_start = time_system_.monotonicTime();
+  process->shutdown();
+  const std::chrono::duration<double> shutdown_duration =
+      time_system_.monotonicTime() - shutdown_start;
+
+  // Lower bound: at least one full pool drain timeout must elapse. This proves requests were
+  // actually in flight during shutdown and guards against this test passing vacuously.
+  EXPECT_GE(shutdown_duration.count(), 0.75 * kDrainTimeoutSeconds);
+  // Upper bound: the per-worker drains should overlap, so shutdown should take ~1 x timeout
+  // regardless of concurrency, while a serialized implementation takes ~concurrency x
+  // timeout (~6s here). The 2 x timeout (4s) bound leaves ~2s of headroom over the
+  // timer-dominated concurrent drain for sanitizer-slowed teardown on loaded CI machines,
+  // while still failing the serialized case by a full drain-timeout of margin.
+  EXPECT_LT(shutdown_duration.count(), 2.0 * kDrainTimeoutSeconds);
+}
+
 /**
  * Fixture for executing the Nighthawk process with simulated time.
  */

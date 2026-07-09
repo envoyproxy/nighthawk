@@ -26,8 +26,17 @@ public:
   virtual void waitForCompletion() PURE;
 
   /**
-   * Shuts down the worker. Must be paired with start, and mandatory. Called from the main thread,
-   * after the worker has cleaned up after itself in shutdownThread().
+   * Signals the worker thread to start shutting down, without waiting for it to finish. Idempotent,
+   * and implied by shutdown(). Called from the main thread. Allows callers that own multiple
+   * workers to signal all of them before joining any, so the workers' shutdown sequences run
+   * concurrently. Does not replace shutdown(): callers must still call shutdown() before
+   * destruction to join the worker thread.
+   */
+  virtual void initiateShutdown() PURE;
+
+  /**
+   * Shuts down the worker and joins its thread. Must be paired with start, and mandatory. Called
+   * from the main thread, after the worker has cleaned up after itself in shutdownThread().
    */
   virtual void shutdown() PURE;
 

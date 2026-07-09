@@ -672,7 +672,12 @@ void ProcessImpl::shutdown() {
     if (flush_worker_) {
       flush_worker_->shutdown();
     }
-    // Before shutting down the cluster manager, stop the workers.
+    // Before shutting down the cluster manager, stop the workers. Signal all workers to exit
+    // first, and only then join them, so that their shutdown sequences (which may block while
+    // draining connection pools) run concurrently instead of serialized per worker.
+    for (auto& worker : workers_) {
+      worker->initiateShutdown();
+    }
     for (auto& worker : workers_) {
       worker->shutdown();
     }
