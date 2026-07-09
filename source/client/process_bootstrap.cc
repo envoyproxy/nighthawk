@@ -445,20 +445,27 @@ absl::Status
 EncapsulationSubProcessRunner::RunWithSubprocess(std::function<void()> nighthawk_fn,
                                                  std::function<void(sem_t&)> envoy_fn) {
 
-  pid_t pid_ = fork();
+  pid_ = fork();
   if (pid_ == -1) {
     return absl::InternalError("fork failed");
   }
   if (pid_ == 0) {
     envoy_fn(*nighthawk_control_sem_);
-    exit(0);
+    // Use _exit() rather than exit(): this child is a fork of a potentially multithreaded
+    // parent (e.g. the gRPC service), where only the forking thread survives. exit() would
+    // run atexit/static-destructor/sanitizer hooks that can deadlock on locks owned by
+    // threads that no longer exist, wedging the child - and, now that the parent reaps the
+    // child via waitpid(), wedging the parent's shutdown along with it.
+    _exit(0);
   } else {
-    // wait for envoy to start and signal nighthawk to start
+    // Wait for envoy to start and signal nighthawk to start. Note that nighthawk_fn only
+    // starts execution and returns; the encap subprocess must outlive the load test, so it
+    // is NOT terminated here. Termination happens via TerminateEncapSubProcess(), which
+    // ProcessImpl invokes on shutdown and on execution cancellation (and the destructor
+    // invokes as a last resort).
     sem_wait(nighthawk_control_sem_);
     // start nighthawk
     nighthawk_fn();
-    // signal envoy to shutdown
-    return TerminateEncapSubProcess();
   }
   return absl::OkStatus();
 }
