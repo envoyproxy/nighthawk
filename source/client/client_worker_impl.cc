@@ -44,7 +44,7 @@ ClientWorkerImpl::ClientWorkerImpl(
                                           },
                                           termination_predicate_factory_.create(
                                               *time_source_, *worker_number_scope_, starting_time),
-                                          *worker_number_scope_, starting_time),
+                                          *worker_number_scope_, starting_time, api),
                                       true)),
       hardcoded_warmup_style_(hardcoded_warmup_style) {}
 

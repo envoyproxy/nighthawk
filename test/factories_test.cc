@@ -1,3 +1,4 @@
+#include <chrono>
 #include "external/envoy/test/mocks/event/mocks.h"
 #include "external/envoy/test/mocks/stats/mocks.h"
 #include "external/envoy/test/mocks/tracing/mocks.h"
@@ -11,7 +12,7 @@
 #include "test/mocks/client/mock_options.h"
 #include "test/mocks/common/mock_termination_predicate.h"
 #include "test/test_common/environment.h"
-
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 using namespace testing;
@@ -184,6 +185,8 @@ public:
                                  sequencer_idle_strategy) {
     SequencerFactoryImpl factory(options_);
     MockBenchmarkClient benchmark_client;
+    absl::optional<envoy::config::core::v3::TypedExtensionConfig> rate_limiter_plugin_config;
+    EXPECT_CALL(options_, rateLimiterPluginConfig()).WillOnce(ReturnRef(rate_limiter_plugin_config));
     EXPECT_CALL(options_, requestsPerSecond()).WillOnce(Return(1));
     EXPECT_CALL(options_, burstSize()).WillOnce(Return(2));
     EXPECT_CALL(options_, sequencerIdleStrategy())
@@ -197,12 +200,84 @@ public:
     };
     auto sequencer = factory.create(api_->timeSource(), dispatcher_, dummy_sequencer_target,
                                     std::make_unique<MockTerminationPredicate>(), stats_scope_,
-                                    time_system.monotonicTime() + 10ms);
+                                    time_system.monotonicTime() + 10ms, *api_);
     EXPECT_NE(nullptr, sequencer.get());
   }
 };
 
 TEST_P(SequencerFactoryTest, TestCreation) { testSequencerCreation(GetParam()); }
+
+TEST_P(SequencerFactoryTest, ValidRateLimiterPluginCreatesWorkingSequencer) {
+  absl::optional<envoy::config::core::v3::TypedExtensionConfig> rate_limiter_plugin_config;
+  std::string rate_limiter_plugin_config_json =
+      "{"
+      "name:\"nighthawk.linear-ramping-rate-limiter-plugin\","
+      "typed_config:{"
+      "\"@type\":\"type.googleapis.com/"
+      "nighthawk.rate_limiter.LinearRampingRateLimiterConfig\","
+      "ramp_time:{seconds:5}"
+      "}"
+      "}";
+  rate_limiter_plugin_config.emplace(envoy::config::core::v3::TypedExtensionConfig());
+  Envoy::MessageUtil::loadFromJson(rate_limiter_plugin_config_json,
+                                   rate_limiter_plugin_config.value(),
+                                   Envoy::ProtobufMessage::getStrictValidationVisitor());
+
+  SequencerFactoryImpl factory(options_);
+
+  EXPECT_CALL(options_, rateLimiterPluginConfig())
+      .Times(AtLeast(1))
+      .WillRepeatedly(ReturnRef(rate_limiter_plugin_config));
+  EXPECT_CALL(options_, sequencerIdleStrategy()).WillOnce(Return(GetParam()));
+  EXPECT_CALL(dispatcher_, createTimer_(_)).Times(2);
+
+  // LinearRampingRateLimiter specific. Adjust if test fails because of any
+  // changes made to the LinearRampingRateLimiterImplFactory.
+  EXPECT_CALL(options_, requestsPerSecond()).WillOnce(Return(100));
+  EXPECT_CALL(options_, noDuration()).WillOnce(Return(false));
+  EXPECT_CALL(options_, duration()).WillOnce(Return(std::chrono::seconds(10)));
+
+  Envoy::Event::SimulatedTimeSystem time_system;
+  const SequencerTarget dummy_sequencer_target = [](const CompletionCallback&) -> bool { return true; };
+
+  auto sequencer = factory.create(api_->timeSource(), dispatcher_, dummy_sequencer_target,
+                                  std::make_unique<MockTerminationPredicate>(), stats_scope_,
+                                  time_system.monotonicTime() + 10ms, *api_);
+  EXPECT_NE(nullptr, sequencer.get());
+}
+
+TEST_P(SequencerFactoryTest, UnknownRateLimiterPluginThrowsException) {
+  absl::optional<envoy::config::core::v3::TypedExtensionConfig> rate_limiter_plugin_config;
+  std::string rate_limiter_plugin_config_json =
+      "{"
+      "name:\"nighthawk.unknown-rate-limiter-plugin\","
+      "typed_config:{"
+      "\"@type\":\"type.googleapis.com/"
+      "nighthawk.rate_limiter.LinearRampingRateLimiterConfig\","
+      "ramp_time:{seconds:5}"
+      "}"
+      "}";
+  rate_limiter_plugin_config.emplace(envoy::config::core::v3::TypedExtensionConfig());
+  Envoy::MessageUtil::loadFromJson(rate_limiter_plugin_config_json,
+                                   rate_limiter_plugin_config.value(),
+                                   Envoy::ProtobufMessage::getStrictValidationVisitor());
+
+  SequencerFactoryImpl factory(options_);
+
+  EXPECT_CALL(options_, rateLimiterPluginConfig())
+      .Times(AtLeast(1))
+      .WillRepeatedly(ReturnRef(rate_limiter_plugin_config));
+
+  Envoy::Event::SimulatedTimeSystem time_system;
+  const SequencerTarget dummy_sequencer_target = [](const CompletionCallback&) -> bool { return true; };
+
+  EXPECT_THROW_WITH_REGEX(
+      factory.create(api_->timeSource(), dispatcher_, dummy_sequencer_target,
+                     std::make_unique<MockTerminationPredicate>(), stats_scope_,
+                     time_system.monotonicTime() + 10ms, *api_),
+      NighthawkException,
+      "Rate Limiter plugin loading error");
+}
 
 INSTANTIATE_TEST_SUITE_P(SequencerIdleStrategies, SequencerFactoryTest,
                          ValuesIn({nighthawk::client::SequencerIdleStrategy::POLL,
