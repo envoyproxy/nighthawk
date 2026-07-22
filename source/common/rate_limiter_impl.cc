@@ -158,8 +158,8 @@ bool LinearRampingRateLimiterImpl::tryAcquireOne() {
     // divide by two.
     total = std::round((elapsed_time.count() / 1e9) * current_frequency / 2.0);
   } else {
-    total = total_ramp_requests_ +
-            std::round((elapsed_time - ramp_time_).count() * target_freq_ns_);
+    total =
+        total_ramp_requests_ + std::round((elapsed_time - ramp_time_).count() * target_freq_ns_);
   }
   acquireable_count_ = total - acquired_count_;
   return acquireable_count_ > 0 ? tryAcquireOne() : false;

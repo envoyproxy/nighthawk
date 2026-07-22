@@ -412,10 +412,10 @@ TEST_F(LinearRampingRateLimiterImplTest, ExtendedDurationGivesCorrectTotalReques
   const unsigned int duration_sec = 12;
   const Frequency frequency = 100_Hz;
 
-  LinearRampingRateLimiterImpl rate_limiter(
-      time_system, std::chrono::seconds(ramp_time_sec), frequency);
+  LinearRampingRateLimiterImpl rate_limiter(time_system, std::chrono::seconds(ramp_time_sec),
+                                            frequency);
 
-  EXPECT_FALSE(rate_limiter.tryAcquireOne());  // Sets up rate limiter
+  EXPECT_FALSE(rate_limiter.tryAcquireOne()); // Sets up rate limiter
 
   unsigned int count = 0;
   const auto clock_tick = 10us; // small step
