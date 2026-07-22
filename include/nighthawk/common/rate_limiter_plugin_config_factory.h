@@ -4,8 +4,8 @@
 #include "envoy/common/pure.h"
 #include "envoy/config/typed_config.h"
 
-#include "nighthawk/common/rate_limiter.h"
 #include "nighthawk/client/options.h"
+#include "nighthawk/common/rate_limiter.h"
 
 namespace Nighthawk {
 
@@ -17,8 +17,8 @@ public:
   // All rate limiter plugins will be in this category.
   std::string category() const override { return "nighthawk.rate_limiter_plugin"; }
 
-  // Instantiates the specific RateLimiterPlugin class. Casts |typed_config| to Any, unpacks it to the
-  // plugin-specific proto, and passes the strongly typed proto to the plugin constructor.
+  // Instantiates the specific RateLimiterPlugin class. Casts |typed_config| to Any, unpacks it to
+  // the plugin-specific proto, and passes the strongly typed proto to the plugin constructor.
   //
   // @param typed_config Taken from TypedExtensionConfig. This should be a type
   // listed in a rate limiter proto file.

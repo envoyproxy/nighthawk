@@ -4,14 +4,14 @@
 #include <memory>
 
 #include "envoy/api/api.h"
+#include "envoy/common/exception.h"
+#include "external/envoy/source/common/common/macros.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"
 #include "nighthawk/client/options.h"
-#include "external/envoy/source/common/common/macros.h"
-#include "envoy/common/exception.h"
 #include "nighthawk/common/exception.h"
 
-#include "external/envoy/source/common/common/assert.h"
 #include "envoy/registry/registry.h"
+#include "external/envoy/source/common/common/assert.h"
 #include "external/envoy/source/common/protobuf/utility.h"
 #include "nighthawk/common/rate_limiter_plugin_config_factory.h"
 
@@ -173,15 +173,15 @@ RateLimiterPtr LinearRampingRateLimiterImplFactory::createRateLimiterPlugin(
   Envoy::MessageUtil::anyConvert(*any, config);
 
   const uint32_t rps = options.requestsPerSecond();
-  const std::chrono::nanoseconds ramp_time =
-      std::chrono::seconds(config.ramp_time().seconds()) +
-      std::chrono::nanoseconds(config.ramp_time().nanos());
+  const std::chrono::nanoseconds ramp_time = std::chrono::seconds(config.ramp_time().seconds()) +
+                                             std::chrono::nanoseconds(config.ramp_time().nanos());
 
   if (ramp_time <= 0ns) {
     throw NighthawkException("ramp_time must be positive and > 0ns");
   }
   if (!options.noDuration() && ramp_time > options.duration()) {
-    throw NighthawkException("ramp_time must be less than or equal to time specified by --duration");
+    throw NighthawkException(
+        "ramp_time must be less than or equal to time specified by --duration");
   }
 
   return std::make_unique<LinearRampingRateLimiterImpl>(time_source, ramp_time, Frequency(rps));

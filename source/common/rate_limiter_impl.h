@@ -14,8 +14,8 @@
 
 #include "absl/random/random.h"
 #include "absl/random/zipf_distribution.h"
-#include "nighthawk/common/rate_limiter_plugin_config_factory.h"
 #include "api/rate_limiter/linear_ramping_rate_limiter.pb.h"
+#include "nighthawk/common/rate_limiter_plugin_config_factory.h"
 
 namespace Nighthawk {
 
@@ -85,7 +85,8 @@ private:
 };
 
 // Factory class for creating LinearRampingRateLimiterImpl objects.
-class LinearRampingRateLimiterImplFactory : public virtual Nighthawk::RateLimiterPluginConfigFactory {
+class LinearRampingRateLimiterImplFactory
+    : public virtual Nighthawk::RateLimiterPluginConfigFactory {
 public:
   std::string name() const override { return "nighthawk.linear-ramping-rate-limiter-plugin"; }
 
@@ -94,8 +95,7 @@ public:
   }
 
   RateLimiterPtr createRateLimiterPlugin(const Envoy::Protobuf::Message& typed_config,
-                                         Envoy::Api::Api& api,
-                                         Envoy::TimeSource& time_source,
+                                         Envoy::Api::Api& api, Envoy::TimeSource& time_source,
                                          const Nighthawk::Client::Options& options) override;
 };
 
