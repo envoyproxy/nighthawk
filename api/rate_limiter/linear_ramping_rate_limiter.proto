@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package nighthawk.rate_limiter;
+
+import "google/protobuf/duration.proto";
+import "validate/validate.proto";
+
+// Config for LinearRampingRateLimiter
+message LinearRampingRateLimiterConfig {
+  // The requests per second will start at 0 and increase at a constant rate
+  // until reaching the target rate specified by --rps after this amount of
+  // ramp_time. Must be less than --duration.
+  google.protobuf.Duration ramp_time = 1
+      [(validate.rules).duration = { gt { seconds: 0 nanos: 0 } }];
+}

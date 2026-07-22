@@ -8,6 +8,7 @@ envoy_package()
 api_cc_py_proto_library(
     name = "rate_limiter_plugin",
     srcs = [
+        "linear_ramping_rate_limiter.proto",
         "stub_rate_limiter.proto",
     ],
     visibility = ["//visibility:public"],

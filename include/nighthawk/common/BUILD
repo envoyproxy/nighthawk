@@ -17,6 +17,7 @@ envoy_basic_cc_library(
         "phase.h",
         "platform_util.h",
         "rate_limiter.h",
+        "rate_limiter_plugin_config_factory.h",
         "request_source.h",
         "request_stream_grpc_client.h",
         "sequencer.h",
