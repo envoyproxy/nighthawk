@@ -89,7 +89,7 @@ public:
   requestSourcePluginConfig() const override {
     return request_source_plugin_config_;
   }
-  const absl::optional<envoy::config::core::v3::TypedExtensionConfig>&
+  const std::optional<envoy::config::core::v3::TypedExtensionConfig>&
   rateLimiterPluginConfig() const override {
     return rate_limiter_plugin_config_;
   }
