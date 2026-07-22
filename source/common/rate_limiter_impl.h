@@ -82,6 +82,8 @@ private:
   uint64_t acquired_count_{0};
   const std::chrono::nanoseconds ramp_time_;
   const Frequency frequency_;
+  const double target_freq_ns_;
+  const int64_t total_ramp_requests_;
 };
 
 // Factory class for creating LinearRampingRateLimiterImpl objects.

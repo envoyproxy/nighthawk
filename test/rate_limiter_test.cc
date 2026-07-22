@@ -406,6 +406,33 @@ TEST_F(LinearRampingRateLimiterImplTest, TimingVerificationTest) {
   checkAcquisitionTimings(40000_Hz, 7s);
 }
 
+TEST_F(LinearRampingRateLimiterImplTest, ExtendedDurationGivesCorrectTotalRequests) {
+  Envoy::Event::SimulatedTimeSystem time_system;
+  const unsigned int ramp_time_sec = 5;
+  const unsigned int duration_sec = 12;
+  const Frequency frequency = 100_Hz;
+
+  LinearRampingRateLimiterImpl rate_limiter(
+      time_system, std::chrono::seconds(ramp_time_sec), frequency);
+
+  EXPECT_FALSE(rate_limiter.tryAcquireOne());  // Sets up rate limiter
+
+  unsigned int count = 0;
+  const auto clock_tick = 10us; // small step
+  auto total_elapsed = 0us;
+
+  do {
+    if (rate_limiter.tryAcquireOne()) {
+      count++;
+    }
+    time_system.advanceTimeWait(clock_tick);
+    total_elapsed += clock_tick;
+  } while (total_elapsed <= std::chrono::seconds(duration_sec));
+
+  EXPECT_EQ(count, (frequency.value() * ramp_time_sec / 2) +
+                       (frequency.value() * (duration_sec - ramp_time_sec)));
+}
+
 TEST_F(RateLimiterTest, GraduallyOpeningRateLimiterFilterInvalidArgumentTest) {
   // Negative ramp throws.
   EXPECT_THROW(GraduallyOpeningRateLimiterFilter gorl(

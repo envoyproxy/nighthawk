@@ -1,5 +1,6 @@
 #include "source/common/rate_limiter_impl.h"
 #include <chrono>
+#include <cmath>
 #include <cstdint>
 #include <memory>
 
@@ -126,7 +127,9 @@ void LinearRateLimiter::releaseOne() {
 LinearRampingRateLimiterImpl::LinearRampingRateLimiterImpl(Envoy::TimeSource& time_source,
                                                            const std::chrono::nanoseconds ramp_time,
                                                            const Frequency frequency)
-    : RateLimiterBaseImpl(time_source), ramp_time_(ramp_time), frequency_(frequency) {
+    : RateLimiterBaseImpl(time_source), ramp_time_(ramp_time), frequency_(frequency),
+      target_freq_ns_(frequency_.value() / 1e9),
+      total_ramp_requests_(std::round(ramp_time.count() * target_freq_ns_ / 2.0)) {
   if (frequency_.value() <= 0) {
     throw NighthawkException(fmt::format("frequency must be > 0, value: {}", frequency.value()));
   }
@@ -142,16 +145,22 @@ bool LinearRampingRateLimiterImpl::tryAcquireOne() {
     return acquireable_count_--;
   }
   const std::chrono::nanoseconds elapsed_time = elapsed();
-  double elapsed_fraction = 1.0;
+  int64_t total = 0;
+
   if (elapsed_time < ramp_time_) {
+    double elapsed_fraction = 1.0;
     elapsed_fraction -= static_cast<double>(ramp_time_.count() - elapsed_time.count()) /
                         static_cast<double>(ramp_time_.count());
+
+    const double current_frequency = elapsed_fraction * frequency_.value();
+    // If we'd be at a constant pace, we can expect elapsed seconds * frequency requests.
+    // However, as we are linearly ramping, we can expect half of that, hence we
+    // divide by two.
+    total = std::round((elapsed_time.count() / 1e9) * current_frequency / 2.0);
+  } else {
+    total = total_ramp_requests_ +
+            std::round((elapsed_time - ramp_time_).count() * target_freq_ns_);
   }
-  const double current_frequency = elapsed_fraction * frequency_.value();
-  // If we'd be at a constant pace, we can expect elapsed seconds * frequency requests.
-  // However, as we are linearly ramping, we can expect half of that, hence we
-  // divide by two.
-  const int64_t total = std::round((elapsed_time.count() / 1e9) * current_frequency / 2.0);
   acquireable_count_ = total - acquired_count_;
   return acquireable_count_ > 0 ? tryAcquireOne() : false;
 }
