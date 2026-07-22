@@ -1,3 +1,4 @@
+#include <memory>
 #include "external/envoy/test/test_common/utility.h"
 
 #include "fmt/format.h"
@@ -608,6 +609,59 @@ TEST_F(OptionsImplTest, RateLimiterPluginConfig_ExtraField_ThrowsException) {
                           config_with_extra_field, good_test_uri_)),
                           MalformedArgvException,
                           "envoy.config.core.v3.TypedExtensionConfig reason INVALID_ARGUMENT");
+}
+
+TEST_F(OptionsImplTest, RateLimiterPluginConfig_ConflictingFlags_ThrowsException) {
+  std::string stub_rate_limiter_json =
+      "{"
+      "name:\"nighthawk.stub-rate-limiter-plugin\","
+      "typed_config:{"
+      "\"@type\":\"type.googleapis.com/"
+      "nighthawk.rate_limiter.StubRateLimiterConfig\","
+      "test_value:\"3\""
+      "}"
+      "}";
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                        "{} --burst-size 10 --rate-limiter-plugin-config {} {}",
+                        client_name_, stub_rate_limiter_json, good_test_uri_)),
+                        MalformedArgvException, "mutually exclusive");
+
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                          "{} --jitter-uniform 1s --rate-limiter-plugin-config {} {}",
+                          client_name_, stub_rate_limiter_json, good_test_uri_)),
+                          MalformedArgvException, "mutually exclusive");
+}
+
+TEST_F(OptionsImplTest, RateLimiterPluginConfig_ProtoConflictingFields_ThrowsException) {
+  std::string stub_rate_limiter_json =
+      "{"
+      "name:\"nighthawk.stub-rate-limiter-plugin\","
+      "typed_config:{"
+      "\"@type\":\"type.googleapis.com/"
+      "nighthawk.rate_limiter.StubRateLimiterConfig\","
+      "test_value:\"3\""
+      "}"
+      "}";
+  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(
+      fmt::format("{} --rate-limiter-plugin-config {} {}", client_name_,
+                  stub_rate_limiter_json, good_test_uri_));
+
+  // Test with burst_size
+  {
+    CommandLineOptionsPtr cmd = options->toCommandLineOptions();
+    cmd->mutable_burst_size()->set_value(10);
+    EXPECT_THROW_WITH_REGEX((void)std::make_unique<OptionsImpl>(*cmd),
+                            MalformedArgvException, "mutually exclusive");
+  }
+
+  // Test with jitter_uniform
+  {
+    CommandLineOptionsPtr cmd = options->toCommandLineOptions();
+    cmd->mutable_jitter_uniform()->set_seconds(1);
+    cmd->mutable_jitter_uniform()->set_nanos(0); 
+    EXPECT_THROW_WITH_REGEX((void)std::make_unique<OptionsImpl>(*cmd),
+                            MalformedArgvException, "mutually exclusive");
+  }
 }
 
 // We test --no-duration here and not in All above because it is exclusive to --duration.

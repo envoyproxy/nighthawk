@@ -364,6 +364,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   TCLAP::ValueArg<std::string> rate_limiter_plugin_config(
       "", "rate-limiter-plugin-config",
       "Rate Limiter plugin configuration in json. "
+      "Mutually exclusive with --burst-size and --jitter-uniform. "
       "Example (json): "
       "{name:\"nighthawk.stub-rate-limiter-plugin\",typed_config:{"
       "\"@type\":\"type.googleapis.com/nighthawk.rate_limiter.StubRateLimiterConfig\","
@@ -711,6 +712,13 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
     }
   }
   if (!rate_limiter_plugin_config.getValue().empty()) {
+    if (burst_size.isSet()) {
+      throw MalformedArgvException("--burst-size and --rate-limiter-plugin-config are mutually exclusive");
+    }
+    if (jitter_uniform.isSet()) {
+      throw MalformedArgvException("--jitter-uniform and --rate-limiter-plugin-config are mutually exclusive");
+    }
+
     try {
       rate_limiter_plugin_config_.emplace(envoy::config::core::v3::TypedExtensionConfig());
       Envoy::MessageUtil::loadFromJson(rate_limiter_plugin_config.getValue(),
@@ -893,6 +901,13 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   }
 
   if (options.has_rate_limiter_plugin_config()) {
+    if (options.has_burst_size() && options.burst_size().value() != 0) {
+      throw MalformedArgvException("burst_size and rate_limiter_plugin_config are mutually exclusive");
+    }
+    if (options.has_jitter_uniform() && (options.jitter_uniform().seconds() != 0 || options.jitter_uniform().nanos() != 0)) {
+      throw MalformedArgvException("jitter_uniform and rate_limiter_plugin_config are mutually exclusive");
+    }
+
     rate_limiter_plugin_config_.emplace(envoy::config::core::v3::TypedExtensionConfig());
     rate_limiter_plugin_config_.value().MergeFrom(options.rate_limiter_plugin_config());
   }

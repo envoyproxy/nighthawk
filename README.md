@@ -254,7 +254,8 @@ execution. Note that this will be reflected in the counters that
 Nighthawk writes to the output. Default is false.
 
 --rate-limiter-plugin-config <string>
-Rate Limiter plugin configuration in json. Example (json):
+Rate Limiter plugin configuration in json. Mutually exclusive with
+--burst-size and --jitter-uniform. Example (json):
 {name:"nighthawk.stub-rate-limiter-plugin"
 ,typed_config:{"@type":"type.googleapis.com/nighthawk.rate_limiter.Stu
 bRateLimiterConfig",test_value:"3"}}
