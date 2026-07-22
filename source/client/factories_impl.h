@@ -48,7 +48,6 @@ public:
                       Envoy::Api::Api& api) const override;
 
 private:
-
   /**
    * Instantiates a RateLimiter using a RateLimiterPluginConfigFactory based on `config`.
    * @param config Plugin name and typed configuration.
@@ -58,7 +57,7 @@ private:
    */
   absl::StatusOr<RateLimiterPtr>
   LoadRateLimiterPlugin(const envoy::config::core::v3::TypedExtensionConfig& config,
-                         Envoy::Api::Api& api, Envoy::TimeSource& time_source) const;
+                        Envoy::Api::Api& api, Envoy::TimeSource& time_source) const;
 };
 
 class StatisticFactoryImpl : public OptionBasedFactoryImpl, public StatisticFactory {

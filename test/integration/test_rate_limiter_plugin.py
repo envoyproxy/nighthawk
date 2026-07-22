@@ -28,6 +28,5 @@ def test_linear_ramping_rate_limiter_plugin(http_test_server_fixture):
 
   expected_total = 925
   margin = 5
-  asserts.assertCounterBetweenInclusive(
-      counters, "benchmark.http_2xx", expected_total - margin, expected_total + margin
-  )
+  asserts.assertCounterBetweenInclusive(counters, "benchmark.http_2xx", expected_total - margin,
+                                        expected_total + margin)

@@ -13,8 +13,7 @@ public:
               (Envoy::TimeSource & time_source, Envoy::Event::Dispatcher& dispatcher,
                const SequencerTarget& sequencer_target,
                TerminationPredicatePtr&& termination_predicate, Envoy::Stats::Scope& scope,
-               const Envoy::MonotonicTime scheduled_starting_time,
-               Envoy::Api::Api& api),
+               const Envoy::MonotonicTime scheduled_starting_time, Envoy::Api::Api& api),
               (const, override));
 };
 

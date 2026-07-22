@@ -4,12 +4,12 @@
 #include <memory>
 #include <utility>
 
-#include "nighthawk/user_defined_output/user_defined_output_plugin.h"
 #include "nighthawk/common/rate_limiter.h"
 #include "nighthawk/common/rate_limiter_plugin_config_factory.h"
+#include "nighthawk/user_defined_output/user_defined_output_plugin.h"
 
-#include "external/envoy/source/common/http/header_map_impl.h"
 #include "external/envoy/source/common/config/utility.h"
+#include "external/envoy/source/common/http/header_map_impl.h"
 
 #include "api/client/options.pb.h"
 
@@ -74,28 +74,29 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
 SequencerFactoryImpl::SequencerFactoryImpl(const Options& options)
     : OptionBasedFactoryImpl(options) {}
 
-SequencerPtr SequencerFactoryImpl::create(
-    Envoy::TimeSource& time_source, Envoy::Event::Dispatcher& dispatcher,
-    const SequencerTarget& sequencer_target, TerminationPredicatePtr&& termination_predicate,
-    Envoy::Stats::Scope& scope, const Envoy::MonotonicTime scheduled_starting_time,
-    Envoy::Api::Api& api) const {
+SequencerPtr SequencerFactoryImpl::create(Envoy::TimeSource& time_source,
+                                          Envoy::Event::Dispatcher& dispatcher,
+                                          const SequencerTarget& sequencer_target,
+                                          TerminationPredicatePtr&& termination_predicate,
+                                          Envoy::Stats::Scope& scope,
+                                          const Envoy::MonotonicTime scheduled_starting_time,
+                                          Envoy::Api::Api& api) const {
   StatisticFactoryImpl statistic_factory(options_);
   RateLimiterPtr rate_limiter;
 
   // Check if there is a rate limiter plugin to load and use.
   if (options_.rateLimiterPluginConfig().has_value()) {
-    absl::StatusOr<RateLimiterPtr> plugin_or = LoadRateLimiterPlugin(
-        options_.rateLimiterPluginConfig().value(), api, time_source);
+    absl::StatusOr<RateLimiterPtr> plugin_or =
+        LoadRateLimiterPlugin(options_.rateLimiterPluginConfig().value(), api, time_source);
     if (!plugin_or.ok()) {
       throw NighthawkException(
-          absl::StrCat("Rate Limiter plugin loading error: ",
-                       plugin_or.status().message()));
+          absl::StrCat("Rate Limiter plugin loading error: ", plugin_or.status().message()));
     }
     rate_limiter = std::move(plugin_or.value());
-    rate_limiter = std::make_unique<ScheduledStartingRateLimiter>(
-        std::move(rate_limiter), scheduled_starting_time);
+    rate_limiter = std::make_unique<ScheduledStartingRateLimiter>(std::move(rate_limiter),
+                                                                  scheduled_starting_time);
 
-  // If no rate limiter plugin is set, use the default linear rate limiter.
+    // If no rate limiter plugin is set, use the default linear rate limiter.
   } else {
     Frequency frequency(options_.requestsPerSecond());
     rate_limiter = std::make_unique<ScheduledStartingRateLimiter>(
@@ -121,12 +122,14 @@ SequencerPtr SequencerFactoryImpl::create(
 }
 
 absl::StatusOr<RateLimiterPtr> SequencerFactoryImpl::LoadRateLimiterPlugin(
-    const envoy::config::core::v3::TypedExtensionConfig& config, Envoy::Api::Api& api, Envoy::TimeSource& time_source) const {
+    const envoy::config::core::v3::TypedExtensionConfig& config, Envoy::Api::Api& api,
+    Envoy::TimeSource& time_source) const {
   try {
     auto& config_factory =
         Envoy::Config::Utility::getAndCheckFactoryByName<RateLimiterPluginConfigFactory>(
             config.name());
-    return config_factory.createRateLimiterPlugin(config.typed_config(), api, time_source, options_);
+    return config_factory.createRateLimiterPlugin(config.typed_config(), api, time_source,
+                                                  options_);
   } catch (const Envoy::EnvoyException& e) {
     return absl::InvalidArgumentError(
         absl::StrCat("Could not load plugin: ", config.name(), ": ", e.what()));
