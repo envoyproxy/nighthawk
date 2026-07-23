@@ -60,6 +60,8 @@ public:
   MOCK_METHOD(std::string, requestSource, (), (const, override));
   MOCK_METHOD(std::optional<envoy::config::core::v3::TypedExtensionConfig>&,
               requestSourcePluginConfig, (), (const, override));
+  MOCK_METHOD(std::optional<envoy::config::core::v3::TypedExtensionConfig>&,
+              rateLimiterPluginConfig, (), (const, override));
   MOCK_METHOD(std::string, trace, (), (const, override));
   MOCK_METHOD(nighthawk::client::H1ConnectionReuseStrategy::H1ConnectionReuseStrategyOptions,
               h1ConnectionReuseStrategy, (), (const, override));

@@ -82,6 +82,8 @@ public:
   virtual std::string requestSource() const PURE;
   virtual const std::optional<envoy::config::core::v3::TypedExtensionConfig>&
   requestSourcePluginConfig() const PURE;
+  virtual const std::optional<envoy::config::core::v3::TypedExtensionConfig>&
+  rateLimiterPluginConfig() const PURE;
   virtual std::string trace() const PURE;
   virtual nighthawk::client::H1ConnectionReuseStrategy::H1ConnectionReuseStrategyOptions
   h1ConnectionReuseStrategy() const PURE;

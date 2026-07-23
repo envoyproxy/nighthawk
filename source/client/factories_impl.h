@@ -44,7 +44,20 @@ public:
   SequencerPtr create(Envoy::TimeSource& time_source, Envoy::Event::Dispatcher& dispatcher,
                       const SequencerTarget& sequencer_target,
                       TerminationPredicatePtr&& termination_predicate, Envoy::Stats::Scope& scope,
-                      const Envoy::MonotonicTime scheduled_starting_time) const override;
+                      const Envoy::MonotonicTime scheduled_starting_time,
+                      Envoy::Api::Api& api) const override;
+
+private:
+  /**
+   * Instantiates a RateLimiter using a RateLimiterPluginConfigFactory based on `config`.
+   * @param config Plugin name and typed configuration.
+   * @param api Envoy API context.
+   * @param time_source Time source used by the rate limiter.
+   * @return Initialized plugin or error status.
+   */
+  absl::StatusOr<RateLimiterPtr>
+  LoadRateLimiterPlugin(const envoy::config::core::v3::TypedExtensionConfig& config,
+                        Envoy::Api::Api& api, Envoy::TimeSource& time_source) const;
 };
 
 class StatisticFactoryImpl : public OptionBasedFactoryImpl, public StatisticFactory {

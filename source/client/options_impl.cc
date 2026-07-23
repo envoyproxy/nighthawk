@@ -360,6 +360,18 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "\"@type\":\"type.googleapis.com/nighthawk.request_source.StubPluginConfig\","
       "test_value:\"3\"}}",
       false, "", "string", cmd);
+
+  TCLAP::ValueArg<std::string> rate_limiter_plugin_config(
+      "", "rate-limiter-plugin-config",
+      "Rate Limiter plugin configuration in json. "
+      "Mutually exclusive with --burst-size and --jitter-uniform. "
+      "Possible configurations located in api/rate_limiter. "
+      "Example (json): "
+      "{name:\"nighthawk.linear-ramping-rate-limiter-plugin\",typed_config:{"
+      "\"@type\":\"type.googleapis.com/nighthawk.rate_limiter.LinearRampingRateLimiterConfig\","
+      "\"ramp_time\":\"5.5s\"}}",
+      false, "", "string", cmd);
+
   TCLAP::SwitchArg simple_warmup(
       "", "simple-warmup",
       "Perform a simple single warmup request (per worker) before starting execution. Note that "
@@ -700,6 +712,25 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       throw MalformedArgvException(e.what());
     }
   }
+  if (!rate_limiter_plugin_config.getValue().empty()) {
+    if (burst_size.isSet()) {
+      throw MalformedArgvException(
+          "--burst-size and --rate-limiter-plugin-config are mutually exclusive");
+    }
+    if (jitter_uniform.isSet()) {
+      throw MalformedArgvException(
+          "--jitter-uniform and --rate-limiter-plugin-config are mutually exclusive");
+    }
+
+    try {
+      rate_limiter_plugin_config_.emplace(envoy::config::core::v3::TypedExtensionConfig());
+      Envoy::MessageUtil::loadFromJson(rate_limiter_plugin_config.getValue(),
+                                       rate_limiter_plugin_config_.value(),
+                                       Envoy::ProtobufMessage::getStrictValidationVisitor());
+    } catch (const Envoy::EnvoyException& e) {
+      throw MalformedArgvException(e.what());
+    }
+  }
   if (!user_defined_output_plugin_configs.getValue().empty()) {
     for (const std::string& plugin_config_string : user_defined_output_plugin_configs.getValue()) {
       try {
@@ -870,6 +901,21 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   } else if (options.has_request_source_plugin_config()) {
     request_source_plugin_config_.emplace(envoy::config::core::v3::TypedExtensionConfig());
     request_source_plugin_config_.value().MergeFrom(options.request_source_plugin_config());
+  }
+
+  if (options.has_rate_limiter_plugin_config()) {
+    if (options.has_burst_size() && options.burst_size().value() != 0) {
+      throw MalformedArgvException(
+          "burst_size and rate_limiter_plugin_config are mutually exclusive");
+    }
+    if (options.has_jitter_uniform() &&
+        (options.jitter_uniform().seconds() != 0 || options.jitter_uniform().nanos() != 0)) {
+      throw MalformedArgvException(
+          "jitter_uniform and rate_limiter_plugin_config are mutually exclusive");
+    }
+
+    rate_limiter_plugin_config_.emplace(envoy::config::core::v3::TypedExtensionConfig());
+    rate_limiter_plugin_config_.value().MergeFrom(options.rate_limiter_plugin_config());
   }
 
   max_pending_requests_ =
@@ -1093,6 +1139,11 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
       }
       request_options->mutable_request_body_size()->set_value(requestBodySize());
     }
+  }
+
+  if (rate_limiter_plugin_config_.has_value()) {
+    *(command_line_options->mutable_rate_limiter_plugin_config()) =
+        rate_limiter_plugin_config_.value();
   }
 
   // Only set the tls context if needed, to avoid a warning being logged about field deprecation.

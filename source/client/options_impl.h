@@ -89,6 +89,10 @@ public:
   requestSourcePluginConfig() const override {
     return request_source_plugin_config_;
   }
+  const std::optional<envoy::config::core::v3::TypedExtensionConfig>&
+  rateLimiterPluginConfig() const override {
+    return rate_limiter_plugin_config_;
+  }
 
   std::string trace() const override { return trace_; }
   nighthawk::client::H1ConnectionReuseStrategy::H1ConnectionReuseStrategyOptions
@@ -170,6 +174,7 @@ private:
   std::optional<envoy::config::core::v3::BindConfig> upstream_bind_config_;
   std::optional<envoy::config::core::v3::TransportSocket> transport_socket_;
   std::optional<envoy::config::core::v3::TypedExtensionConfig> request_source_plugin_config_;
+  std::optional<envoy::config::core::v3::TypedExtensionConfig> rate_limiter_plugin_config_;
 
   uint32_t max_pending_requests_{0};
   // This default is based the minimum recommendation for SETTINGS_MAX_CONCURRENT_STREAMS over at

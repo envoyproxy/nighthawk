@@ -1,7 +1,10 @@
 #include "external/envoy/test/test_common/utility.h"
+#include <memory>
 
+#include "fmt/format.h"
 #include "source/client/options_impl.h"
 
+#include "api/rate_limiter/stub_rate_limiter.pb.h"
 #include "test/client/utility.h"
 #include "test/test_common/environment.h"
 #include "test/test_common/proto_matchers.h"
@@ -503,6 +506,153 @@ TEST_F(OptionsImplTest, BadRequestSourcePluginSpecification) {
                                           "{misspelled_field:{}}", good_test_uri_)),
                           MalformedArgvException,
                           "envoy.config.core.v3.TypedExtensionConfig reason INVALID_ARGUMENT");
+}
+
+TEST_F(OptionsImplTest, RateLimiterPluginConfig_ValidConfig_Success) {
+  Envoy::MessageUtil util;
+
+  std::string stub_rate_limiter_json = "{"
+                                       "name:\"nighthawk.stub-rate-limiter-plugin\","
+                                       "typed_config:{"
+                                       "\"@type\":\"type.googleapis.com/"
+                                       "nighthawk.rate_limiter.StubRateLimiterConfig\","
+                                       "test_value:\"3\""
+                                       "}"
+                                       "}";
+
+  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(
+      fmt::format("{} --rate-limiter-plugin-config {} {}", client_name_, stub_rate_limiter_json,
+                  good_test_uri_));
+
+  // Check that fields in OptionsImpl contain the right values.
+  ASSERT_TRUE(options->rateLimiterPluginConfig().has_value());
+  EXPECT_EQ(options->rateLimiterPluginConfig()->name(), "nighthawk.stub-rate-limiter-plugin");
+
+  nighthawk::rate_limiter::StubRateLimiterConfig stub_config;
+  EXPECT_TRUE(
+      Envoy::MessageUtil::unpackTo(options->rateLimiterPluginConfig()->typed_config(), stub_config)
+          .ok());
+  EXPECT_EQ(stub_config.test_value().value(), 3.0);
+
+  // Check that generated CommandLineOptions is equivalent to OptionsImpl.
+  CommandLineOptionsPtr command = options->toCommandLineOptions();
+
+  EXPECT_TRUE(
+      util(command->rate_limiter_plugin_config(), options->rateLimiterPluginConfig().value()));
+
+  // The predicates are defined as proto maps, and these seem to re-serialize into a different
+  // order. Hence we trim the maps to contain a single entry so they don't thwart our textual
+  // comparison below.
+  EXPECT_EQ(1, command->mutable_failure_predicates()->erase("benchmark.http_4xx"));
+  EXPECT_EQ(1, command->mutable_failure_predicates()->erase("benchmark.http_5xx"));
+  EXPECT_EQ(1, command->mutable_failure_predicates()->erase("benchmark.stream_resets"));
+  EXPECT_EQ(1, command->mutable_failure_predicates()->erase("requestsource.upstream_rq_5xx"));
+
+  // Reconstruct OptionsImpl from CommandLineOptions.
+  OptionsImpl options_from_proto(*command);
+
+  std::string yaml_for_options_proto = Envoy::MessageUtil::getYamlStringFromMessage(
+      *(options_from_proto.toCommandLineOptions()), true, true);
+  std::string yaml_for_command = Envoy::MessageUtil::getYamlStringFromMessage(*command, true, true);
+
+  // Check if reconstructed OptionsImpl is equivalent to CommandLineOptions
+  // by comparing their YAML representations.
+  EXPECT_EQ(yaml_for_options_proto, yaml_for_command);
+  EXPECT_TRUE(util(*(options_from_proto.toCommandLineOptions()), *command));
+}
+
+TEST_F(OptionsImplTest, RateLimiterPluginConfig_BrokenJson_ThrowsException) {
+  // Name and typed_config present, but missing closing }.
+  std::string broken_realistic_json =
+      "{"
+      "name:\"nighthawk.stub-rate-limiter-plugin\","
+      "typed_config:{"
+      "\"@type\":\"type.googleapis.com/nighthawk.rate_limiter.StubRateLimiterConfig\","
+      "test_value:\"3\""
+      "}";
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(
+                              fmt::format("{} --rate-limiter-plugin-config {} {}", client_name_,
+                                          broken_realistic_json, good_test_uri_)),
+                          MalformedArgvException, "Unable to parse JSON as proto");
+}
+
+TEST_F(OptionsImplTest, RateLimiterPluginConfig_TypeMismatch_ThrowsException) {
+  // Name is valid, but typed_config is a number instead of a JSON object.
+  std::string config_with_number_typed_config =
+      "{name:\"nighthawk.stub-rate-limiter-plugin\",typed_config:123}";
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(
+                              fmt::format("{} --rate-limiter-plugin-config {} {}", client_name_,
+                                          config_with_number_typed_config, good_test_uri_)),
+                          MalformedArgvException, "Unable to parse JSON as proto");
+}
+
+TEST_F(OptionsImplTest, RateLimiterPluginConfig_ExtraField_ThrowsException) {
+  // Name and typed_config present, but with an incorrect third field.
+  std::string config_with_extra_field =
+      "{"
+      "name:\"nighthawk.stub-rate-limiter-plugin\","
+      "typed_config:{"
+      "\"@type\":\"type.googleapis.com/nighthawk.rate_limiter.StubRateLimiterConfig\","
+      "test_value:\"3\""
+      "},"
+      "invalid_field:\"4\""
+      "}";
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(
+                              fmt::format("{} --rate-limiter-plugin-config {} {}", client_name_,
+                                          config_with_extra_field, good_test_uri_)),
+                          MalformedArgvException,
+                          "envoy.config.core.v3.TypedExtensionConfig reason INVALID_ARGUMENT");
+}
+
+TEST_F(OptionsImplTest, RateLimiterPluginConfig_ConflictingFlags_ThrowsException) {
+  std::string stub_rate_limiter_json = "{"
+                                       "name:\"nighthawk.stub-rate-limiter-plugin\","
+                                       "typed_config:{"
+                                       "\"@type\":\"type.googleapis.com/"
+                                       "nighthawk.rate_limiter.StubRateLimiterConfig\","
+                                       "test_value:\"3\""
+                                       "}"
+                                       "}";
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(
+                              fmt::format("{} --burst-size 10 --rate-limiter-plugin-config {} {}",
+                                          client_name_, stub_rate_limiter_json, good_test_uri_)),
+                          MalformedArgvException, "mutually exclusive");
+
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} --jitter-uniform 1s --rate-limiter-plugin-config {} {}",
+                              client_name_, stub_rate_limiter_json, good_test_uri_)),
+                          MalformedArgvException, "mutually exclusive");
+}
+
+TEST_F(OptionsImplTest, RateLimiterPluginConfig_ProtoConflictingFields_ThrowsException) {
+  std::string stub_rate_limiter_json = "{"
+                                       "name:\"nighthawk.stub-rate-limiter-plugin\","
+                                       "typed_config:{"
+                                       "\"@type\":\"type.googleapis.com/"
+                                       "nighthawk.rate_limiter.StubRateLimiterConfig\","
+                                       "test_value:\"3\""
+                                       "}"
+                                       "}";
+  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(
+      fmt::format("{} --rate-limiter-plugin-config {} {}", client_name_, stub_rate_limiter_json,
+                  good_test_uri_));
+
+  // Test with burst_size
+  {
+    CommandLineOptionsPtr cmd = options->toCommandLineOptions();
+    cmd->mutable_burst_size()->set_value(10);
+    EXPECT_THROW_WITH_REGEX((void)std::make_unique<OptionsImpl>(*cmd), MalformedArgvException,
+                            "mutually exclusive");
+  }
+
+  // Test with jitter_uniform
+  {
+    CommandLineOptionsPtr cmd = options->toCommandLineOptions();
+    cmd->mutable_jitter_uniform()->set_seconds(1);
+    cmd->mutable_jitter_uniform()->set_nanos(0);
+    EXPECT_THROW_WITH_REGEX((void)std::make_unique<OptionsImpl>(*cmd), MalformedArgvException,
+                            "mutually exclusive");
+  }
 }
 
 // We test --no-duration here and not in All above because it is exclusive to --duration.

@@ -136,7 +136,7 @@ message Protocol {
 
 // TODO(oschaaf): Ultimately this will be a load test specification. The fact that it
 // can arrive via CLI is just a concrete detail. Change this to reflect that.
-// Next unused number is 120.
+// Next unused number is 121.
 message CommandLineOptions {
   // The target requests-per-second rate. Default: 5.
   google.protobuf.UInt32Value requests_per_second = 1
@@ -339,4 +339,8 @@ message CommandLineOptions {
   // Nighthawk will abort an execution attempt if a user_defined_plugin_config is provided but the
   // associated plugin factory is not registered through Envoy's plugin system.
   repeated envoy.config.core.v3.TypedExtensionConfig user_defined_plugin_configs = 112;
+
+  // A plugin config that is to be parsed by a RateLimiterPluginConfigFactory
+  // and used to create a custom rate limiter.
+  envoy.config.core.v3.TypedExtensionConfig rate_limiter_plugin_config = 120;
 }

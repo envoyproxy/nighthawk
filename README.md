@@ -168,6 +168,7 @@ bazel-bin/nighthawk_client  [--user-defined-plugin-config <string>] ...
 [--stats-flush-interval <uint32_t>]
 [--stats-sinks <string>] ... [--no-duration]
 [--simple-warmup]
+[--rate-limiter-plugin-config <string>]
 [--request-source-plugin-config <string>]
 [--request-source <uri format>] [--label
 <string>] ... [--multi-target-use-https]
@@ -251,6 +252,14 @@ will still be added. Mutually exclusive with --duration.
 Perform a simple single warmup request (per worker) before starting
 execution. Note that this will be reflected in the counters that
 Nighthawk writes to the output. Default is false.
+
+--rate-limiter-plugin-config <string>
+Rate Limiter plugin configuration in json. Mutually exclusive with
+--burst-size and --jitter-uniform. Possible configurations located in
+api/rate_limiter. Example (json):
+{name:"nighthawk.linear-ramping-rate-limiter-plugin"
+,typed_config:{"@type":"type.googleapis.com/nighthawk.rate_limiter.Lin
+earRampingRateLimiterConfig","ramp_time":"5.5s"}}
 
 --request-source-plugin-config <string>
 [Request

@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package nighthawk.rate_limiter;
+
+import "google/protobuf/wrappers.proto";
+
+// Configuration used only for testing and as an example in the CLI help text
+// for --rate-limiter-plugin-config.
+message StubRateLimiterConfig {
+  // Used for testing.
+  google.protobuf.DoubleValue test_value = 1;
+}
