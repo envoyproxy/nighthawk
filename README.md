@@ -255,10 +255,11 @@ Nighthawk writes to the output. Default is false.
 
 --rate-limiter-plugin-config <string>
 Rate Limiter plugin configuration in json. Mutually exclusive with
---burst-size and --jitter-uniform. Example (json):
-{name:"nighthawk.stub-rate-limiter-plugin"
-,typed_config:{"@type":"type.googleapis.com/nighthawk.rate_limiter.Stu
-bRateLimiterConfig",test_value:"3"}}
+--burst-size and --jitter-uniform. Possible configurations located in
+api/rate_limiter. Example (json):
+{name:"nighthawk.linear-ramping-rate-limiter-plugin"
+,typed_config:{"@type":"type.googleapis.com/nighthawk.rate_limiter.Lin
+earRampingRateLimiterConfig","ramp_time":"5.5s"}}
 
 --request-source-plugin-config <string>
 [Request

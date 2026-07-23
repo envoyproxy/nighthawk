@@ -365,10 +365,11 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "", "rate-limiter-plugin-config",
       "Rate Limiter plugin configuration in json. "
       "Mutually exclusive with --burst-size and --jitter-uniform. "
+      "Possible configurations located in api/rate_limiter. "
       "Example (json): "
-      "{name:\"nighthawk.stub-rate-limiter-plugin\",typed_config:{"
-      "\"@type\":\"type.googleapis.com/nighthawk.rate_limiter.StubRateLimiterConfig\","
-      "test_value:\"3\"}}",
+      "{name:\"nighthawk.linear-ramping-rate-limiter-plugin\",typed_config:{"
+      "\"@type\":\"type.googleapis.com/nighthawk.rate_limiter.LinearRampingRateLimiterConfig\","
+      "\"ramp_time\":\"5.5s\"}}",
       false, "", "string", cmd);
 
   TCLAP::SwitchArg simple_warmup(
