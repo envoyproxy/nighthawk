@@ -15,7 +15,7 @@ import "validate/validate.proto";
 message DistributedRequest {
   client.ExecutionRequest execution_request = 1;
   // Specify one or more services that will handle the inner message associated to this.
-  repeated envoy.config.core.v3.Address services = 3 [(validate.rules).repeated .min_items = 1];
+  repeated envoy.config.core.v3.Address services = 3 [(validate.rules).repeated.min_items = 1];
 }
 
 message DistributedServiceResponse {

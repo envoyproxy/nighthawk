@@ -57,8 +57,8 @@ public:
   // Grpc::AsyncStreamCallbacks
   void onCreateInitialMetadata(Envoy::Http::RequestHeaderMap& metadata) override;
   void onReceiveInitialMetadata(Envoy::Http::ResponseHeaderMapPtr&& metadata) override;
-  void onReceiveMessage(
-      std::unique_ptr<nighthawk::request_source::RequestStreamResponse>&& message) override;
+  void onReceiveMessage(Envoy::Grpc::ResponsePtr<nighthawk::request_source::RequestStreamResponse>&&
+                            message) override;
   void onReceiveTrailingMetadata(Envoy::Http::ResponseTrailerMapPtr&& metadata) override;
   void onRemoteClose(Envoy::Grpc::Status::GrpcStatus status, const std::string& message) override;
 
@@ -77,8 +77,9 @@ private:
       async_client_;
   Envoy::Grpc::AsyncStream<nighthawk::request_source::RequestStreamRequest> stream_{};
   const Envoy::Protobuf::MethodDescriptor& service_method_;
-  std::queue<std::unique_ptr<nighthawk::request_source::RequestStreamResponse>> messages_;
-  void emplaceMessage(std::unique_ptr<nighthawk::request_source::RequestStreamResponse>&& message);
+  std::queue<Envoy::Grpc::ResponsePtr<nighthawk::request_source::RequestStreamResponse>> messages_;
+  void emplaceMessage(
+      Envoy::Grpc::ResponsePtr<nighthawk::request_source::RequestStreamResponse>&& message);
   uint32_t in_flight_headers_{0};
   uint32_t total_messages_received_{0};
   const Envoy::Http::RequestHeaderMap& base_header_;
