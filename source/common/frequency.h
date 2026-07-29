@@ -17,7 +17,7 @@ private:
   const std::chrono::duration<double> interval_;
 };
 
-constexpr Frequency operator"" _Hz(unsigned long long hz) { return Frequency{hz}; }
-constexpr Frequency operator"" _kHz(unsigned long long khz) { return Frequency{khz * 1000}; }
+constexpr Frequency operator""_Hz(unsigned long long hz) { return Frequency{hz}; }
+constexpr Frequency operator""_kHz(unsigned long long khz) { return Frequency{khz * 1000}; }
 
 } // namespace Nighthawk
