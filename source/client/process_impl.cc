@@ -89,15 +89,17 @@ public:
   // Determines the concurrency Nighthawk should use based on configuration
   // (options) and the available machine resources.
   static uint32_t determineConcurrency(const Options& options) {
-    uint32_t cpu_cores_with_affinity = Envoy::OptionsImplPlatform::getCpuCount();
     bool autoscale = options.concurrency() == "auto";
-    // TODO(oschaaf): Maybe, in the case where the concurrency flag is left out, but
-    // affinity is set / we don't have affinity with all cores, we should default to autoscale.
-    // (e.g. we are called via taskset).
-    uint32_t concurrency = autoscale ? cpu_cores_with_affinity : std::stoi(options.concurrency());
-
+    uint32_t concurrency;
     if (autoscale) {
+      uint32_t cpu_cores_with_affinity = Envoy::OptionsImplPlatform::getCpuCount();
       ENVOY_LOG(info, "Detected {} (v)CPUs with affinity..", cpu_cores_with_affinity);
+      concurrency = cpu_cores_with_affinity;
+    } else {
+      // TODO(oschaaf): Maybe, in the case where the concurrency flag is left out, but
+      // affinity is set / we don't have affinity with all cores, we should default to autoscale.
+      // (e.g. we are called via taskset).
+      concurrency = std::stoi(options.concurrency());
     }
     std::string duration_as_string =
         options.noDuration() ? "No time limit"
