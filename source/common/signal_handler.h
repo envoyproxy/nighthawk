@@ -19,7 +19,10 @@ using SignalCallback = std::function<void()>;
  * Utility class for handling TERM and INT signals. Allows wiring up a callback that
  * should be invoked upon signal reception. This callback implementation does not have to be
  * signal safe, as a different thread is used to fire it.
- * NOTE: Only the first observed signal will result in the callback being invoked.
+ * NOTE: Only the first observed signal will result in the callback being invoked. After the
+ * first signal has been handled, the signal dispositions that were active before this
+ * instance was constructed are restored (typically SIG_DFL), so a second signal gets the
+ * OS default action (usually process termination) - an escalation path when shutdown hangs.
  * WARNING: only a single instance should be active at any given time in a process, and
  * the responsibility for not breaking this rule is not enforced at this time.
  *
@@ -70,6 +73,14 @@ private:
   // about signal-safety.
   std::vector<int> pipe_fds_;
   bool destructing_{false};
+
+  // The dispositions that were installed for SIGTERM/SIGINT before this instance replaced
+  // them (as returned by signal()). Restored after the first handled signal (so a second
+  // signal gets the OS default action) and again in the destructor. Relies on the existing
+  // single-active-instance assumption (see the class WARNING above); the file-scope
+  // delegate in signal_handler.cc already imposes it.
+  void (*previous_sigterm_handler_)(int) = nullptr;
+  void (*previous_sigint_handler_)(int) = nullptr;
 };
 
 using SignalHandlerPtr = std::unique_ptr<SignalHandler>;

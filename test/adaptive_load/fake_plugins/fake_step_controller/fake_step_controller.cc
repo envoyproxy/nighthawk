@@ -106,7 +106,7 @@ MakeFakeStepControllerPluginConfigWithRps(int fixed_rps_value) {
   nighthawk::adaptive_load::FakeStepControllerConfig config;
   config.set_fixed_rps_value(fixed_rps_value);
   Envoy::Protobuf::Any config_any;
-  config_any.PackFrom(config);
+  std::ignore = config_any.PackFrom(config);
   *outer_config.mutable_typed_config() = config_any;
   return outer_config;
 }
@@ -120,7 +120,7 @@ envoy::config::core::v3::TypedExtensionConfig MakeFakeStepControllerPluginConfig
       static_cast<int>(artificial_validation_error.code()));
   config.mutable_artificial_validation_failure()->set_message(
       std::string(artificial_validation_error.message()));
-  outer_config.mutable_typed_config()->PackFrom(config);
+  std::ignore = outer_config.mutable_typed_config()->PackFrom(config);
   return outer_config;
 }
 
@@ -136,7 +136,7 @@ MakeFakeStepControllerPluginConfigWithInputSettingError(
   config.mutable_artificial_input_setting_failure()->set_message(
       std::string(artificial_input_setting_failure.message()));
   config.set_artificial_input_setting_failure_countdown(countdown);
-  outer_config.mutable_typed_config()->PackFrom(config);
+  std::ignore = outer_config.mutable_typed_config()->PackFrom(config);
   return outer_config;
 }
 

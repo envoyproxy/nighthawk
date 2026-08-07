@@ -43,7 +43,7 @@ TEST(FakeMetricsPluginConfigFactory, FactoryRegistersUnderCorrectName) {
 TEST(FakeMetricsPluginConfigFactory, CreateMetricsPluginCreatesCorrectPluginType) {
   FakeMetricsPluginConfig config;
   Envoy::Protobuf::Any config_any;
-  config_any.PackFrom(config);
+  std::ignore = config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<MetricsPluginConfigFactory>(
           "nighthawk.fake_metrics_plugin");
@@ -67,7 +67,7 @@ TEST(FakeMetricsPluginConfigFactory, ValidateConfigWithWellFormedIllegalConfigRe
   config.mutable_artificial_validation_failure()->set_code(kExpectedStatusCode);
   config.mutable_artificial_validation_failure()->set_message(kExpectedStatusMessage);
   Envoy::Protobuf::Any any;
-  any.PackFrom(config);
+  std::ignore = any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<MetricsPluginConfigFactory>(
           "nighthawk.fake_metrics_plugin");

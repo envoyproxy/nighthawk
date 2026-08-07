@@ -1,6 +1,7 @@
 #pragma once
 
 #include <semaphore.h>
+#include <unistd.h>
 
 #include <functional>
 #include <vector>
@@ -106,7 +107,10 @@ public:
   absl::Status Run() { return RunWithSubprocess(nighthawk_runner_, encap_envoy_runner_); }
 
   /**
-   * Sends a SIGTERM to Encap Envoy subprocess and blocks till exit
+   * Sends a SIGTERM to the Encap Envoy subprocess and reaps it. Waits up to ~15 seconds
+   * for a graceful exit, then escalates to SIGKILL: an unbounded wait here could wedge the
+   * caller (for example a gRPC service handler running ProcessImpl::shutdown()) if the
+   * subprocess never exits.
    *
    **/
   absl::Status TerminateEncapSubProcess() {
@@ -119,16 +123,31 @@ public:
       return absl::InternalError("Failed to kill encapsulation subprocess");
     }
 
-    int status;
-    waitpid(pid_, &status, 0);
+    int status = 0;
+    pid_t reaped = 0;
+    for (int i = 0; i < 150 && reaped == 0; ++i) {
+      reaped = waitpid(pid_, &status, WNOHANG);
+      if (reaped == 0) {
+        // Waiting on a real OS process; there is no injectable time source here.
+        usleep(100000); // 100ms per attempt, ~15s in total. NO_CHECK_FORMAT(real_time)
+      }
+    }
+    if (reaped == 0) {
+      kill(pid_, SIGKILL);
+      reaped = waitpid(pid_, &status, 0);
+    }
     pid_ = -1;
 
+    if (reaped < 0) {
+      // Nothing to reap (e.g. the child was already reaped elsewhere): not a crash.
+      return absl::OkStatus();
+    }
     if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
       // Child process did not crash.
       return absl::OkStatus();
     }
 
-    // Child process crashed.
+    // Child process crashed or had to be hard-killed.
     return absl::InternalError(absl::StrCat("Envoy crashed with code: ", status));
   }
 

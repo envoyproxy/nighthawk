@@ -35,8 +35,7 @@ TEST(FakeStepControllerConfigFactory, CreateEmptyConfigProtoCreatesCorrectType) 
 TEST(FakeStepControllerConfigFactory, FactoryRegistersUnderCorrectName) {
   FakeStepControllerConfig config;
   Envoy::Protobuf::Any config_any;
-  config_any.PackFrom(config);
-  CommandLineOptions options;
+  std::ignore = config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<StepControllerConfigFactory>(
           "nighthawk.fake_step_controller");
@@ -46,7 +45,7 @@ TEST(FakeStepControllerConfigFactory, FactoryRegistersUnderCorrectName) {
 TEST(FakeStepControllerConfigFactory, CreateStepControllerCreatesCorrectPluginType) {
   FakeStepControllerConfig config;
   Envoy::Protobuf::Any config_any;
-  config_any.PackFrom(config);
+  std::ignore = config_any.PackFrom(config);
   CommandLineOptions options;
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<StepControllerConfigFactory>(
@@ -71,7 +70,7 @@ TEST(FakeStepControllerConfigFactory, ValidateConfigWithAritificialValidationErr
   config.mutable_artificial_validation_failure()->set_code(kExpectedStatusCode);
   config.mutable_artificial_validation_failure()->set_message(kExpectedStatusMessage);
   Envoy::Protobuf::Any config_any;
-  config_any.PackFrom(config);
+  std::ignore = config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<StepControllerConfigFactory>(
           "nighthawk.fake_step_controller");
@@ -83,7 +82,7 @@ TEST(FakeStepControllerConfigFactory, ValidateConfigWithAritificialValidationErr
 TEST(FakeStepControllerConfigFactory, ValidateConfigWithDefaultConfigReturnsOk) {
   FakeStepControllerConfig config;
   Envoy::Protobuf::Any config_any;
-  config_any.PackFrom(config);
+  std::ignore = config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<StepControllerConfigFactory>(
           "nighthawk.fake_step_controller");
@@ -95,7 +94,7 @@ TEST(FakeStepControllerConfigFactory, ValidateConfigWithValidConfigReturnsOk) {
   FakeStepControllerConfig config;
   config.set_fixed_rps_value(1);
   Envoy::Protobuf::Any config_any;
-  config_any.PackFrom(config);
+  std::ignore = config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<StepControllerConfigFactory>(
           "nighthawk.fake_step_controller");

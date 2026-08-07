@@ -228,7 +228,7 @@ Envoy::Protobuf::Any CreateTypedConfigAny(const double threshold) {
   nighthawk::adaptive_load::LinearScoringFunctionConfig config;
   config.set_threshold(threshold);
   Envoy::Protobuf::Any config_any;
-  config_any.PackFrom(config);
+  std::ignore = config_any.PackFrom(config);
   return config_any;
 }
 

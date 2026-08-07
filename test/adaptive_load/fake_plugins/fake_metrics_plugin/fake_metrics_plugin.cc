@@ -87,7 +87,7 @@ envoy::config::core::v3::TypedExtensionConfig MakeFakeMetricsPluginTypedExtensio
     const nighthawk::adaptive_load::FakeMetricsPluginConfig& config) {
   envoy::config::core::v3::TypedExtensionConfig outer_config;
   outer_config.set_name("nighthawk.fake_metrics_plugin");
-  outer_config.mutable_typed_config()->PackFrom(config);
+  std::ignore = outer_config.mutable_typed_config()->PackFrom(config);
   return outer_config;
 }
 

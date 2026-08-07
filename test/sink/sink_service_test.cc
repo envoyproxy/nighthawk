@@ -228,7 +228,6 @@ TEST_P(SinkServiceTest, LoadWithOutputMergeFailure) {
 
 TEST_P(SinkServiceTest, StoreExecutionResponseStreamOK) {
   StoreExecutionResponse response;
-  ExecutionResponse result_to_store;
   std::unique_ptr<::grpc::ClientWriter<::nighthawk::StoreExecutionRequest>> writer =
       stub_->StoreExecutionResponseStream(&context_, &response);
   EXPECT_CALL(*sink_, StoreExecutionResultPiece(_))
@@ -243,7 +242,6 @@ TEST_P(SinkServiceTest, StoreExecutionResponseStreamOK) {
 
 TEST_P(SinkServiceTest, StoreExecutionResponseStreamFailure) {
   StoreExecutionResponse response;
-  ExecutionResponse result_to_store;
   std::unique_ptr<::grpc::ClientWriter<::nighthawk::StoreExecutionRequest>> writer =
       stub_->StoreExecutionResponseStream(&context_, &response);
   EXPECT_CALL(*sink_, StoreExecutionResultPiece(_))
@@ -256,7 +254,6 @@ TEST_P(SinkServiceTest, StoreExecutionResponseStreamFailure) {
 
 TEST_P(SinkServiceTest, StoreExecutionResponseStreamNullReader) {
   StoreExecutionResponse response;
-  ExecutionResponse result_to_store;
   std::unique_ptr<::grpc::ClientWriter<::nighthawk::StoreExecutionRequest>> writer =
       stub_->StoreExecutionResponseStream(&context_, &response);
   EXPECT_CALL(*sink_, StoreExecutionResultPiece(_))

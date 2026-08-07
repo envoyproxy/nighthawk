@@ -22,6 +22,7 @@ public:
 
   void start() override;
   void waitForCompletion() override;
+  void initiateShutdown() override;
   void shutdown() override;
 
 protected:
@@ -41,6 +42,9 @@ private:
   bool started_{};
   std::promise<void> complete_;
   std::promise<void> signal_thread_to_exit_;
+  // Tracks whether signal_thread_to_exit_ has been fired, making initiateShutdown() idempotent
+  // (std::promise::set_value() throws when called twice).
+  bool exit_signaled_{};
   bool shutdown_{true};
 };
 

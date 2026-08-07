@@ -121,7 +121,7 @@ mergeExecutionResponses(const std::string& requested_execution_id,
       ::google::rpc::Status* error_detail = aggregated_response.mutable_error_detail();
       error_detail->set_code(-1);
       error_detail->set_message("One or more remote execution(s) terminated with a failure.");
-      error_detail->add_details()->PackFrom(execution_response.error_detail());
+      std::ignore = error_detail->add_details()->PackFrom(execution_response.error_detail());
     }
     absl::Status merge_status = mergeOutput(execution_response.output(), aggregated_output);
     if (!merge_status.ok()) {

@@ -125,7 +125,7 @@ TEST_F(StreamDecoderTest, LatencyIsNotMeasured) {
   EXPECT_CALL(stream_encoder,
               encodeHeaders(Envoy::HeaderMapEqualRef(request_headers_.get()), true));
   decoder->onPoolReady(stream_encoder, ptr, stream_info,
-                       {} /*absl::optional<Envoy::Http::Protocol> protocol*/);
+                       {} /*std::optional<Envoy::Http::Protocol> protocol*/);
   decoder->decodeHeaders(std::move(test_header_), true);
   EXPECT_EQ(0, connect_statistic_.count());
   EXPECT_EQ(0, latency_statistic_.count());
@@ -161,7 +161,7 @@ TEST_F(StreamDecoderTest, LatencyIsMeasured) {
   NiceMock<Envoy::StreamInfo::MockStreamInfo> stream_info;
   EXPECT_CALL(stream_encoder, encodeHeaders(_, true));
   decoder->onPoolReady(stream_encoder, ptr, stream_info,
-                       {} /*absl::optional<Envoy::Http::Protocol> protocol*/);
+                       {} /*std::optional<Envoy::Http::Protocol> protocol*/);
   EXPECT_EQ(1, connect_statistic_.count());
   decoder->decodeHeaders(std::move(test_header_), false);
   EXPECT_EQ(0, stream_decoder_export_latency_callbacks_);
@@ -189,7 +189,7 @@ TEST_F(StreamDecoderTest, EmptyRequestBodyWithNonZeroRequestBodySize) {
       .Times(1)
       .WillOnce(testing::DoAll(SaveArg<0>(&captured_encoder_body_input_buf)));
   decoder->onPoolReady(stream_encoder, ptr, stream_info,
-                       {} /*absl::optional<Envoy::Http::Protocol> protocol*/);
+                       {} /*std::optional<Envoy::Http::Protocol> protocol*/);
   decoder->decodeHeaders(std::move(test_header_), false);
   EXPECT_EQ(captured_encoder_body_input_buf.toString(), expected_body);
   delete decoder;
@@ -213,7 +213,7 @@ TEST_F(StreamDecoderTest, NonEmptyRequestBodyIgnoresProvidedRequestBodySize) {
       .Times(1)
       .WillOnce(testing::DoAll(SaveArg<0>(&captured_encoder_body_input_buf)));
   decoder->onPoolReady(stream_encoder, ptr, stream_info,
-                       {} /*absl::optional<Envoy::Http::Protocol> protocol*/);
+                       {} /*std::optional<Envoy::Http::Protocol> protocol*/);
   decoder->decodeHeaders(std::move(test_header_), false);
   EXPECT_EQ(captured_encoder_body_input_buf.toString(), json_buf.toString());
   delete decoder;

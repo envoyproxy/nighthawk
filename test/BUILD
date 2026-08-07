@@ -202,6 +202,20 @@ envoy_cc_test(
 )
 
 envoy_cc_test(
+    name = "rate_limiter_plugin_test",
+    srcs = ["rate_limiter_plugin_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//api/rate_limiter:rate_limiter_plugin_cc_proto",
+        "//source/common:nighthawk_common_lib",
+        "//test/mocks/client:mock_options",
+        "//test/test_common:proto_matchers",
+        "@envoy//test/mocks/stats:stats_mocks",
+        "@envoy//test/test_common:simulated_time_system_lib",
+    ],
+)
+
+envoy_cc_test(
     name = "sequencer_test",
     srcs = ["sequencer_test.cc"],
     data = [

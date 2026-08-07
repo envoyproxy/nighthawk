@@ -34,7 +34,7 @@ jobs:
       packages: read
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v7.0.0
+    - uses: actions/checkout@v7.0.1
     - name: Set gcc
       run: |
         if [[ "${{ inputs.task }}" == *"gcc"* ]]; then
@@ -45,9 +45,10 @@ jobs:
     - name: Configure repo Bazel settings
       run: |
         echo "common --jobs=200" >> repo.bazelrc
+        echo "test --local_test_jobs=4" >> repo.bazelrc
         echo "build --config=bes" >> repo.bazelrc
     - name: Bind mount spare disk for build artifacts
-      uses: envoyproxy/toolshed/actions/bind-mounts@actions-v0.4.17
+      uses: envoyproxy/toolshed/actions/bind-mounts@actions-v0.4.19
       with:
         mounts: |
           - src: /mnt/envoy-docker-build

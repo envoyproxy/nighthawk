@@ -1,5 +1,6 @@
 #include "source/client/benchmark_client_impl.h"
 
+#include "envoy/common/conn_pool.h"
 #include "envoy/event/dispatcher.h"
 #include "envoy/thread_local/thread_local.h"
 
@@ -110,7 +111,7 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
 }
 
 void BenchmarkClientHttpImpl::terminate() {
-  absl::optional<Envoy::Upstream::HttpPoolData> pool_data = pool();
+  std::optional<Envoy::Upstream::HttpPoolData> pool_data = pool();
   if (pool_data.has_value() && pool_data.value().hasActiveConnections()) {
     // We don't report what happens after this call in the output, but latencies may still be
     // reported via callbacks. This may happen after a long time (60s), which HdrHistogram can't
@@ -128,6 +129,19 @@ void BenchmarkClientHttpImpl::terminate() {
       dispatcher_.exit();
     });
     drain_timer_->enableTimer(timeout_);
+    // Actively drain the pool. Without this, completed requests leave ready keep-alive
+    // connections behind, and the pool never becomes idle (all of the pool's client lists must
+    // be empty for that), so the idle callback above would never fire and we would always
+    // block for the full timeout. DrainAndDelete closes idle connections right away and closes
+    // busy ones as their in-flight streams complete; it does not reset in-flight streams, so
+    // the drain timer above remains the hard cap for streams that never complete.
+    // The drain call is posted rather than made inline, so that it runs at loop entry of
+    // dispatcher_.run() below, after the idle callback and drain timer above are fully set
+    // up; this keeps terminate() correct regardless of whether draining ever invokes idle
+    // callbacks synchronously.
+    dispatcher_.post([pool_data]() mutable {
+      pool_data.value().drainConnections(Envoy::ConnectionPool::DrainBehavior::DrainAndDelete);
+    });
     dispatcher_.run(Envoy::Event::Dispatcher::RunType::RunUntilExit);
   }
 }
@@ -151,7 +165,7 @@ StatisticPtrMap BenchmarkClientHttpImpl::statistics() const {
 };
 
 bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completion_callback) {
-  absl::optional<Envoy::Upstream::HttpPoolData> pool_data = pool();
+  std::optional<Envoy::Upstream::HttpPoolData> pool_data = pool();
   if (!pool_data.has_value()) {
     return false;
   }

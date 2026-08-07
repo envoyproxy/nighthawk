@@ -25,7 +25,7 @@ message AdaptiveLoadSessionSpec {
   repeated envoy.config.core.v3.TypedExtensionConfig metrics_plugin_configs = 1;
   // Metrics and thresholds that determine load adjustments. The order of
   // metrics is not significant. Required.
-  repeated MetricSpecWithThreshold metric_thresholds = 2 [(validate.rules).repeated .min_items = 1];
+  repeated MetricSpecWithThreshold metric_thresholds = 2 [(validate.rules).repeated.min_items = 1];
   // Metrics that are collected and included in the output but not taken into
   // account when adjusting the load. May be used for debugging or
   // visualization. Optional.

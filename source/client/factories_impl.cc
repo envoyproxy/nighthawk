@@ -1,7 +1,14 @@
 #include "source/client/factories_impl.h"
+#include <chrono>
+#include <cstdint>
+#include <memory>
+#include <utility>
 
+#include "nighthawk/common/rate_limiter.h"
+#include "nighthawk/common/rate_limiter_plugin_config_factory.h"
 #include "nighthawk/user_defined_output/user_defined_output_plugin.h"
 
+#include "external/envoy/source/common/config/utility.h"
 #include "external/envoy/source/common/http/header_map_impl.h"
 
 #include "api/client/options.pb.h"
@@ -55,7 +62,6 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
       api, dispatcher, scope, statistic, options_.protocol(), cluster_manager, tracer, cluster_name,
       request_generator.get(), !options_.openLoop(), options_.responseHeaderWithLatencyInput(),
       std::move(user_defined_output_plugins));
-  auto request_options = options_.toCommandLineOptions()->request_options();
   benchmark_client->setConnectionLimit(options_.connections());
   benchmark_client->setMaxPendingRequests(options_.maxPendingRequests());
   benchmark_client->setMaxActiveRequests(options_.maxActiveRequests());
@@ -68,31 +74,66 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
 SequencerFactoryImpl::SequencerFactoryImpl(const Options& options)
     : OptionBasedFactoryImpl(options) {}
 
-SequencerPtr SequencerFactoryImpl::create(
-    Envoy::TimeSource& time_source, Envoy::Event::Dispatcher& dispatcher,
-    const SequencerTarget& sequencer_target, TerminationPredicatePtr&& termination_predicate,
-    Envoy::Stats::Scope& scope, const Envoy::MonotonicTime scheduled_starting_time) const {
+SequencerPtr SequencerFactoryImpl::create(Envoy::TimeSource& time_source,
+                                          Envoy::Event::Dispatcher& dispatcher,
+                                          const SequencerTarget& sequencer_target,
+                                          TerminationPredicatePtr&& termination_predicate,
+                                          Envoy::Stats::Scope& scope,
+                                          const Envoy::MonotonicTime scheduled_starting_time,
+                                          Envoy::Api::Api& api) const {
   StatisticFactoryImpl statistic_factory(options_);
-  Frequency frequency(options_.requestsPerSecond());
-  RateLimiterPtr rate_limiter = std::make_unique<ScheduledStartingRateLimiter>(
-      std::make_unique<LinearRateLimiter>(time_source, frequency), scheduled_starting_time);
-  const uint64_t burst_size = options_.burstSize();
+  RateLimiterPtr rate_limiter;
 
-  if (burst_size) {
-    rate_limiter = std::make_unique<BurstingRateLimiter>(std::move(rate_limiter), burst_size);
-  }
+  // Check if there is a rate limiter plugin to load and use.
+  if (options_.rateLimiterPluginConfig().has_value()) {
+    absl::StatusOr<RateLimiterPtr> plugin_or =
+        LoadRateLimiterPlugin(options_.rateLimiterPluginConfig().value(), api, time_source);
+    if (!plugin_or.ok()) {
+      throw NighthawkException(
+          absl::StrCat("Rate Limiter plugin loading error: ", plugin_or.status().message()));
+    }
+    rate_limiter = std::move(plugin_or.value());
+    rate_limiter = std::make_unique<ScheduledStartingRateLimiter>(std::move(rate_limiter),
+                                                                  scheduled_starting_time);
 
-  const std::chrono::nanoseconds jitter_uniform = options_.jitterUniform();
-  if (jitter_uniform.count() > 0) {
-    rate_limiter = std::make_unique<DistributionSamplingRateLimiterImpl>(
-        std::make_unique<UniformRandomDistributionSamplerImpl>(jitter_uniform.count()),
-        std::move(rate_limiter));
+    // If no rate limiter plugin is set, use the default linear rate limiter.
+  } else {
+    Frequency frequency(options_.requestsPerSecond());
+    rate_limiter = std::make_unique<ScheduledStartingRateLimiter>(
+        std::make_unique<LinearRateLimiter>(time_source, frequency), scheduled_starting_time);
+    const uint64_t burst_size = options_.burstSize();
+
+    if (burst_size) {
+      rate_limiter = std::make_unique<BurstingRateLimiter>(std::move(rate_limiter), burst_size);
+    }
+
+    const std::chrono::nanoseconds jitter_uniform = options_.jitterUniform();
+    if (jitter_uniform.count() > 0) {
+      rate_limiter = std::make_unique<DistributionSamplingRateLimiterImpl>(
+          std::make_unique<UniformRandomDistributionSamplerImpl>(jitter_uniform.count()),
+          std::move(rate_limiter));
+    }
   }
 
   return std::make_unique<SequencerImpl>(
       platform_util_, dispatcher, time_source, std::move(rate_limiter), sequencer_target,
       statistic_factory.create(), statistic_factory.create(), options_.sequencerIdleStrategy(),
       std::move(termination_predicate), scope);
+}
+
+absl::StatusOr<RateLimiterPtr> SequencerFactoryImpl::LoadRateLimiterPlugin(
+    const envoy::config::core::v3::TypedExtensionConfig& config, Envoy::Api::Api& api,
+    Envoy::TimeSource& time_source) const {
+  try {
+    auto& config_factory =
+        Envoy::Config::Utility::getAndCheckFactoryByName<RateLimiterPluginConfigFactory>(
+            config.name());
+    return config_factory.createRateLimiterPlugin(config.typed_config(), api, time_source,
+                                                  options_);
+  } catch (const Envoy::EnvoyException& e) {
+    return absl::InvalidArgumentError(
+        absl::StrCat("Could not load plugin: ", config.name(), ": ", e.what()));
+  }
 }
 
 StatisticFactoryImpl::StatisticFactoryImpl(const Options& options)

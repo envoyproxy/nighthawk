@@ -27,7 +27,7 @@ void OutputCollectorImpl::addResult(
     absl::string_view name, const std::vector<StatisticPtr>& statistics,
     const std::map<std::string, uint64_t>& counters,
     const std::chrono::nanoseconds execution_duration,
-    const absl::optional<Envoy::SystemTime>& first_acquisition_time,
+    const std::optional<Envoy::SystemTime>& first_acquisition_time,
     const std::vector<nighthawk::client::UserDefinedOutput>& user_defined_output_results) {
   auto result = output_.add_results();
   result->set_name(name.data(), name.size());

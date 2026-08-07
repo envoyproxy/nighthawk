@@ -119,7 +119,7 @@ void StreamDecoder::onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason
 void StreamDecoder::onPoolReady(Envoy::Http::RequestEncoder& encoder,
                                 Envoy::Upstream::HostDescriptionConstSharedPtr,
                                 Envoy::StreamInfo::StreamInfo&,
-                                absl::optional<Envoy::Http::Protocol>) {
+                                std::optional<Envoy::Http::Protocol>) {
   encoder.getStream().addCallbacks(*this);
   stream_info_.upstreamInfo()->upstreamTiming().onFirstUpstreamTxByteSent(
       time_source_); // XXX(oschaaf): is this correct?

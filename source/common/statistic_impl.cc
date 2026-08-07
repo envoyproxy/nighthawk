@@ -117,7 +117,7 @@ absl::StatusOr<std::unique_ptr<std::istream>> SimpleStatistic::serializeNative()
   proto.set_sum_x_2(sum_x2_);
 
   std::string tmp;
-  proto.SerializeToString(&tmp);
+  std::ignore = proto.SerializeToString(&tmp);
   auto write_stream = std::make_unique<std::stringstream>();
   *write_stream << tmp;
   return write_stream;
@@ -187,7 +187,7 @@ absl::StatusOr<std::unique_ptr<std::istream>> StreamingStatistic::serializeNativ
   proto.set_accumulated_variance(accumulated_variance_);
 
   std::string tmp;
-  proto.SerializeToString(&tmp);
+  std::ignore = proto.SerializeToString(&tmp);
   auto write_stream = std::make_unique<std::stringstream>();
   *write_stream << tmp;
   return write_stream;
@@ -402,7 +402,7 @@ nighthawk::client::Statistic CircllhistStatistic::toProto(SerializationDomain do
   return proto;
 }
 
-SinkableStatistic::SinkableStatistic(Envoy::Stats::Scope& scope, absl::optional<int> worker_id)
+SinkableStatistic::SinkableStatistic(Envoy::Stats::Scope& scope, std::optional<int> worker_id)
     : Envoy::Stats::HistogramImplHelper(scope.symbolTable()), scope_(scope), worker_id_(worker_id) {
 }
 
@@ -418,8 +418,7 @@ Envoy::Stats::Histogram::Unit SinkableStatistic::unit() const {
 
 Envoy::Stats::SymbolTable& SinkableStatistic::symbolTable() { return scope_.symbolTable(); }
 
-SinkableHdrStatistic::SinkableHdrStatistic(Envoy::Stats::Scope& scope,
-                                           absl::optional<int> worker_id)
+SinkableHdrStatistic::SinkableHdrStatistic(Envoy::Stats::Scope& scope, std::optional<int> worker_id)
     : SinkableStatistic(scope, worker_id) {}
 
 void SinkableHdrStatistic::recordValue(uint64_t value) {
@@ -438,7 +437,7 @@ std::string SinkableHdrStatistic::tagExtractedName() const {
 }
 
 SinkableCircllhistStatistic::SinkableCircllhistStatistic(Envoy::Stats::Scope& scope,
-                                                         absl::optional<int> worker_id)
+                                                         std::optional<int> worker_id)
     : SinkableStatistic(scope, worker_id) {}
 
 void SinkableCircllhistStatistic::recordValue(uint64_t value) {

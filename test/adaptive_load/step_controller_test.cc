@@ -51,7 +51,7 @@ TEST(ExponentialSearchStepControllerConfigFactory, CreatesCorrectFactoryName) {
 TEST(ExponentialSearchStepControllerConfigFactory, CreatesCorrectPluginType) {
   nighthawk::adaptive_load::ExponentialSearchStepControllerConfig config;
   Envoy::Protobuf::Any config_any;
-  config_any.PackFrom(config);
+  std::ignore = config_any.PackFrom(config);
   nighthawk::client::CommandLineOptions options;
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<StepControllerConfigFactory>(
@@ -67,7 +67,7 @@ TEST(ExponentialSearchStepControllerConfigFactory,
       Envoy::Config::Utility::getAndCheckFactoryByName<StepControllerConfigFactory>(
           "nighthawk.exponential_search");
   Envoy::Protobuf::Any config_any;
-  config_any.PackFrom(config);
+  std::ignore = config_any.PackFrom(config);
   absl::Status status = config_factory.ValidateConfig(config_any);
   EXPECT_TRUE(status.ok());
 }
@@ -81,7 +81,7 @@ TEST(ExponentialSearchStepControllerConfigFactory,
       Envoy::Config::Utility::getAndCheckFactoryByName<StepControllerConfigFactory>(
           "nighthawk.exponential_search");
   Envoy::Protobuf::Any config_any;
-  config_any.PackFrom(config);
+  std::ignore = config_any.PackFrom(config);
   absl::Status status = config_factory.ValidateConfig(config_any);
   EXPECT_TRUE(status.ok());
 }
@@ -96,7 +96,7 @@ TEST(ExponentialSearchStepControllerConfigFactory,
       Envoy::Config::Utility::getAndCheckFactoryByName<StepControllerConfigFactory>(
           "nighthawk.exponential_search");
   Envoy::Protobuf::Any config_any;
-  config_any.PackFrom(config);
+  std::ignore = config_any.PackFrom(config);
   absl::Status status = config_factory.ValidateConfig(config_any);
   EXPECT_EQ(status.code(), absl::StatusCode::kDataLoss);
   EXPECT_EQ(status.message(), kExpectedStatusMessage);

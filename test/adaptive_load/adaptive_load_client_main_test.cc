@@ -327,7 +327,7 @@ TEST(AdaptiveLoadClientMainTest, WritesOutputProtoToFile) {
                                     "test/adaptive_load/test_data/golden_output.textproto")))
                                 .value();
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput golden_proto;
-  Envoy::Protobuf::TextFormat::ParseFromString(golden_text, &golden_proto);
+  std::ignore = Envoy::Protobuf::TextFormat::ParseFromString(golden_text, &golden_proto);
   EXPECT_EQ(actual_outfile_contents, absl::StrCat(golden_proto));
 }
 

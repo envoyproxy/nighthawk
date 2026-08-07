@@ -58,7 +58,7 @@ MakeLowerThresholdBinaryScoringFunctionConfig(double lower_threshold) {
   config.set_name("nighthawk.binary_scoring");
   nighthawk::adaptive_load::BinaryScoringFunctionConfig inner_config;
   inner_config.mutable_lower_threshold()->set_value(lower_threshold);
-  config.mutable_typed_config()->PackFrom(inner_config);
+  std::ignore = config.mutable_typed_config()->PackFrom(inner_config);
   return config;
 }
 

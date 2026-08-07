@@ -154,6 +154,12 @@ py_library(
     deps = [":integration_test_base"],
 )
 
+py_library(
+    name = "test_rate_limiter_plugin_lib",
+    srcs = ["test_rate_limiter_plugin.py"],
+    deps = [":integration_test_base"],
+)
+
 py_binary(
     name = "integration_test",
     srcs = ["integration_test.py"],
@@ -178,6 +184,7 @@ py_binary(
         ":test_integration_basics_lib",
         ":test_integration_zipkin_lib",
         ":test_output_transform_lib",
+        ":test_rate_limiter_plugin_lib",
         ":test_remote_execution_lib",
         ":test_request_source_plugin_lib",
         ":test_user_defined_output_plugins_lib",

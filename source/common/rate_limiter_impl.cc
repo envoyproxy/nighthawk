@@ -1,8 +1,20 @@
 #include "source/common/rate_limiter_impl.h"
+#include <chrono>
+#include <cmath>
+#include <cstdint>
+#include <memory>
 
+#include "envoy/api/api.h"
+#include "envoy/common/exception.h"
+#include "external/envoy/source/common/common/macros.h"
+#include "external/envoy/source/common/protobuf/protobuf.h"
+#include "nighthawk/client/options.h"
 #include "nighthawk/common/exception.h"
 
+#include "envoy/registry/registry.h"
 #include "external/envoy/source/common/common/assert.h"
+#include "external/envoy/source/common/protobuf/utility.h"
+#include "nighthawk/common/rate_limiter_plugin_config_factory.h"
 
 namespace Nighthawk {
 
@@ -38,18 +50,18 @@ bool BurstingRateLimiter::tryAcquireOne() {
     }
   }
 
-  previously_releasing_ = absl::nullopt;
+  previously_releasing_ = std::nullopt;
   return false;
 }
 
 void BurstingRateLimiter::releaseOne() {
   ASSERT(accumulated_ < burst_size_);
-  ASSERT(previously_releasing_ != absl::nullopt && previously_releasing_ == true);
+  ASSERT(previously_releasing_ != std::nullopt && previously_releasing_ == true);
   // The caller wasn't able to put its earlier successfull acquisition to good use, so we restore
   // state to what it was prior to that.
   accumulated_++;
   releasing_ = true; // release_ could only have been set earlier.
-  previously_releasing_ = absl::nullopt;
+  previously_releasing_ = std::nullopt;
 }
 
 ScheduledStartingRateLimiter::ScheduledStartingRateLimiter(
@@ -115,7 +127,9 @@ void LinearRateLimiter::releaseOne() {
 LinearRampingRateLimiterImpl::LinearRampingRateLimiterImpl(Envoy::TimeSource& time_source,
                                                            const std::chrono::nanoseconds ramp_time,
                                                            const Frequency frequency)
-    : RateLimiterBaseImpl(time_source), ramp_time_(ramp_time), frequency_(frequency) {
+    : RateLimiterBaseImpl(time_source), ramp_time_(ramp_time), frequency_(frequency),
+      target_freq_ns_(frequency_.value() / 1e9),
+      total_ramp_requests_(std::round(ramp_time.count() * target_freq_ns_ / 2.0)) {
   if (frequency_.value() <= 0) {
     throw NighthawkException(fmt::format("frequency must be > 0, value: {}", frequency.value()));
   }
@@ -131,16 +145,22 @@ bool LinearRampingRateLimiterImpl::tryAcquireOne() {
     return acquireable_count_--;
   }
   const std::chrono::nanoseconds elapsed_time = elapsed();
-  double elapsed_fraction = 1.0;
+  int64_t total = 0;
+
   if (elapsed_time < ramp_time_) {
+    double elapsed_fraction = 1.0;
     elapsed_fraction -= static_cast<double>(ramp_time_.count() - elapsed_time.count()) /
                         static_cast<double>(ramp_time_.count());
+
+    const double current_frequency = elapsed_fraction * frequency_.value();
+    // If we'd be at a constant pace, we can expect elapsed seconds * frequency requests.
+    // However, as we are linearly ramping, we can expect half of that, hence we
+    // divide by two.
+    total = std::round((elapsed_time.count() / 1e9) * current_frequency / 2.0);
+  } else {
+    total =
+        total_ramp_requests_ + std::round((elapsed_time - ramp_time_).count() * target_freq_ns_);
   }
-  const double current_frequency = elapsed_fraction * frequency_.value();
-  // If we'd be at a constant pace, we can expect elapsed seconds * frequency requests.
-  // However, as we are linearly ramping, we can expect half of that, hence we
-  // divide by two.
-  const int64_t total = std::round((elapsed_time.count() / 1e9) * current_frequency / 2.0);
   acquireable_count_ = total - acquired_count_;
   return acquireable_count_ > 0 ? tryAcquireOne() : false;
 }
@@ -149,6 +169,34 @@ void LinearRampingRateLimiterImpl::releaseOne() {
   acquireable_count_++;
   acquired_count_--;
 }
+
+RateLimiterPtr LinearRampingRateLimiterImplFactory::createRateLimiterPlugin(
+    const Envoy::Protobuf::Message& typed_config, Envoy::Api::Api& api,
+    Envoy::TimeSource& time_source, const Nighthawk::Client::Options& options) {
+  UNREFERENCED_PARAMETER(api);
+  const auto* any = Envoy::Protobuf::DynamicCastMessage<const Envoy::Protobuf::Any>(&typed_config);
+  if (any == nullptr) {
+    throw Envoy::EnvoyException("typed_config cannot be cast to an Any proto");
+  }
+  nighthawk::rate_limiter::LinearRampingRateLimiterConfig config;
+  Envoy::MessageUtil::anyConvert(*any, config);
+
+  const uint32_t rps = options.requestsPerSecond();
+  const std::chrono::nanoseconds ramp_time = std::chrono::seconds(config.ramp_time().seconds()) +
+                                             std::chrono::nanoseconds(config.ramp_time().nanos());
+
+  if (ramp_time <= 0ns) {
+    throw NighthawkException("ramp_time must be positive and > 0ns");
+  }
+  if (!options.noDuration() && ramp_time > options.duration()) {
+    throw NighthawkException(
+        "ramp_time must be less than or equal to time specified by --duration");
+  }
+
+  return std::make_unique<LinearRampingRateLimiterImpl>(time_source, ramp_time, Frequency(rps));
+}
+
+REGISTER_FACTORY(LinearRampingRateLimiterImplFactory, RateLimiterPluginConfigFactory);
 
 DelegatingRateLimiterImpl::DelegatingRateLimiterImpl(
     RateLimiterPtr&& rate_limiter, RateLimiterDelegate random_distribution_generator)

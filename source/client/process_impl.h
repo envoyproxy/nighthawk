@@ -116,7 +116,7 @@ private:
    * @param concurrency the amount of workers that should be created.
    */
   absl::Status createWorkers(const uint32_t concurrency,
-                             const absl::optional<Envoy::SystemTime>& schedule);
+                             const std::optional<Envoy::SystemTime>& schedule);
   std::vector<StatisticPtr> vectorizeStatisticPtrMap(const StatisticPtrMap& statistics) const;
   std::vector<StatisticPtr>
   mergeWorkerStatistics(const std::vector<ClientWorkerPtr>& workers) const;
@@ -132,7 +132,7 @@ private:
                        std::list<std::unique_ptr<Envoy::Stats::Sink>>& stats_sinks);
   bool runInternal(OutputCollector& collector, const UriPtr& tracing_uri,
                    const Envoy::Network::DnsResolverSharedPtr& dns_resolver,
-                   const absl::optional<Envoy::SystemTime>& schedule);
+                   const std::optional<Envoy::SystemTime>& schedule);
 
   /**
    * Compute the offset at which execution should start. We adhere to the scheduled start passed in
@@ -146,7 +146,7 @@ private:
    */
   static Envoy::MonotonicTime
   computeFirstWorkerStart(Envoy::Event::TimeSystem& time_system,
-                          const absl::optional<Envoy::SystemTime>& scheduled_start,
+                          const std::optional<Envoy::SystemTime>& scheduled_start,
                           const uint32_t concurrency);
 
   /**

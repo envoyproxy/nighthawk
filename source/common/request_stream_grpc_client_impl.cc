@@ -52,7 +52,7 @@ void RequestStreamGrpcClientImpl::onCreateInitialMetadata(Envoy::Http::RequestHe
 void RequestStreamGrpcClientImpl::onReceiveInitialMetadata(Envoy::Http::ResponseHeaderMapPtr&&) {}
 
 void RequestStreamGrpcClientImpl::onReceiveMessage(
-    std::unique_ptr<nighthawk::request_source::RequestStreamResponse>&& message) {
+    Envoy::Grpc::ResponsePtr<nighthawk::request_source::RequestStreamResponse>&& message) {
   in_flight_headers_--;
   total_messages_received_++;
   emplaceMessage(std::move(message));
@@ -143,7 +143,7 @@ RequestPtr RequestStreamGrpcClientImpl::maybeDequeue() {
 }
 
 void RequestStreamGrpcClientImpl::emplaceMessage(
-    std::unique_ptr<nighthawk::request_source::RequestStreamResponse>&& message) {
+    Envoy::Grpc::ResponsePtr<nighthawk::request_source::RequestStreamResponse>&& message) {
   ENVOY_LOG(trace, "message received: {}", absl::StrCat(*message));
   messages_.emplace(std::move(message));
 }

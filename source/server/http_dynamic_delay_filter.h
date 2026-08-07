@@ -146,9 +146,9 @@ public:
    *
    * @param configuration Dynamic delay configuration.
    * @param concurrency The number of concurrenct active requests.
-   * @return absl::optional<int64_t> The computed delay in milliseconds, if any.
+   * @return std::optional<int64_t> The computed delay in milliseconds, if any.
    */
-  static absl::optional<int64_t>
+  static std::optional<int64_t>
   computeDelayMs(const nighthawk::server::DynamicDelayConfiguration& configuration,
                  const uint64_t concurrency);
 
@@ -160,7 +160,7 @@ public:
    * 0, the call will be a no-op.
    * @param request_headers The request headers that will be modified to instruct the fault filter.
    */
-  static void maybeRequestFaultFilterDelay(const absl::optional<int64_t> delay_ms,
+  static void maybeRequestFaultFilterDelay(const std::optional<int64_t> delay_ms,
                                            Envoy::Http::RequestHeaderMap& request_headers);
 
   /**

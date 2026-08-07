@@ -51,10 +51,10 @@ private:
 absl::StatusOr<UserDefinedOutputPluginPtr>
 CreatePlugin(const std::string& config_textproto, std::unique_ptr<HeaderLogger> header_logger) {
   LogResponseHeadersConfig config;
-  TextFormat::ParseFromString(config_textproto, &config);
+  std::ignore = TextFormat::ParseFromString(config_textproto, &config);
 
   Envoy::Protobuf::Any config_any;
-  config_any.PackFrom(config);
+  std::ignore = config_any.PackFrom(config);
   auto& factory = Envoy::Config::Utility::getAndCheckFactoryByName<UserDefinedOutputPluginFactory>(
       "nighthawk.log_response_headers_plugin");
   WorkerMetadata metadata;
@@ -77,7 +77,7 @@ Envoy::Protobuf::Any CreateOutputAny() {
   LogResponseHeadersOutput output;
 
   Envoy::Protobuf::Any output_any;
-  output_any.PackFrom(output);
+  std::ignore = output_any.PackFrom(output);
 
   return output_any;
 }
@@ -103,7 +103,7 @@ TEST(LogResponseHeadersPluginFactory, CreateEmptyConfigProtoCreatesCorrectType) 
 TEST(LogResponseHeadersPluginFactory, FactoryRegistersUnderCorrectName) {
   LogResponseHeadersConfig config;
   Envoy::Protobuf::Any config_any;
-  config_any.PackFrom(config);
+  std::ignore = config_any.PackFrom(config);
   auto& factory = Envoy::Config::Utility::getAndCheckFactoryByName<UserDefinedOutputPluginFactory>(
       "nighthawk.log_response_headers_plugin");
   EXPECT_EQ(factory.name(), "nighthawk.log_response_headers_plugin");

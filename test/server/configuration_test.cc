@@ -29,13 +29,13 @@ using ::testing::HasSubstr;
 
 TEST(MergeJsonConfig, AddsInUnsetValuesToConfig) {
   ResponseOptions options;
-  TextFormat::ParseFromString("response_body_size: 23", &options);
+  std::ignore = TextFormat::ParseFromString("response_body_size: 23", &options);
   ResponseOptions expected_options;
-  TextFormat::ParseFromString(R"(
+  std::ignore = TextFormat::ParseFromString(R"(
     response_body_size: 23
     echo_request_headers: true
   )",
-                              &expected_options);
+                                            &expected_options);
   std::string error;
   EXPECT_TRUE(mergeJsonConfig("{'echo_request_headers': true}", options, error));
   EXPECT_THAT(options, EqualsProto(expected_options));
@@ -44,17 +44,17 @@ TEST(MergeJsonConfig, AddsInUnsetValuesToConfig) {
 
 TEST(MergeJsonConfig, OverridesSetValues) {
   ResponseOptions options;
-  TextFormat::ParseFromString(R"(
+  std::ignore = TextFormat::ParseFromString(R"(
     response_body_size: 23
     echo_request_headers: false
   )",
-                              &options);
+                                            &options);
   ResponseOptions expected_options;
-  TextFormat::ParseFromString(R"(
+  std::ignore = TextFormat::ParseFromString(R"(
     response_body_size: 23
     echo_request_headers: true
   )",
-                              &expected_options);
+                                            &expected_options);
   std::string error;
   EXPECT_TRUE(mergeJsonConfig("{'echo_request_headers': true}", options, error));
   EXPECT_THAT(options, EqualsProto(expected_options));
@@ -63,11 +63,11 @@ TEST(MergeJsonConfig, OverridesSetValues) {
 
 TEST(MergeJsonConfig, ErrorsGracefullyForInvalidJsonConfig) {
   ResponseOptions options;
-  TextFormat::ParseFromString(R"(
+  std::ignore = TextFormat::ParseFromString(R"(
     response_body_size: 23
     echo_request_headers: false
   )",
-                              &options);
+                                            &options);
   std::string error;
   EXPECT_FALSE(mergeJsonConfig("{'not_a_field': true}", options, error));
   EXPECT_THAT(error, HasSubstr("INVALID_ARGUMENT"));
@@ -75,7 +75,7 @@ TEST(MergeJsonConfig, ErrorsGracefullyForInvalidJsonConfig) {
 
 TEST(MergeJsonConfig, AppendsHeadersWhenCalledFor) {
   ResponseOptions options;
-  TextFormat::ParseFromString(R"(
+  std::ignore = TextFormat::ParseFromString(R"(
     v3_response_headers {
       header {
         key: "foo"
@@ -83,9 +83,9 @@ TEST(MergeJsonConfig, AppendsHeadersWhenCalledFor) {
       }
     }
   )",
-                              &options);
+                                            &options);
   ResponseOptions expected_options;
-  TextFormat::ParseFromString(R"(
+  std::ignore = TextFormat::ParseFromString(R"(
     v3_response_headers {
       header {
         key: "foo"
@@ -99,7 +99,7 @@ TEST(MergeJsonConfig, AppendsHeadersWhenCalledFor) {
       }
     }
   )",
-                              &expected_options);
+                                            &expected_options);
   std::string header_json =
       R"({v3_response_headers: [ { header: { key: "foo", value: "bar2"} } ]})";
   std::string error;

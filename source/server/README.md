@@ -197,6 +197,7 @@ bazel-bin/nighthawk_test_server  [--stats-tag <string>] ...
 <string>] [-l <string>]
 [--local-address-ip-version <string>]
 [--admin-address-path <string>]
+[--log-stacktrace-single-entry]
 [--skip-deprecated-logs]
 [--ignore-unknown-dynamic-fields]
 [--reject-unknown-dynamic-fields]
@@ -306,6 +307,10 @@ The local IP address version (v4 or v6).
 
 --admin-address-path <string>
 Admin address path
+
+--log-stacktrace-single-entry
+Emit the entire stack trace in a single log entry instead of one log
+call per frame. Useful for log aggregation systems.
 
 --skip-deprecated-logs
 Skips the logging of deprecated field warnings during Protobuf message

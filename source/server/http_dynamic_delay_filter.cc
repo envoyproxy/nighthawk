@@ -109,7 +109,7 @@ HttpDynamicDelayDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& head
   effective_config_ =
       computeEffectiveConfiguration(config_->getStartupFilterConfiguration(), headers);
   if (effective_config_.ok()) {
-    const absl::optional<int64_t> delay_ms =
+    const std::optional<int64_t> delay_ms =
         computeDelayMs(*effective_config_.value(), config_->approximateFilterInstances());
     maybeRequestFaultFilterDelay(delay_ms, headers);
   } else {
@@ -134,10 +134,10 @@ HttpDynamicDelayDecoderFilter::decodeData(Envoy::Buffer::Instance& buffer, bool 
   return Envoy::Extensions::HttpFilters::Fault::FaultFilter::decodeData(buffer, end_stream);
 }
 
-absl::optional<int64_t>
+std::optional<int64_t>
 HttpDynamicDelayDecoderFilter::computeDelayMs(const DynamicDelayConfiguration& config,
                                               const uint64_t concurrency) {
-  absl::optional<int64_t> delay_ms;
+  std::optional<int64_t> delay_ms;
   if (config.has_static_delay()) {
     delay_ms = Envoy::Protobuf::util::TimeUtil::DurationToMilliseconds(config.static_delay());
   } else if (config.has_concurrency_based_linear_delay()) {
@@ -150,7 +150,7 @@ HttpDynamicDelayDecoderFilter::computeDelayMs(const DynamicDelayConfiguration& c
 }
 
 void HttpDynamicDelayDecoderFilter::maybeRequestFaultFilterDelay(
-    const absl::optional<int64_t> delay_ms, Envoy::Http::RequestHeaderMap& headers) {
+    const std::optional<int64_t> delay_ms, Envoy::Http::RequestHeaderMap& headers) {
   if (delay_ms.has_value() && delay_ms > 0) {
     // Emit header to communicate the delay we desire to the fault filter extension.
     const Envoy::Http::LowerCaseString key("x-envoy-fault-delay-request");
