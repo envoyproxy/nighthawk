@@ -70,4 +70,22 @@ HttpFilterIntegrationTestBase::getResponse(ResponseOrigin expected_origin) {
   return response;
 }
 
+Envoy::IntegrationStreamDecoderPtr
+HttpFilterIntegrationTestBase::getResponseWithTrailers(ResponseOrigin expected_origin) {
+  cleanupUpstreamAndDownstream();
+  codec_client_ = makeHttpConnection(lookupPort("http"));
+  Envoy::IntegrationStreamDecoderPtr response;
+  auto encoder_decoder = codec_client_->startRequest(request_headers_, false);
+  response = std::move(encoder_decoder.second);
+  Envoy::Http::TestRequestTrailerMapImpl trailers{{"x-test-trailer", "present"}};
+  codec_client_->sendTrailers(encoder_decoder.first, trailers);
+
+  if (expected_origin == ResponseOrigin::UPSTREAM) {
+    ASSERT_TRUE(fake_upstreams_[0]->waitForHttpConnection(*dispatcher_, fake_upstream_connection_));
+    ASSERT_TRUE(fake_upstream_connection_->waitForNewStream(*dispatcher_, upstream_request_));
+  }
+
+  return response;
+}
+
 } // namespace Nighthawk
