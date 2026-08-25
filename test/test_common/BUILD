@@ -33,7 +33,7 @@ envoy_cc_test_library(
     hdrs = ["mock_stream.h"],
     repository = "@envoy",
     deps = [
-        "@com_github_grpc_grpc//:grpc++",
         "@envoy//test/test_common:utility_lib",
+        "@grpc//:grpc++",
     ],
 )

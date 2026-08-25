@@ -1,5 +1,5 @@
-load("@com_github_grpc_grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
 load("@envoy_api//bazel:api_build_system.bzl", "api_cc_py_proto_library")
+load("@grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
 
 licenses(["notice"])  # Apache 2
 
