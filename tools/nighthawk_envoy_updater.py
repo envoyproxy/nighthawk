@@ -338,9 +338,8 @@ class StepHandler(Generic[TStep]):
     print("=" * 78)
 
     while True:
-      choice = input(
-          "\nChoose action: [r]etry step / [p]roceed to next step / [e]xit process: "
-      ).strip().lower()
+      choice = input("\nChoose action: [r]etry step / [p]roceed to next step / [e]xit process: "
+                    ).strip().lower()
       if choice in ("r", "retry"):
         return "retry"
       elif choice in ("p", "proceed", "s", "skip", "next"):
@@ -399,9 +398,7 @@ class StepHandler(Generic[TStep]):
               logging.info(f"Retrying step {step.name}...")
               continue
             elif action == "proceed":
-              logging.info(
-                  f"Proceeding to next step after manual intervention in {step.name}..."
-              )
+              logging.info(f"Proceeding to next step after manual intervention in {step.name}...")
               self._set_step_success(step)
               break
             else:  # "exit"
@@ -567,8 +564,7 @@ class EnvoyCommitIntegration(StepHandler[EnvoyCommitIntegrationStep]):
               if "<<<<<<<" in content or "=======" in content or ">>>>>>>" in content:
                 raise RuntimeError(
                     f"Merge conflict detected in shared file '{shared_file}'.\n"
-                    f"Conflict markers (<<<<<<<, =======, >>>>>>>) placed in {nighthawk_file}."
-                )
+                    f"Conflict markers (<<<<<<<, =======, >>>>>>>) placed in {nighthawk_file}.")
       case EnvoyCommitIntegrationStep.BAZEL_UPDATE_REQUIREMENTS:
         _run_command(["./ci/do_ci.sh", "fix_requirements"], cwd=self.nighthawk_git_repo_dir)
       case EnvoyCommitIntegrationStep.BUILD_NIGHTHAWK:
@@ -841,10 +837,8 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
       case NighthawkEnvoyUpdateStep.FIND_LATEST_TRIVIAL_MERGE:
         if not self.bisect:
           target_envoy_commit = self.envoy_commits_current_to_latest[-1]
-          logging.info(
-              f"Attempting to integrate latest Envoy commit: {target_envoy_commit} "
-              f"(https://github.com/envoyproxy/envoy/commit/{target_envoy_commit})"
-          )
+          logging.info(f"Attempting to integrate latest Envoy commit: {target_envoy_commit} "
+                       f"(https://github.com/envoyproxy/envoy/commit/{target_envoy_commit})")
           results = EnvoyCommitIntegration(
               nighthawk_git_repo_dir=self.nighthawk_git_repo_dir,
               envoy_git_repo_dir=self.envoy_git_repo_dir,
@@ -915,7 +909,8 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
             index_to_test = low + (high - low) // 2
 
           if not self.best_envoy_commit:
-            logging.info('Bisecting failed to find an Envoy commit that can be trivially integrated.')
+            logging.info(
+                'Bisecting failed to find an Envoy commit that can be trivially integrated.')
             self.best_envoy_commit = None
             self.first_non_trivial_commit = self.envoy_commits_current_to_latest[0]
             self._set_step_not_planned(NighthawkEnvoyUpdateStep.COMMIT_AND_PUSH_UPDATE_BRANCH)
