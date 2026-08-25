@@ -39,6 +39,7 @@ paths:
   # this exclusion prevents all of our files from being formatted              # unique
   # - .                                                                        # unique
   - bazel/external/c-ares/
+  - bazel/external/cargo/remote/
   - bazel/external/http_parser/
   - bazel/rbe/toolchains/configs/
   - bazel-
@@ -82,7 +83,7 @@ paths:
     include:
     - api/bazel/envoy_http_archive.bzl
     - api/bazel/repository_locations.bzl
-    - bazel/external/cargo/crates.bzl
+    - bazel/external/cargo/remote/defs.bzl
     - bazel/repository_locations.bzl
     - docs/bazel/repository_locations.bzl
 
@@ -210,9 +211,12 @@ paths:
     - source/extensions/load_balancing_policies/subset
     - source/extensions/matching
     - source/extensions/network/dns_resolver/cares/
+    - source/extensions/queue_policy/common/
+    - source/extensions/queue_policy/fifo/
     - source/extensions/quic/server_preferred_address
     - source/extensions/quic/connection_id_generator
     - source/extensions/resource_monitors
+    - source/extensions/router/cluster_specifiers/dynamic_modules/config.cc
     - source/extensions/router/cluster_specifiers/lua/lua_cluster_specifier.cc
     - source/extensions/string_matcher/lua/match.cc
     - source/extensions/tracers
@@ -259,6 +263,7 @@ paths:
     - test/extensions/bootstrap/wasm/test_data
     - .                                                                        # unique
     # TODO(915): Remove this inclusion when all direct references removed      # unique
+    - bazel/external/cargo/remote
 
   # Files that are allowed to use try without main thread assertion.
   raw_try:
@@ -490,4 +495,6 @@ visibility_excludes:
 - source/extensions/load_balancing_policies/random/
 - source/extensions/load_balancing_policies/cluster_provided/
 - source/extensions/filters/http/match_delegate/
+- source/extensions/transport_sockets/tls/
+- source/extensions/stat_sinks/metrics_service/BUILD
 - source/extensions/transport_sockets/tls/
