@@ -36,11 +36,11 @@ envoy_cc_library(
     deps = [
         "//api/distributor:distributor_grpc_lib",
         "//include/nighthawk/common:nighthawk_service_client",
-        "@com_github_grpc_grpc//:grpc++",
         "@envoy//source/common/common:assert_lib_with_external_headers",
         "@envoy//source/common/common:minimal_logger_lib_with_external_headers",
         "@envoy//source/common/common:statusor_lib_with_external_headers",
         "@envoy//source/common/protobuf:message_validator_lib_with_external_headers",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
+        "@grpc//:grpc++",
     ],
 )
