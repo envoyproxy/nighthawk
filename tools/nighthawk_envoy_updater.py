@@ -15,15 +15,12 @@ import datetime
 import enum
 import logging
 import pathlib
-import pprint
 import shlex
 import subprocess
 import sys
 import tempfile
 import traceback
 from typing import Any, Generic, TypeVar
-
-MAX_AGENT_ATTEMPTS = 3
 
 # Files Nighthawk re-uses verbatim from its Envoy dependency.
 COPIED_FILES: list[str] = [
@@ -182,16 +179,13 @@ class StepHandler(Generic[TStep]):
     step_enum: The enum type for the steps.
     steps: A list of all possible steps.
     step_tracker: A dictionary to track the status and errors of each step.
-    agent_invocation: Command template to invoke an LLM agent to fix step
-      failures.
   """
 
-  def __init__(self, step_enum: type[TStep], agent_invocation: str | None = None) -> None:
+  def __init__(self, step_enum: type[TStep]) -> None:
     """Initialize the StepHandler.
 
     Args:
       step_enum: The enum type defining the sequence of steps.
-      agent_invocation: Command template to invoke the agent.
     """
     self.steps = list(step_enum)
     self.step_tracker = {
@@ -205,7 +199,6 @@ class StepHandler(Generic[TStep]):
                 step_handler_state=None,
             ) for step in self.steps
     }
-    self.agent_invocation = agent_invocation
 
   def _set_step_success(self, step: TStep) -> None:
     """Set the status of a step to SUCCESS.
@@ -221,9 +214,6 @@ class StepHandler(Generic[TStep]):
         traceback=None,
         step_handler_state=None,
     )
-    for member in self.steps:
-      if self.step_tracker[member].step_status == StepStatus.CANCELLED:
-        self.step_tracker[member].step_status = StepStatus.PENDING
 
   def _set_step_failure(self, step: TStep, error: Exception) -> None:
     """Set the status of a step to FAILED and record the error.
@@ -261,26 +251,11 @@ class StepHandler(Generic[TStep]):
     del print_vars["step_tracker"]
     return print_vars
 
-  def _create_agent_prompt(self, step: TStep) -> str:
-    """Create a prompt file for the agent and return the path."""
-    return "\n".join([
-        "## Step handler state and tracker", "",
-        f"{format_step_result(self.step_tracker[step], True)}", "", "## Agent Instructions", "",
-        "Based on the context and instance state above, fix the files in the ",
-        "nighthawk_git_repo_dir to resolve the error. The primary goal ",
-        "is to make the failing step pass.\n",
-        "Avoid changing the behavior of Nighthawk's tests, if possible. ",
-        "Avoid changing compilation flags, if possible. ",
-        "The Envoy source code for the target commit is available in a tmp ",
-        "directory under the Nighthawk project root parent, ", "envoy_git_repo_dir.\n\n",
-        "Do **not** modify the Nighthawk git repo state (add, commit, etc.)"
-    ])
-
   def _run_step(self, step: TStep):
     """Run the logic for a single step. Must be overridden by subclasses."""
     raise RuntimeError("Must be overridden")
 
-  def _run_steps(self, prior_attempts: int = 0) -> dict[TStep, StepResult]:
+  def _run_steps(self) -> dict[TStep, StepResult]:
     """Run all pending steps in sequence.
 
     Returns:
@@ -300,21 +275,6 @@ class StepHandler(Generic[TStep]):
           subprocess.CalledProcessError,
       ) as e:
         self._set_step_failure(step, e)
-        if self.agent_invocation and prior_attempts < MAX_AGENT_ATTEMPTS:
-          prompt = self._create_agent_prompt(step)
-          logging.info(f"Step {step.name} failed. Invoking agent...")
-          logging.info(f"Agent prompt:\n\n{prompt}")
-          subprocess.run(
-              shlex.split(self.agent_invocation),
-              cwd=self.nighthawk_git_repo_dir.parent
-              if hasattr(self, "nighthawk_git_repo_dir") else None,
-              input=prompt,
-              text=True,
-              check=True,
-          )
-          self._set_step_success(step)
-          logging.info("Agent fix finished. Proceeding...")
-          self._run_steps(prior_attempts=prior_attempts + 1)
 
     return self.step_tracker
 
@@ -344,7 +304,6 @@ class EnvoyCommitIntegration(StepHandler[EnvoyCommitIntegrationStep]):
       envoy_git_repo_dir: pathlib.Path,
       current_envoy_commit: str,
       target_envoy_commit: str,
-      agent_invocation: str,
   ) -> None:
     """Initialize the EnvoyCommitIntegration.
 
@@ -353,10 +312,8 @@ class EnvoyCommitIntegration(StepHandler[EnvoyCommitIntegrationStep]):
       envoy_git_repo_dir: The path to the local Envoy git repository.
       current_envoy_commit: The current Envoy commit hash in Nighthawk.
       target_envoy_commit: The target Envoy commit hash to integrate.
-      agent_invocation: Command template to invoke an LLM agent to fix step
-        failures.
     """
-    super().__init__(EnvoyCommitIntegrationStep, agent_invocation)
+    super().__init__(EnvoyCommitIntegrationStep)
     self.nighthawk_git_repo_dir = nighthawk_git_repo_dir
     self.envoy_git_repo_dir = envoy_git_repo_dir
     self.current_envoy_commit = current_envoy_commit
@@ -510,7 +467,6 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
       envoy_clone_depth: int,
       sync_nighthawk_repo: bool,
       skip_bisection: bool,
-      agent_invocation: str | None = None,
   ) -> None:
     """Initialize the NighthawkEnvoyUpdate.
 
@@ -520,10 +476,8 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
       envoy_clone_depth: The depth to use when cloning the Envoy repository.
       sync_nighthawk_repo: Whether to sync the Nighthawk repo with upstream.
       skip_bisection: Whether to skip bisection and just use the latest commit.
-      agent_invocation: Command template to invoke an LLM agent to fix step
-        failures.
     """
-    super().__init__(NighthawkEnvoyUpdateStep, agent_invocation)
+    super().__init__(NighthawkEnvoyUpdateStep)
     self.nighthawk_git_repo_dir = nighthawk_git_repo_dir.expanduser()
     self.branch_name = branch_name
     self.envoy_clone_depth = envoy_clone_depth
@@ -759,7 +713,6 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
               envoy_git_repo_dir=self.envoy_git_repo_dir,
               current_envoy_commit=current_envoy_commit,
               target_envoy_commit=target_envoy_commit,
-              agent_invocation=self.agent_invocation,
           ).run_envoy_commit_integration_steps()
           self.envoy_commit_integration_results[target_envoy_commit] = results
 
@@ -873,12 +826,6 @@ def main() -> None:
       dest="skip_bisection",
       help=("If set, the script will only attempt to integrate the latest Envoy commit."),
   )
-  parser.add_argument(
-      "--agent_invocation",
-      type=str,
-      default=None,
-      help=("Command to invoke an LLM agent, e.g. 'gemini', with prompt by stdin."),
-  )
 
   args = parser.parse_args()
 
@@ -888,7 +835,6 @@ def main() -> None:
       envoy_clone_depth=args.envoy_clone_depth,
       sync_nighthawk_repo=args.sync_nighthawk_repo,
       skip_bisection=args.skip_bisection,
-      agent_invocation=args.agent_invocation,
   )
   try:
     updater.run_update()
