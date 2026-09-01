@@ -1,7 +1,10 @@
+load("@envoy//bazel:envoy_build_system.bzl", "envoy_package")
 load("@nh_pip3//:requirements.bzl", "requirement")
 load("@rules_python//python:defs.bzl", "py_test")
 
 licenses(["notice"])  # Apache 2
+
+envoy_package()
 
 py_test(
     name = "test_nighthawk_test_server",
