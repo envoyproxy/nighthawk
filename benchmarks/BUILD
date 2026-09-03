@@ -1,6 +1,9 @@
+load("@envoy//bazel:envoy_build_system.bzl", "envoy_package")
 load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
 
 licenses(["notice"])  # Apache 2
+
+envoy_package()
 
 py_binary(
     name = "benchmarks",
