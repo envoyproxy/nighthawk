@@ -14,9 +14,11 @@ from dataclasses import dataclass
 import datetime
 import enum
 import logging
+import os
 import pathlib
 import pprint
 import shlex
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -186,12 +188,18 @@ class StepHandler(Generic[TStep]):
       failures.
   """
 
-  def __init__(self, step_enum: type[TStep], agent_invocation: str | None = None) -> None:
+  def __init__(
+      self,
+      step_enum: type[TStep],
+      agent_invocation: str | None = None,
+      interactive: bool = True,
+  ) -> None:
     """Initialize the StepHandler.
 
     Args:
       step_enum: The enum type defining the sequence of steps.
       agent_invocation: Command template to invoke the agent.
+      interactive: Whether to pause and prompt the user when a step fails.
     """
     self.steps = list(step_enum)
     self.step_tracker = {
@@ -206,6 +214,7 @@ class StepHandler(Generic[TStep]):
             ) for step in self.steps
     }
     self.agent_invocation = agent_invocation
+    self.interactive = interactive
 
   def _set_step_success(self, step: TStep) -> None:
     """Set the status of a step to SUCCESS.
@@ -215,6 +224,24 @@ class StepHandler(Generic[TStep]):
     """
     self.step_tracker[step] = StepResult(
         step_status=StepStatus.SUCCESS,
+        cmd=None,
+        stdout=None,
+        stderr=None,
+        traceback=None,
+        step_handler_state=None,
+    )
+    for member in self.steps:
+      if self.step_tracker[member].step_status == StepStatus.CANCELLED:
+        self.step_tracker[member].step_status = StepStatus.PENDING
+
+  def _set_step_pending(self, step: TStep) -> None:
+    """Reset a step and any cancelled steps to PENDING.
+
+    Args:
+      step: The step to reset to pending.
+    """
+    self.step_tracker[step] = StepResult(
+        step_status=StepStatus.PENDING,
         cmd=None,
         stdout=None,
         stderr=None,
@@ -276,6 +303,52 @@ class StepHandler(Generic[TStep]):
         "Do **not** modify the Nighthawk git repo state (add, commit, etc.)"
     ])
 
+  def _prompt_interactive_failure(self, step: TStep, error: Exception) -> str:
+    """Prompt the user to resolve a step failure interactively.
+
+    Args:
+      step: The step that failed.
+      error: The exception that caused the failure.
+
+    Returns:
+      One of 'retry', 'proceed', or 'exit'.
+    """
+    print("\n" + "=" * 78)
+    print(f"STEP FAILED: {step.name}")
+    print("=" * 78)
+    cmd = getattr(error, "cmd", None)
+    if cmd:
+      print(f"Command: {cmd}")
+    stdout = getattr(error, "stdout", None)
+    if stdout:
+      print("Stdout:")
+      for line in stdout.strip().splitlines():
+        print(f"  {line}")
+    stderr = getattr(error, "stderr", None)
+    if stderr:
+      print("Stderr:")
+      for line in stderr.strip().splitlines():
+        print(f"  {line}")
+    print(f"Error: {error}")
+
+    repo_dir = getattr(self, "nighthawk_git_repo_dir", None)
+    if repo_dir:
+      print(f"\nRepository directory: {repo_dir}")
+    print("The process is paused to give you the opportunity to fix it.")
+    print("=" * 78)
+
+    while True:
+      choice = input("\nChoose action: [r]etry step / [p]roceed to next step / [e]xit process: "
+                    ).strip().lower()
+      if choice in ("r", "retry"):
+        return "retry"
+      elif choice in ("p", "proceed", "s", "skip", "next"):
+        return "proceed"
+      elif choice in ("e", "exit", "a", "abort", "q", "quit"):
+        return "exit"
+      else:
+        print(f"Invalid input '{choice}'. Please enter 'r' (retry), 'p' (proceed), or 'e' (exit).")
+
   def _run_step(self, step: TStep):
     """Run the logic for a single step. Must be overridden by subclasses."""
     raise RuntimeError("Must be overridden")
@@ -289,32 +362,50 @@ class StepHandler(Generic[TStep]):
     for step in self.steps:
       if self.step_tracker[step].step_status != StepStatus.PENDING:
         continue
-      logging.info(f"    {step}")
-      try:
-        self._run_step(step)
-        self._set_step_success(step)
-      except (
-          RuntimeError,
-          FileNotFoundError,
-          ValueError,
-          subprocess.CalledProcessError,
-      ) as e:
-        self._set_step_failure(step, e)
-        if self.agent_invocation and prior_attempts < MAX_AGENT_ATTEMPTS:
-          prompt = self._create_agent_prompt(step)
-          logging.info(f"Step {step.name} failed. Invoking agent...")
-          logging.info(f"Agent prompt:\n\n{prompt}")
-          subprocess.run(
-              shlex.split(self.agent_invocation),
-              cwd=self.nighthawk_git_repo_dir.parent
-              if hasattr(self, "nighthawk_git_repo_dir") else None,
-              input=prompt,
-              text=True,
-              check=True,
-          )
+      while True:
+        logging.info(f"    {step}")
+        try:
+          self._run_step(step)
           self._set_step_success(step)
-          logging.info("Agent fix finished. Proceeding...")
-          self._run_steps(prior_attempts=prior_attempts + 1)
+          break
+        except (
+            RuntimeError,
+            FileNotFoundError,
+            ValueError,
+            subprocess.CalledProcessError,
+        ) as e:
+          self._set_step_failure(step, e)
+          if self.agent_invocation and prior_attempts < MAX_AGENT_ATTEMPTS:
+            prompt = self._create_agent_prompt(step)
+            logging.info(f"Step {step.name} failed. Invoking agent...")
+            logging.info(f"Agent prompt:\n\n{prompt}")
+            subprocess.run(
+                shlex.split(self.agent_invocation),
+                cwd=self.nighthawk_git_repo_dir.parent
+                if hasattr(self, "nighthawk_git_repo_dir") else None,
+                input=prompt,
+                text=True,
+                check=True,
+            )
+            self._set_step_success(step)
+            logging.info("Agent fix finished. Proceeding...")
+            return self._run_steps(prior_attempts=prior_attempts + 1)
+
+          if self.interactive:
+            action = self._prompt_interactive_failure(step, e)
+            if action == "retry":
+              self._set_step_pending(step)
+              logging.info(f"Retrying step {step.name}...")
+              continue
+            elif action == "proceed":
+              logging.info(f"Proceeding to next step after manual intervention in {step.name}...")
+              self._set_step_success(step)
+              break
+            else:  # "exit"
+              logging.info(f"Exiting on user request during step {step.name}.")
+              return self.step_tracker
+          else:
+            return self.step_tracker
 
     return self.step_tracker
 
@@ -344,7 +435,8 @@ class EnvoyCommitIntegration(StepHandler[EnvoyCommitIntegrationStep]):
       envoy_git_repo_dir: pathlib.Path,
       current_envoy_commit: str,
       target_envoy_commit: str,
-      agent_invocation: str,
+      agent_invocation: str | None = None,
+      interactive: bool = True,
   ) -> None:
     """Initialize the EnvoyCommitIntegration.
 
@@ -355,8 +447,9 @@ class EnvoyCommitIntegration(StepHandler[EnvoyCommitIntegrationStep]):
       target_envoy_commit: The target Envoy commit hash to integrate.
       agent_invocation: Command template to invoke an LLM agent to fix step
         failures.
+      interactive: Whether to pause and prompt the user when a step fails.
     """
-    super().__init__(EnvoyCommitIntegrationStep, agent_invocation)
+    super().__init__(EnvoyCommitIntegrationStep, agent_invocation, interactive)
     self.nighthawk_git_repo_dir = nighthawk_git_repo_dir
     self.envoy_git_repo_dir = envoy_git_repo_dir
     self.current_envoy_commit = current_envoy_commit
@@ -365,10 +458,6 @@ class EnvoyCommitIntegration(StepHandler[EnvoyCommitIntegrationStep]):
 
   def _patch_merge_conflict_instructions(self) -> str:
     """Generate instructions for resolving merge conflicts in shared files.
-
-    Args:
-      envoy_commit: The Envoy commit hash that caused the conflict.
-      nighthawk_git_repo_dir: The path to the Nighthawk git repository.
 
     Returns:
       A string containing detailed instructions for the user.
@@ -384,19 +473,10 @@ class EnvoyCommitIntegration(StepHandler[EnvoyCommitIntegrationStep]):
         and marked inline with `# unique`.
 
         Integrating changes in shared files from commit {self.target_envoy_commit}
-        could not be completed programmatically because the patch file references a lined marked by
-        `# unique`. These failed patch files are recorded in the {self.nighthawk_git_repo_dir} repo
-        as ".rej" files.
+        could not be completed cleanly.
 
-        For merge conflicts, you must manually inspect Nighthawk's copy and
-        combine the Envoy changes with the old Nighthawk version into an updated
-        Nighthawk-specific "# unique" line. This is also an opportunity to critically
-        evaluate whether the existing `# unique` deviation from Envoy is still
-        necessary or whether it can be removed.
-
-        Merge failure files prefixed ".rej" have been inserted directly into the
-        local git Nighthawk repository. Reconcile the changes they describe into
-        the Nighthawk code, delete the ".rej" file, and commit the change.
+        For merge conflicts, inspect Nighthawk's copy and combine the Envoy changes
+        with the old Nighthawk version into an updated Nighthawk-specific "# unique" line.
         """
 
   def _run_step(self, step: EnvoyCommitIntegrationStep) -> None:
@@ -431,35 +511,60 @@ class EnvoyCommitIntegration(StepHandler[EnvoyCommitIntegrationStep]):
               f"{self.nighthawk_git_repo_dir}/{copied_file}",
           ])
       case EnvoyCommitIntegrationStep.PATCH_SHARED_FILES:
-        patch_file_name = (self.envoy_git_repo_dir / "nighthawk_shared_files.patch")
-        _run_command(
-            [
-                "git diff"
-                f" {self.current_envoy_commit}..{self.target_envoy_commit} -- " +
-                " ".join(SHARED_FILES) + f" > {patch_file_name}"
-            ],
-            cwd=self.envoy_git_repo_dir,
-            shell=True,
-        )
+        for shared_file in SHARED_FILES:
+          nighthawk_file = self.nighthawk_git_repo_dir / shared_file
+          if not nighthawk_file.exists():
+            continue
 
-        if pathlib.Path(patch_file_name).stat().st_size == 0:
-          # No changes for shared files in Envoy diff.
-          return
-
-        try:
-          # Note, we can't use `--3way` to produce inline merge markers as we're
-          # applying the patch to a non-Envoy repository. The 3 way merge relies on
-          # comparing the git repo hashes.
-          _run_command(
+          # Check if there are diffs for this shared file in Envoy.
+          diff_output = _run_command(
               [
-                  "git apply --reject --ignore-whitespace --ignore-space-change"
-                  f" < {patch_file_name}"
+                  "git",
+                  "diff",
+                  f"{self.current_envoy_commit}..{self.target_envoy_commit}",
+                  "--",
+                  shared_file,
               ],
-              cwd=self.nighthawk_git_repo_dir,
-              shell=True,
+              cwd=self.envoy_git_repo_dir,
           )
-        except subprocess.CalledProcessError as e:
-          raise RuntimeError(self._patch_merge_conflict_instructions()) from e
+          if not diff_output:
+            continue
+
+          with tempfile.NamedTemporaryFile() as base_file, tempfile.NamedTemporaryFile(
+          ) as target_file:
+            base_content = _run_command(
+                ["git", "show", f"{self.current_envoy_commit}:{shared_file}"],
+                cwd=self.envoy_git_repo_dir,
+            )
+            base_file.write(base_content.encode("utf-8"))
+            base_file.flush()
+
+            target_content = _run_command(
+                ["git", "show", f"{self.target_envoy_commit}:{shared_file}"],
+                cwd=self.envoy_git_repo_dir,
+            )
+            target_file.write(target_content.encode("utf-8"))
+            target_file.flush()
+
+            # Run 3-way merge on the file using git merge-file
+            res = subprocess.run(
+                [
+                    "git",
+                    "merge-file",
+                    str(nighthawk_file),
+                    base_file.name,
+                    target_file.name,
+                ],
+                cwd=self.nighthawk_git_repo_dir,
+                capture_output=True,
+                text=True,
+            )
+            if res.returncode != 0:
+              content = nighthawk_file.read_text(encoding="utf-8")
+              if "<<<<<<<" in content or "=======" in content or ">>>>>>>" in content:
+                raise RuntimeError(
+                    f"Merge conflict detected in shared file '{shared_file}'.\n"
+                    f"Conflict markers (<<<<<<<, =======, >>>>>>>) placed in {nighthawk_file}.")
       case EnvoyCommitIntegrationStep.BAZEL_UPDATE_REQUIREMENTS:
         _run_command(["./ci/do_ci.sh", "fix_requirements"], cwd=self.nighthawk_git_repo_dir)
       case EnvoyCommitIntegrationStep.BUILD_NIGHTHAWK:
@@ -509,7 +614,8 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
       branch_name: str,
       envoy_clone_depth: int,
       sync_nighthawk_repo: bool,
-      skip_bisection: bool,
+      bisect: bool = False,
+      interactive: bool = True,
       agent_invocation: str | None = None,
   ) -> None:
     """Initialize the NighthawkEnvoyUpdate.
@@ -519,15 +625,16 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
       branch_name: The name of the branch to create for the update.
       envoy_clone_depth: The depth to use when cloning the Envoy repository.
       sync_nighthawk_repo: Whether to sync the Nighthawk repo with upstream.
-      skip_bisection: Whether to skip bisection and just use the latest commit.
+      bisect: Whether to bisect Envoy commits to find the latest passing commit.
+      interactive: Whether to pause and prompt the user when a step fails.
       agent_invocation: Command template to invoke an LLM agent to fix step
         failures.
     """
-    super().__init__(NighthawkEnvoyUpdateStep, agent_invocation)
+    super().__init__(NighthawkEnvoyUpdateStep, agent_invocation, interactive)
     self.nighthawk_git_repo_dir = nighthawk_git_repo_dir.expanduser()
     self.branch_name = branch_name
     self.envoy_clone_depth = envoy_clone_depth
-    self.skip_bisection = skip_bisection
+    self.bisect = bisect
 
     self._envoy_tmp_dir = tempfile.TemporaryDirectory(dir=self.nighthawk_git_repo_dir.parent,
                                                       prefix="envoy-clone-")
@@ -723,72 +830,99 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
         if len(self.envoy_commits_current_to_latest) == 0:
           logging.info("Nighthawk is up-to-date, no new commits in Envoy repo.")
           sys.exit(0)
-        if self.skip_bisection:
+        if not self.bisect:
           self.envoy_commits_current_to_latest = [self.envoy_commits_current_to_latest[-1]]
       case NighthawkEnvoyUpdateStep.BAZEL_CLEAN_EXPUNGE:
         _run_command(["bazel", "clean", "--expunge"], cwd=self.nighthawk_git_repo_dir)
       case NighthawkEnvoyUpdateStep.FIND_LATEST_TRIVIAL_MERGE:
-        current_envoy_commit = self.current_envoy_commit
-        low = 0
-        high = len(self.envoy_commits_current_to_latest) - 1
-
-        index_to_test = high
-        while low <= high:
-          target_envoy_commit = self.envoy_commits_current_to_latest[index_to_test]
-
-          logging.info("Bisection status:")
-          for i, commit in enumerate(self.envoy_commits_current_to_latest):
-            status = None
-            results = self.envoy_commit_integration_results.get(commit, None)
-            # Log status if the commit has been tried
-            if results:
-              status = "PASSED" if is_clean_results(results) else "FAILED"
-            # Log status if the commit is about to be tried
-            elif target_envoy_commit == commit:
-              status = "---->"
-            elif i == 0 or i == len(self.envoy_commits_current_to_latest) - 1:
-              # Log status if the commit is the earliest or latest Envoy commit to try
-              status = " "
-            # Otherwise, don't log status.
-            if status:
-              logging.info(f"[{status:^8}]"
-                           f" https://github.com/envoyproxy/envoy/commit/{commit}")
-
+        if not self.bisect:
+          target_envoy_commit = self.envoy_commits_current_to_latest[-1]
+          logging.info(f"Attempting to integrate latest Envoy commit: {target_envoy_commit} "
+                       f"(https://github.com/envoyproxy/envoy/commit/{target_envoy_commit})")
           results = EnvoyCommitIntegration(
               nighthawk_git_repo_dir=self.nighthawk_git_repo_dir,
               envoy_git_repo_dir=self.envoy_git_repo_dir,
-              current_envoy_commit=current_envoy_commit,
+              current_envoy_commit=self.current_envoy_commit,
               target_envoy_commit=target_envoy_commit,
               agent_invocation=self.agent_invocation,
+              interactive=self.interactive,
           ).run_envoy_commit_integration_steps()
           self.envoy_commit_integration_results[target_envoy_commit] = results
 
-          clean_integration = is_clean_results(results)
-
-          if clean_integration:
-            current_envoy_commit = target_envoy_commit
+          if is_clean_results(results):
+            logging.info("Successfully integrated latest Envoy commit.")
             self.best_envoy_commit = target_envoy_commit
-            low = index_to_test + 1
+            self.first_non_trivial_commit = None
+            self._set_step_not_planned(NighthawkEnvoyUpdateStep.APPLY_PARTIAL_INTEGRATION)
           else:
+            logging.info("Integration of latest Envoy commit failed.")
+            self.best_envoy_commit = None
             self.first_non_trivial_commit = target_envoy_commit
-            high = index_to_test - 1
-
-          index_to_test = low + (high - low) // 2
-
-        if not self.best_envoy_commit:
-          logging.info('Bisecting failed to find an Envoy commit that can be trivially integrated.')
-          self.best_envoy_commit = None
-          self.first_non_trivial_commit = self.envoy_commits_current_to_latest[0]
-          self._set_step_not_planned(NighthawkEnvoyUpdateStep.COMMIT_AND_PUSH_UPDATE_BRANCH)
-        elif self.best_envoy_commit == self.envoy_commits_current_to_latest[-1]:
-          logging.info('The latest Envoy commit can be trivially integrated.')
-          self.best_envoy_commit = self.envoy_commits_current_to_latest[-1]
-          self.first_non_trivial_commit = None
-          self._set_step_not_planned(NighthawkEnvoyUpdateStep.APPLY_PARTIAL_INTEGRATION)
+            self._set_step_not_planned(NighthawkEnvoyUpdateStep.COMMIT_AND_PUSH_UPDATE_BRANCH)
         else:
-          logging.info(
-              'A trivially integrated Envoy commit was found and there are further Envoy commits after it.'
-          )
+          current_envoy_commit = self.current_envoy_commit
+          low = 0
+          high = len(self.envoy_commits_current_to_latest) - 1
+
+          index_to_test = high
+          while low <= high:
+            target_envoy_commit = self.envoy_commits_current_to_latest[index_to_test]
+
+            logging.info("Bisection status:")
+            for i, commit in enumerate(self.envoy_commits_current_to_latest):
+              status = None
+              results = self.envoy_commit_integration_results.get(commit, None)
+              # Log status if the commit has been tried
+              if results:
+                status = "PASSED" if is_clean_results(results) else "FAILED"
+              # Log status if the commit is about to be tried
+              elif target_envoy_commit == commit:
+                status = "---->"
+              elif i == 0 or i == len(self.envoy_commits_current_to_latest) - 1:
+                # Log status if the commit is the earliest or latest Envoy commit to try
+                status = " "
+              # Otherwise, don't log status.
+              if status:
+                logging.info(f"[{status:^8}]"
+                             f" https://github.com/envoyproxy/envoy/commit/{commit}")
+
+            results = EnvoyCommitIntegration(
+                nighthawk_git_repo_dir=self.nighthawk_git_repo_dir,
+                envoy_git_repo_dir=self.envoy_git_repo_dir,
+                current_envoy_commit=current_envoy_commit,
+                target_envoy_commit=target_envoy_commit,
+                agent_invocation=self.agent_invocation,
+                interactive=self.interactive,
+            ).run_envoy_commit_integration_steps()
+            self.envoy_commit_integration_results[target_envoy_commit] = results
+
+            clean_integration = is_clean_results(results)
+
+            if clean_integration:
+              current_envoy_commit = target_envoy_commit
+              self.best_envoy_commit = target_envoy_commit
+              low = index_to_test + 1
+            else:
+              self.first_non_trivial_commit = target_envoy_commit
+              high = index_to_test - 1
+
+            index_to_test = low + (high - low) // 2
+
+          if not self.best_envoy_commit:
+            logging.info(
+                'Bisecting failed to find an Envoy commit that can be trivially integrated.')
+            self.best_envoy_commit = None
+            self.first_non_trivial_commit = self.envoy_commits_current_to_latest[0]
+            self._set_step_not_planned(NighthawkEnvoyUpdateStep.COMMIT_AND_PUSH_UPDATE_BRANCH)
+          elif self.best_envoy_commit == self.envoy_commits_current_to_latest[-1]:
+            logging.info('The latest Envoy commit can be trivially integrated.')
+            self.best_envoy_commit = self.envoy_commits_current_to_latest[-1]
+            self.first_non_trivial_commit = None
+            self._set_step_not_planned(NighthawkEnvoyUpdateStep.APPLY_PARTIAL_INTEGRATION)
+          else:
+            logging.info(
+                'A trivially integrated Envoy commit was found and there are further Envoy commits after it.'
+            )
       case NighthawkEnvoyUpdateStep.COMMIT_AND_PUSH_UPDATE_BRANCH:
         if not self.best_envoy_commit:
           raise RuntimeError("Nighthawk repo attempting to commit when no trivial Envoy"
@@ -868,10 +1002,32 @@ def main() -> None:
             " the upstream remote before starting the update process."),
   )
   parser.add_argument(
-      "--skip_bisection",
+      "--bisect",
       action="store_true",
-      dest="skip_bisection",
-      help=("If set, the script will only attempt to integrate the latest Envoy commit."),
+      default=False,
+      dest="bisect",
+      help=("If set, the script will bisect Envoy commits to find the latest passing commit."
+            " By default, bisection is disabled and only the latest Envoy commit is attempted."),
+  )
+  parser.add_argument(
+      "--skip_bisection",
+      action="store_false",
+      dest="bisect",
+      help=argparse.SUPPRESS,
+  )
+  parser.add_argument(
+      "--interactive",
+      action="store_true",
+      default=True,
+      dest="interactive",
+      help=("Enable interactive mode on step failures (pause, fix, retry/proceed/exit)."
+            " Enabled by default."),
+  )
+  parser.add_argument(
+      "--no_interactive",
+      action="store_false",
+      dest="interactive",
+      help="Disable interactive mode on step failures.",
   )
   parser.add_argument(
       "--agent_invocation",
@@ -887,7 +1043,8 @@ def main() -> None:
       branch_name=args.branch_name,
       envoy_clone_depth=args.envoy_clone_depth,
       sync_nighthawk_repo=args.sync_nighthawk_repo,
-      skip_bisection=args.skip_bisection,
+      bisect=args.bisect,
+      interactive=args.interactive,
       agent_invocation=args.agent_invocation,
   )
   try:
