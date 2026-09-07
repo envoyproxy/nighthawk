@@ -74,6 +74,7 @@ message GrpcMode {
   enum GrpcModeOptions {
     NONE = 0;
     UNARY = 1;
+    BIDI_STREAM = 2;
   }
   GrpcModeOptions value = 1;
 }
@@ -201,7 +202,28 @@ message CommandLineOptions {
   // by the grpc-status trailer (or header for trailers-only responses) instead of the HTTP status
   // alone. See the benchmark.grpc_error and benchmark.grpc_status.<code> counters and the
   // benchmark_http_client.latency_grpc_ok statistic.
+  // BIDI_STREAM: gRPC bidirectional streaming, see GrpcStreamOptions.
   GrpcMode grpc_mode = 121;
+
+  // Parameters of the BIDI_STREAM grpc_mode (--grpc-mode bidi-stream). Nighthawk opens `streams`
+  // long-lived bidi streams (spread evenly over the workers, so `streams` must be divisible by
+  // the concurrency) to the URI path and sends the request_options.request_body message on them
+  // at an aggregate rate of requests_per_second messages per second, round-robin over the streams,
+  // on an absolute schedule (late sends fire immediately and are never rescheduled). The server is
+  // expected to echo one message per message, in order, on the same stream; the latency of message
+  // k is measured from its send to the arrival of echo k (benchmark_stream.message_latency). When a
+  // stream already has max_inflight_per_stream unanswered messages, a scheduled send is dropped and
+  // counted in benchmark.stream_deferred instead of being queued. At the end of the run every
+  // stream is half-closed and echoes are collected for drain_duration before reporting.
+  message GrpcStreamOptions {
+    // Number of bidi streams to open in total. Default: 20.
+    google.protobuf.UInt32Value streams = 1 [(validate.rules).uint32 = {gte: 1}];
+    // Maximum unanswered messages per stream before scheduled sends are deferred. Default: 256.
+    google.protobuf.UInt32Value max_inflight_per_stream = 2 [(validate.rules).uint32 = {gte: 1}];
+    // How long to wait for outstanding echoes after half-closing the streams. Default: 500ms.
+    google.protobuf.Duration drain_duration = 3 [(validate.rules).duration.gte.nanos = 0];
+  }
+  GrpcStreamOptions grpc_stream = 122;
 
   // Allows user to set specific HTTP3 protocol options.
   // Only valid when protocol is set to HTTP3.

@@ -68,6 +68,9 @@ public:
   uint32_t requestBodySize() const override { return request_body_size_; };
   const std::string& requestBody() const override { return request_body_; };
   nighthawk::client::GrpcMode::GrpcModeOptions grpcMode() const override { return grpc_mode_; };
+  uint32_t streams() const override { return streams_; };
+  uint32_t maxInflightPerStream() const override { return max_inflight_per_stream_; };
+  std::chrono::nanoseconds streamDrainDuration() const override { return stream_drain_duration_; };
   const envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext&
   tlsContext() const override {
     return tls_context_;
@@ -175,6 +178,10 @@ private:
   std::string request_body_;
   nighthawk::client::GrpcMode::GrpcModeOptions grpc_mode_{nighthawk::client::GrpcMode::NONE};
   bool grpcEnabled() const { return grpc_mode_ != nighthawk::client::GrpcMode::NONE; }
+  bool grpcStreamEnabled() const { return grpc_mode_ == nighthawk::client::GrpcMode::BIDI_STREAM; }
+  uint32_t streams_{20};
+  uint32_t max_inflight_per_stream_{256};
+  std::chrono::nanoseconds stream_drain_duration_{std::chrono::milliseconds(500)};
 
   /**
    * Reads the whole file at path into a string (binary safe).
@@ -182,6 +189,11 @@ private:
    * maximum request body size.
    */
   static std::string readRequestBodyFile(const std::string& path);
+  /**
+   * In --grpc-mode bidi-stream, raises max_pending_requests_ to at least the number of streams per
+   * worker so that opening all streams at once does not trip the pending-request circuit breaker.
+   */
+  void raisePendingRequestsForStreams();
   envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext tls_context_;
   std::optional<envoy::config::core::v3::BindConfig> upstream_bind_config_;
   std::optional<envoy::config::core::v3::TransportSocket> transport_socket_;

@@ -14,6 +14,7 @@
 #include "api/client/options.pb.h"
 
 #include "source/client/benchmark_client_impl.h"
+#include "source/client/grpc_stream_client_impl.h"
 #include "source/client/output_collector_impl.h"
 #include "source/client/output_formatter_impl.h"
 #include "source/common/platform_util_impl.h"
@@ -42,6 +43,14 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
     absl::string_view cluster_name, int worker_id, RequestSource& request_generator,
     std::vector<UserDefinedOutputNamePluginPair> user_defined_output_plugins) const {
   StatisticFactoryImpl statistic_factory(options_);
+  if (options_.grpcMode() == nighthawk::client::GrpcMode::BIDI_STREAM) {
+    const uint32_t concurrency = std::stoi(options_.concurrency());
+    auto stream_client = std::make_unique<GrpcStreamBenchmarkClientImpl>(
+        api, dispatcher, scope, std::make_unique<SinkableHdrStatistic>(scope, worker_id),
+        cluster_manager, cluster_name, request_generator.get(), options_.streams() / concurrency,
+        options_.maxInflightPerStream(), options_.streamDrainDuration(), options_.timeout());
+    return stream_client;
+  }
   // While we lack options to configure which statistic backend goes where, we directly pass
   // StreamingStatistic for the stats that track response sizes. Ideally we would have options
   // for this to route the right stat to the right backend (HdrStatistic, SimpleStatistic,
@@ -100,7 +109,11 @@ SequencerPtr SequencerFactoryImpl::create(Envoy::TimeSource& time_source,
 
     // If no rate limiter plugin is set, use the default linear rate limiter.
   } else {
-    Frequency frequency(options_.requestsPerSecond());
+    // In --grpc-mode bidi-stream --rps is the aggregate message rate, divided over the workers.
+    const uint32_t rps = options_.grpcMode() == nighthawk::client::GrpcMode::BIDI_STREAM
+                             ? options_.requestsPerSecond() / std::stoi(options_.concurrency())
+                             : options_.requestsPerSecond();
+    Frequency frequency(rps);
     rate_limiter = std::make_unique<ScheduledStartingRateLimiter>(
         std::make_unique<LinearRateLimiter>(time_source, frequency), scheduled_starting_time);
     const uint64_t burst_size = options_.burstSize();

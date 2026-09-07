@@ -73,6 +73,18 @@ public:
    * plain HTTP.
    */
   virtual nighthawk::client::GrpcMode::GrpcModeOptions grpcMode() const PURE;
+  /**
+   * @return uint32_t total number of gRPC bidi streams to open (BIDI_STREAM grpc mode).
+   */
+  virtual uint32_t streams() const PURE;
+  /**
+   * @return uint32_t maximum unanswered messages per stream before sends are deferred.
+   */
+  virtual uint32_t maxInflightPerStream() const PURE;
+  /**
+   * @return std::chrono::nanoseconds time to wait for echoes after half-closing the streams.
+   */
+  virtual std::chrono::nanoseconds streamDrainDuration() const PURE;
   virtual const envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext&
   tlsContext() const PURE;
   virtual const std::optional<envoy::config::core::v3::BindConfig>& upstreamBindConfig() const PURE;

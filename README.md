@@ -189,9 +189,12 @@ bazel-bin/nighthawk_client  [--user-defined-plugin-config <string>] ...
 <uint32_t>] [--max-pending-requests
 <uint32_t>] [--transport-socket <string>]
 [--upstream-bind-config <string>]
-[--tls-context <string>] [--grpc-mode
-<unary>] [--request-body-file <string>]
-[--request-body-size <uint32_t>]
+[--tls-context <string>]
+[--stream-drain-duration <string>]
+[--max-inflight-per-stream <uint32_t>]
+[--streams <uint32_t>] [--grpc-mode <unary
+|bidi-stream>] [--request-body-file
+<string>] [--request-body-size <uint32_t>]
 [--request-header <string>] ...
 [--request-method <GET|HEAD|POST|PUT|DELETE
 |CONNECT|OPTIONS|TRACE>] [--address-family
@@ -375,18 +378,44 @@ in json. Mutually exclusive with --transport-socket. Example (json):
 {common_tls_context:{tls_params:{cipher_suites:["-ALL:ECDHE-RSA-AES128
 -SHA"]}}}
 
---grpc-mode <unary>
-gRPC load generation mode. Possible values: [unary]. 'unary' issues
-gRPC unary calls instead of plain HTTP requests: implies --protocol
-http2 (prior knowledge on http:// URIs) and --request-method POST,
-adds 'content-type: application/grpc' and 'te: trailers', frames the
---request-body-file bytes as a gRPC message, and scores responses on
-the grpc-status trailer: status 0 counts as success (also recorded in
-the benchmark_http_client.latency_grpc_ok statistic), any other or
-missing status increments benchmark.grpc_error and
-benchmark.grpc_status.<code> and is not counted as a 2xx success. The
-URI path (or a ':path' request header) selects the method, e.g.
-http://host:8080/pkg.Service/Method.
+--stream-drain-duration <string>
+Time to wait for outstanding echoes after half-closing the streams in
+--grpc-mode bidi-stream, as a duration string (default: 0.5s).
+
+--max-inflight-per-stream <uint32_t>
+Maximum unanswered messages per stream in --grpc-mode bidi-stream
+before scheduled sends are deferred (default: 256).
+
+--streams <uint32_t>
+Total number of gRPC bidi streams to open in --grpc-mode bidi-stream
+mode (default: 20).
+
+--grpc-mode <unary|bidi-stream>
+gRPC load generation mode. Possible values: [unary, bidi-stream].
+'unary' issues gRPC unary calls instead of plain HTTP requests:
+implies --protocol http2 (prior knowledge on http:// URIs) and
+--request-method POST, adds 'content-type: application/grpc' and 'te:
+trailers', frames the --request-body-file bytes as a gRPC message, and
+scores responses on the grpc-status trailer: status 0 counts as
+success (also recorded in the benchmark_http_client.latency_grpc_ok
+statistic), any other or missing status increments
+benchmark.grpc_error and benchmark.grpc_status.<code> and is not
+counted as a 2xx success. The URI path (or a ':path' request header)
+selects the method, e.g. http://host:8080/pkg.Service/Method.
+'bidi-stream' opens --streams long-lived bidi streams to the URI path,
+spread evenly over the workers, and sends the --request-body-file
+message on them at an AGGREGATE rate of --rps messages per second
+(round-robin over the streams, absolute schedule: late sends fire
+immediately and are never rescheduled). The server must echo one
+message per message in order on the same stream; message latency is
+measured from send to echo (benchmark_stream.message_latency). Sends
+scheduled for a stream that already has --max-inflight-per-stream
+unanswered messages are dropped and counted in
+benchmark.stream_deferred. Requires a numeric --concurrency that
+divides --streams and --rps. At the end every stream is half-closed
+and echoes are collected for --stream-drain-duration; the grpc-status
+of each closed stream is counted in
+benchmark.stream_grpc_status.<code>.
 
 --request-body-file <string>
 Path to a file whose bytes are sent verbatim as the request body on

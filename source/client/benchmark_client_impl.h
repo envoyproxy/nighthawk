@@ -134,6 +134,8 @@ public:
   void setGrpc(bool grpc) { grpc_ = grpc; }
 
   // BenchmarkClient
+  void prepare() override {}
+  void finish() override {}
   void terminate() override;
   StatisticPtrMap statistics() const override;
   bool shouldMeasureLatencies() const override { return measure_latencies_; }

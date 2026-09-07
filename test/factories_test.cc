@@ -6,6 +6,7 @@
 #include <chrono>
 
 #include "source/client/factories_impl.h"
+#include "source/client/grpc_stream_client_impl.h"
 #include "source/common/request_source_impl.h"
 
 #include "test/mocks/client/mock_benchmark_client.h"
@@ -53,6 +54,27 @@ TEST_F(FactoriesTest, CreateBenchmarkClient) {
       factory.create(*api_, dispatcher_, stats_scope_, cluster_manager, tracer_, "foocluster",
                      /*worker_id=*/0, request_generator, {});
   EXPECT_NE(nullptr, benchmark_client.get());
+}
+
+TEST_F(FactoriesTest, CreateGrpcStreamBenchmarkClient) {
+  BenchmarkClientFactoryImpl factory(options_);
+  Envoy::Upstream::ClusterManagerPtr cluster_manager;
+  EXPECT_CALL(options_, grpcMode())
+      .WillRepeatedly(Return(nighthawk::client::GrpcMode::BIDI_STREAM));
+  EXPECT_CALL(options_, concurrency()).WillRepeatedly(Return("2"));
+  EXPECT_CALL(options_, streams()).WillRepeatedly(Return(20));
+  EXPECT_CALL(options_, maxInflightPerStream()).WillRepeatedly(Return(256));
+  EXPECT_CALL(options_, streamDrainDuration())
+      .WillRepeatedly(Return(std::chrono::nanoseconds(std::chrono::milliseconds(500))));
+  EXPECT_CALL(options_, timeout()).WillRepeatedly(Return(std::chrono::seconds(30)));
+  StaticRequestSourceImpl request_generator(
+      std::make_unique<Envoy::Http::TestRequestHeaderMapImpl>());
+  auto benchmark_client =
+      factory.create(*api_, dispatcher_, stats_scope_, cluster_manager, tracer_, "foocluster",
+                     /*worker_id=*/0, request_generator, {});
+  ASSERT_NE(nullptr, benchmark_client.get());
+  EXPECT_NE(nullptr, dynamic_cast<GrpcStreamBenchmarkClientImpl*>(benchmark_client.get()));
+  EXPECT_EQ(1, benchmark_client->statistics().count("benchmark_stream.message_latency"));
 }
 
 TEST_F(FactoriesTest, CreateRequestSourcePluginWithWorkingJsonReturnsWorkingRequestSource) {
@@ -250,6 +272,7 @@ public:
     EXPECT_CALL(options_, rateLimiterPluginConfig())
         .WillOnce(ReturnRef(rate_limiter_plugin_config));
     EXPECT_CALL(options_, requestsPerSecond()).WillOnce(Return(1));
+    EXPECT_CALL(options_, grpcMode());
     EXPECT_CALL(options_, burstSize()).WillOnce(Return(2));
     EXPECT_CALL(options_, sequencerIdleStrategy())
         .Times(1)
