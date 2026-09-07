@@ -411,6 +411,57 @@ TEST_F(OptionsImplTest, RequestBodyFileAndRequestBodySizeAreMutuallyExclusive) {
                           MalformedArgvException, "mutually exclusive");
 }
 
+TEST_F(OptionsImplTest, GrpcImpliesHttp2AndPostAndRoundTrips) {
+  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(
+      fmt::format("{} --grpc-mode unary {}", client_name_, good_test_uri_));
+  EXPECT_EQ(nighthawk::client::GrpcMode::UNARY, options->grpcMode());
+  EXPECT_EQ(Envoy::Http::Protocol::Http2, options->protocol());
+  EXPECT_EQ(envoy::config::core::v3::RequestMethod::POST, options->requestMethod());
+
+  CommandLineOptionsPtr cmd = options->toCommandLineOptions();
+  EXPECT_EQ(nighthawk::client::GrpcMode::UNARY, cmd->grpc_mode().value());
+  EXPECT_EQ(nighthawk::client::Protocol::HTTP2, cmd->protocol().value());
+  OptionsImpl round_trip(*cmd);
+  EXPECT_EQ(nighthawk::client::GrpcMode::UNARY, round_trip.grpcMode());
+  EXPECT_EQ(Envoy::Http::Protocol::Http2, round_trip.protocol());
+  EXPECT_EQ(envoy::config::core::v3::RequestMethod::POST, round_trip.requestMethod());
+
+  // Explicit http2 and the deprecated --h2 spelling are accepted too.
+  EXPECT_EQ(nighthawk::client::GrpcMode::UNARY,
+            TestUtility::createOptionsImpl(fmt::format("{} --grpc-mode unary --protocol http2 {}",
+                                                       client_name_, good_test_uri_))
+                ->grpcMode());
+  EXPECT_EQ(nighthawk::client::GrpcMode::UNARY,
+            TestUtility::createOptionsImpl(
+                fmt::format("{} --grpc-mode unary --h2 {}", client_name_, good_test_uri_))
+                ->grpcMode());
+}
+
+TEST_F(OptionsImplTest, GrpcFromProtoWithoutProtocolImpliesHttp2) {
+  nighthawk::client::CommandLineOptions cmd;
+  cmd.mutable_uri()->set_value(good_test_uri_);
+  cmd.mutable_grpc_mode()->set_value(nighthawk::client::GrpcMode::UNARY);
+  OptionsImpl options(cmd);
+  EXPECT_EQ(nighthawk::client::GrpcMode::UNARY, options.grpcMode());
+  EXPECT_EQ(Envoy::Http::Protocol::Http2, options.protocol());
+  EXPECT_EQ(envoy::config::core::v3::RequestMethod::POST, options.requestMethod());
+}
+
+TEST_F(OptionsImplTest, GrpcRejectsOtherProtocolsAndMethods) {
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(
+          fmt::format("{} --grpc-mode unary --protocol http1 {}", client_name_, good_test_uri_)),
+      MalformedArgvException, "--grpc-mode requires --protocol http2");
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(
+          fmt::format("{} --grpc-mode unary --protocol http3 {}", client_name_, good_test_uri_)),
+      MalformedArgvException, "--grpc-mode requires --protocol http2");
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(fmt::format("{} --grpc-mode unary --request-method GET {}",
+                                                 client_name_, good_test_uri_)),
+      MalformedArgvException, "--grpc-mode requires --request-method POST");
+}
+
 TEST_F(OptionsImplTest, RequestSource) {
   Envoy::MessageUtil util;
   const std::string request_source = "127.9.9.4:32323";

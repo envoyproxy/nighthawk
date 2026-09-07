@@ -161,6 +161,12 @@ py_library(
 )
 
 py_library(
+    name = "test_grpc_unary_lib",
+    srcs = ["test_grpc_unary.py"],
+    deps = [":integration_test_base"],
+)
+
+py_library(
     name = "test_rate_limiter_plugin_lib",
     srcs = ["test_rate_limiter_plugin.py"],
     deps = [":integration_test_base"],
@@ -187,6 +193,7 @@ py_binary(
     deps = [
         ":test_connection_management_lib",
         ":test_grpc_service_lib",
+        ":test_grpc_unary_lib",
         ":test_integration_basics_lib",
         ":test_integration_zipkin_lib",
         ":test_output_transform_lib",

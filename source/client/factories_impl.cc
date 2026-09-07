@@ -57,6 +57,7 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
                                      std::make_unique<SinkableHdrStatistic>(scope, worker_id),
                                      std::make_unique<SinkableHdrStatistic>(scope, worker_id),
                                      std::make_unique<SinkableHdrStatistic>(scope, worker_id),
+                                     std::make_unique<SinkableHdrStatistic>(scope, worker_id),
                                      std::make_unique<SinkableHdrStatistic>(scope, worker_id));
   auto benchmark_client = std::make_unique<BenchmarkClientHttpImpl>(
       api, dispatcher, scope, statistic, options_.protocol(), cluster_manager, tracer, cluster_name,
@@ -67,6 +68,7 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
   benchmark_client->setMaxActiveRequests(options_.maxActiveRequests());
   benchmark_client->setMaxRequestsPerConnection(options_.maxRequestsPerConnection());
   benchmark_client->setTimeout(options_.timeout());
+  benchmark_client->setGrpc(options_.grpcMode() != nighthawk::client::GrpcMode::NONE);
 
   return benchmark_client;
 }
@@ -208,7 +210,12 @@ RequestSourceFactoryImpl::create(const Envoy::Upstream::ClusterManagerPtr& clust
 
   header->setMethod(envoy::config::core::v3::RequestMethod_Name(options_.requestMethod()));
   std::string body = options_.requestBody();
-  if (!body.empty()) {
+  if (options_.grpcMode() != nighthawk::client::GrpcMode::NONE) {
+    // gRPC over HTTP/2: no content-length, message framed on the wire.
+    header->setReferenceContentType(Envoy::Http::Headers::get().ContentTypeValues.Grpc);
+    header->setReferenceTE(Envoy::Http::Headers::get().TEValues.Trailers);
+    body = grpcFrameMessage(body);
+  } else if (!body.empty()) {
     header->setContentLength(body.size());
   } else {
     const uint32_t content_length = options_.requestBodySize();
