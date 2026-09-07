@@ -382,6 +382,35 @@ TEST_F(OptionsImplTest, AlmostAll) {
 
 // We test RequestSource here and not in All above because it is exclusive to some of the other
 // options.
+TEST_F(OptionsImplTest, RequestBodyFileIsReadVerbatimAndRoundTrips) {
+  const std::string body("\x00\x01{\"name\":\"world\"}\xff\n", 20);
+  const std::string path = TestEnvironment::writeStringToFileForTest("request_body.bin", body);
+  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(
+      fmt::format("{} --request-body-file {} {}", client_name_, path, good_test_uri_));
+  EXPECT_EQ(body, options->requestBody());
+  EXPECT_EQ(0, options->requestBodySize());
+
+  CommandLineOptionsPtr cmd = options->toCommandLineOptions();
+  EXPECT_EQ(body, cmd->request_options().request_body());
+  OptionsImpl round_trip(*cmd);
+  EXPECT_EQ(body, round_trip.requestBody());
+}
+
+TEST_F(OptionsImplTest, RequestBodyFileMissing) {
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(fmt::format("{} --request-body-file {} {}", client_name_,
+                                                 "/does/not/exist.bin", good_test_uri_)),
+      MalformedArgvException, "Failed to open --request-body-file");
+}
+
+TEST_F(OptionsImplTest, RequestBodyFileAndRequestBodySizeAreMutuallyExclusive) {
+  const std::string path = TestEnvironment::writeStringToFileForTest("request_body2.bin", "abc");
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(
+                              fmt::format("{} --request-body-file {} --request-body-size 3 {}",
+                                          client_name_, path, good_test_uri_)),
+                          MalformedArgvException, "mutually exclusive");
+}
+
 TEST_F(OptionsImplTest, RequestSource) {
   Envoy::MessageUtil util;
   const std::string request_source = "127.9.9.4:32323";

@@ -64,6 +64,10 @@ public:
   virtual envoy::config::core::v3::RequestMethod requestMethod() const PURE;
   virtual std::vector<std::string> requestHeaders() const PURE;
   virtual uint32_t requestBodySize() const PURE;
+  /**
+   * @return const std::string& raw request body bytes (empty when not configured).
+   */
+  virtual const std::string& requestBody() const PURE;
   virtual const envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext&
   tlsContext() const PURE;
   virtual const std::optional<envoy::config::core::v3::BindConfig>& upstreamBindConfig() const PURE;

@@ -3,8 +3,11 @@
 #include <cerrno>
 #include <cstdint>
 #include <exception>
+#include <fstream>
+#include <iterator>
 #include <optional>
 
+#include "external/envoy/source/common/common/utility.h"
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"
 #include "external/envoy/source/common/protobuf/utility.h"
@@ -192,6 +195,12 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "Size of the request body to send. NH will send a number of consecutive 'a' characters equal "
       "to the number specified here. (default: 0, no data).",
       false, 0, "uint32_t", cmd);
+  TCLAP::ValueArg<std::string> request_body_file(
+      "", "request-body-file",
+      "Path to a file whose bytes are sent verbatim as the request body on every request (binary "
+      "safe). No Content-Type is set for it; pass one with --request-header if needed. Mutually "
+      "exclusive with --request-body-size.",
+      false, "", "string", cmd);
 
   TCLAP::ValueArg<std::string> tls_context(
       "", "tls-context",
@@ -533,6 +542,9 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   }
   TCLAP_SET_IF_SPECIFIED(request_headers, request_headers_);
   TCLAP_SET_IF_SPECIFIED(request_body_size, request_body_size_);
+  if (request_body_file.isSet()) {
+    request_body_ = readRequestBodyFile(request_body_file.getValue());
+  }
   TCLAP_SET_IF_SPECIFIED(max_pending_requests, max_pending_requests_);
   TCLAP_SET_IF_SPECIFIED(max_active_requests, max_active_requests_);
   TCLAP_SET_IF_SPECIFIED(max_requests_per_connection, max_requests_per_connection_);
@@ -895,6 +907,7 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
     }
     request_body_size_ =
         PROTOBUF_GET_WRAPPED_OR_DEFAULT(request_options, request_body_size, request_body_size_);
+    request_body_ = request_options.request_body();
   } else if (options.has_request_source()) {
     const auto& request_source_options = options.request_source();
     request_source_ = request_source_options.uri();
@@ -1012,7 +1025,29 @@ void OptionsImpl::setNonTrivialDefaults() {
   jitter_uniform_ = std::chrono::nanoseconds(0);
 }
 
+std::string OptionsImpl::readRequestBodyFile(const std::string& path) {
+  std::ifstream file(path, std::ios::in | std::ios::binary);
+  if (!file) {
+    throw MalformedArgvException(fmt::format("Failed to open --request-body-file '{}': {}", path,
+                                             Envoy::errorDetails(errno)));
+  }
+  std::string contents((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+  if (file.bad()) {
+    throw MalformedArgvException(fmt::format("Failed to read --request-body-file '{}'", path));
+  }
+  if (contents.size() > largest_acceptable_uint32_option_value) {
+    throw MalformedArgvException(fmt::format(
+        "--request-body-file '{}' is larger than the maximum request body size of {} bytes", path,
+        largest_acceptable_uint32_option_value));
+  }
+  return contents;
+}
+
 void OptionsImpl::validate() const {
+  if (!request_body_.empty() && request_body_size_ > 0) {
+    throw MalformedArgvException(
+        "--request-body-file and --request-body-size are mutually exclusive");
+  }
   if (h2_use_multiple_connections_) {
     throw MalformedArgvException(
         "The experimental_h2_use_multiple_connections option is deprecated, set "
@@ -1138,6 +1173,9 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
         throw MalformedArgvException("A ':' is required in a header.");
       }
       request_options->mutable_request_body_size()->set_value(requestBodySize());
+    }
+    if (!request_body_.empty()) {
+      request_options->set_request_body(request_body_);
     }
   }
 

@@ -155,6 +155,12 @@ py_library(
 )
 
 py_library(
+    name = "test_request_body_file_lib",
+    srcs = ["test_request_body_file.py"],
+    deps = [":integration_test_base"],
+)
+
+py_library(
     name = "test_rate_limiter_plugin_lib",
     srcs = ["test_rate_limiter_plugin.py"],
     deps = [":integration_test_base"],
@@ -186,6 +192,7 @@ py_binary(
         ":test_output_transform_lib",
         ":test_rate_limiter_plugin_lib",
         ":test_remote_execution_lib",
+        ":test_request_body_file_lib",
         ":test_request_source_plugin_lib",
         ":test_user_defined_output_plugins_lib",
     ],
