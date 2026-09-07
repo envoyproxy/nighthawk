@@ -1076,8 +1076,17 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
       }
     }
   };
-  encap_runner_ = std::make_shared<EncapsulationSubProcessRunner>(nigthawk_fn, envoy_routine);
-  auto status = encap_runner_->Run();
+  absl::Status status = absl::OkStatus();
+  if (!options_.tunnelUri().empty()) {
+    encap_runner_ = std::make_shared<EncapsulationSubProcessRunner>(nigthawk_fn, envoy_routine);
+    status = encap_runner_->Run();
+  } else {
+    // Without a tunnel there is nothing for a child process to do, so do not fork: the parent is
+    // already multithreaded here (the signal handler thread at least), and a fork of a
+    // multithreaded process can deadlock the child on a lock owned by a thread that does not
+    // exist in it, before it ever signals the parent.
+    nigthawk_fn();
+  }
 
   if (!result) {
     return result;

@@ -14,6 +14,7 @@ Version history
 
 ### Changelist
 
+- `nighthawk_client` no longer forks a child process unless `--tunnel-uri` is configured. The fork of the already multithreaded client could deadlock the child before it signaled the parent, leaving the client hung at startup without sending any request.
 - Introducing termination predicates (https://github.com/envoyproxy/nighthawk/pull/167) and https://github.com/envoyproxy/nighthawk/pull/176
 
 0.2 (July 16, 2019)
