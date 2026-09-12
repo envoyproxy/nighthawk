@@ -192,6 +192,15 @@ TEST_P(HttpTestServerIntegrationTest, TestEchoHeaders) {
   }
 }
 
+TEST_P(HttpTestServerIntegrationTest, TestRequestTrailers) {
+  initializeFilterConfiguration(kDefaultProto);
+  auto response = getResponseWithTrailers(ResponseOrigin::EXTENSION);
+  ASSERT_TRUE(response->waitForEndStream());
+  ASSERT_TRUE(response->complete());
+  EXPECT_EQ("200", response->headers().Status()->value().getStringView());
+  EXPECT_EQ(std::string(10, 'a'), response->body());
+}
+
 TEST_P(HttpTestServerIntegrationTest, NoNoStaticConfigHeaderConfig) {
   initializeFilterConfiguration(kNoConfigProto);
   Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
