@@ -7,8 +7,8 @@
 
 #include "nighthawk/common/exception.h"
 
-#include "external/envoy/source/common/common/logger.h"
-#include "external/envoy/source/common/common/thread.h"
+#include "source/common/common/logger.h"
+#include "source/common/common/thread.h"
 
 #include "api/client/service.pb.h"
 

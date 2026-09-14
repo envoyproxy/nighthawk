@@ -9,11 +9,11 @@
 #include "nighthawk/client/options.h"
 #include "nighthawk/common/uri.h"
 
-#include "external/envoy/source/common/common/posix/thread_impl.h"
-#include "external/envoy/source/common/common/statusor.h"
-#include "external/envoy/source/common/event/dispatcher_impl.h"
-#include "external/envoy/source/common/network/dns_resolver/dns_factory_util.h"
-#include "external/envoy_api/envoy/config/bootstrap/v3/bootstrap.pb.h"
+#include "envoy/config/bootstrap/v3/bootstrap.pb.h"
+#include "source/common/common/posix/thread_impl.h"
+#include "source/common/common/statusor.h"
+#include "source/common/event/dispatcher_impl.h"
+#include "source/common/network/dns_resolver/dns_factory_util.h"
 
 #include "source/common/uri_impl.h"
 

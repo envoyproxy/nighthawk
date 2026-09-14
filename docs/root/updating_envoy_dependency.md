@@ -98,70 +98,27 @@ Click the link in the terminal to double check the date of the Envoy commit to w
 
 (See **Example commands** for shell commands covering this entire step.)
 
-Edit [bazel/repositories.bzl](/bazel/repositories.bzl):
+Edit [MODULE.bazel](/MODULE.bazel):
 
-1. Update `ENVOY_COMMIT` to the latest Envoy's commit from
-   [this page](https://github.com/envoyproxy/envoy/commits/main). (Clicking on the
-   short commit id opens a page that contains the fully expanded commit id).
+1. Update `archive_override` for module `envoy` with the target Envoy commit from
+   [this page](https://github.com/envoyproxy/envoy/commits/main).
 
-1. Run `ci/do_ci.sh build`. This build will fail because the downloaded envoy repository version now doesn't satisfy the SHA integrity check.
-
-For example:
-
-```
-Error in download_and_extract: java.io.IOException: Error downloading [https://github.com/envoyproxy/envoy/archive/b0d58be31c2d7fe3ea8fd620c7aedb6b09a4bb89.tar.gz] to /usr/local/google/home/zhangtom/.cache/bazel/_bazel_zhangtom/56ac6ccac3919b4b0
-24c2cb2cc80a341/external/envoy/temp16830088231701668784/b0d58be31c2d7fe3ea8fd620c7aedb6b09a4bb89.tar.gz: Checksum was 66e09f6146cb1548bd0cf6b6cfda1a5cc5fdb349f7bcb98e81cc23c9dd6c7d16 but wanted eb8ed0282dd9fe13aac5f0d260e481e367439d53a9c8fdddd44
-e38f8cf5c4b92
-```
-
-We will now replace the `ENVOY_SHA` value with the intended value.
-
-1. Update `ENVOY_SHA` in [bazel/repositories.bzl](/bazel/repositories.bzl) to
-   this value.
+2. Run `ci/do_ci.sh build`. If the integrity checksum changed, update the `integrity` field in `MODULE.bazel`.
 
 #### Example commands
 
-Overwrite `ENVOY_COMMIT` and `ENVOY_SHA` in `bazel/repositories.bzl`:
+Update the Envoy commit in `MODULE.bazel`:
 
 ```bash
-sed -i -e "s/ENVOY_COMMIT =.*/ENVOY_COMMIT = \"${envoy_commit}\"/" bazel/repositories.bzl
+sed -i -e "s|urls = \[\"https://github.com/envoyproxy/envoy/archive/.*\.tar\.gz\"\]|urls = \[\"https://github.com/envoyproxy/envoy/archive/${envoy_commit}.tar.gz\"\]|" MODULE.bazel
+sed -i -e "s|strip_prefix = \"envoy-.*\"|strip_prefix = \"envoy-${envoy_commit}\"|" MODULE.bazel
 
 git diff
 ```
 
 At this point:
 
-- `ENVOY_COMMIT` should be a new value
-
-The easiest way to obtain the Envoy SHA is to run a build with an inappropriate SHA from a clean state. In
-this case the Envoy SHA is printed to Bazel's stdout near the beginning of the
-build. The build will fail due to the SHA mismatch.:
-
-```bash
-bazel clean --expunge
-
-envoy_sha=$(ci/do_ci.sh build 2>&1 | sed -En 's/.*Checksum was ([0-9a-f]{64}).*/\1/p' | uniq)
-
-echo "envoy_sha=$envoy_sha"
-```
-
-Note that this will wait for the whole build to finish.
-
-If this command failed to set `$envoy_sha` to a long alphanumeric string, most likely the build
-failed because of code changes upstream. We will need to run `ci/do_ci.sh build` to debug at this point.
-
-If we successfully obtained the new SHA, set `ENVOY_SHA`:
-
-```bash
-sed -i -e "s/ENVOY_SHA =.*/ENVOY_SHA = \"$envoy_sha\"/" bazel/repositories.bzl
-
-git diff
-```
-
-At this point:
-
-- `ENVOY_COMMIT` should be a new value
-- `ENVOY_SHA` should be a new value
+- `MODULE.bazel` will refer to the new Envoy commit.
 
 ### Step 5
 

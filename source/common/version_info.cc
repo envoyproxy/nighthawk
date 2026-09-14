@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "external/envoy/source/common/common/macros.h"
+#include "source/common/common/macros.h"
 
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"

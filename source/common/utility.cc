@@ -4,8 +4,8 @@
 
 #include "nighthawk/common/exception.h"
 
-#include "external/envoy/source/common/http/utility.h"
-#include "external/envoy/source/common/network/utility.h"
+#include "source/common/http/utility.h"
+#include "source/common/network/utility.h"
 
 #include "absl/strings/match.h"
 #include "absl/strings/str_join.h"

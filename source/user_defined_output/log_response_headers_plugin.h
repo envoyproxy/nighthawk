@@ -5,7 +5,7 @@
 
 #include "nighthawk/user_defined_output/user_defined_output_plugin.h"
 
-#include "external/envoy/source/common/common/statusor.h"
+#include "source/common/common/statusor.h"
 
 #include "api/user_defined_output/log_response_headers.pb.h"
 

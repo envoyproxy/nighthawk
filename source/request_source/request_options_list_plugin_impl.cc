@@ -2,10 +2,10 @@
 
 #include <memory>
 
-#include "external/envoy/source/common/protobuf/message_validator_impl.h"
-#include "external/envoy/source/common/protobuf/protobuf.h"
-#include "external/envoy/source/common/protobuf/utility.h"
-#include "external/envoy/source/exe/platform_impl.h"
+#include "source/common/protobuf/message_validator_impl.h"
+#include "source/common/protobuf/protobuf.h"
+#include "source/common/protobuf/utility.h"
+#include "source/exe/platform_impl.h"
 
 #include "api/client/options.pb.h"
 

@@ -6,9 +6,9 @@
 #include "envoy/config/core/v3/base.pb.h"
 #include "envoy/stats/scope.h"
 
-#include "external/envoy/source/common/common/assert.h"
-#include "external/envoy/source/common/http/header_map_impl.h"
-#include "external/envoy/source/common/http/headers.h"
+#include "source/common/common/assert.h"
+#include "source/common/http/header_map_impl.h"
+#include "source/common/http/headers.h"
 
 #include "api/request_source/service.pb.h"
 

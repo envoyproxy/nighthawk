@@ -12,10 +12,10 @@
 #include "nighthawk/common/request_source.h"
 #include "nighthawk/common/statistic.h"
 
-#include "external/envoy/source/common/common/random_generator.h"
-#include "external/envoy/source/common/http/header_map_impl.h"
-#include "external/envoy/source/common/stream_info/stream_info_impl.h"
-#include "external/envoy/source/common/tracing/http_tracer_impl.h"
+#include "source/common/common/random_generator.h"
+#include "source/common/http/header_map_impl.h"
+#include "source/common/stream_info/stream_info_impl.h"
+#include "source/common/tracing/http_tracer_impl.h"
 
 namespace Nighthawk {
 namespace Client {
