@@ -736,7 +736,7 @@
     "https://raw.githubusercontent.com/envoyproxy/bazel-registry/main/modules/libcircllhist/0.3.2.envoy/MODULE.bazel": "093e50ec67a5615229453870c477310985f6feaf282d6a2dbb4ed7059be0085d",
     "https://raw.githubusercontent.com/envoyproxy/bazel-registry/main/modules/libcircllhist/0.3.2.envoy/source.json": "51fe6317d2bcc64f396a662d6c57ed8312e2dd8c1e650f95171f08d18f8b4fb7",
     "https://raw.githubusercontent.com/envoyproxy/bazel-registry/main/modules/libevent/2.2.2-alpha.envoy/MODULE.bazel": "c48ae76869f4b3eb10706706342071f946991e7813086658ebcb57dedf8f06e8",
-    "https://raw.githubusercontent.com/envoyproxy/bazel-registry/main/modules/libevent/2.2.2-alpha.envoy/source.json": "bd9a6df4a4f10439040ad664dde96dce926089e982ce91d2ee789ff147717d06",
+    "https://raw.githubusercontent.com/envoyproxy/bazel-registry/main/modules/libevent/2.2.2-alpha.envoy/source.json": "bab4ff8ad4b3c1e4431e69af07686f0b0a4a229b1c4fc4a9cb5d9cab88f04b46",
     "https://raw.githubusercontent.com/envoyproxy/bazel-registry/main/modules/librdkafka/2.6.0.envoy/MODULE.bazel": "01488b0bb62bc20a99109fecfafab2ba2f8de557a5cf591466166a0be192f174",
     "https://raw.githubusercontent.com/envoyproxy/bazel-registry/main/modules/librdkafka/2.6.0.envoy/source.json": "a3a947f7559ece5b2d3988b7eef2ee87a251e42c6d3da701376cd8c8ec3de3c1",
     "https://raw.githubusercontent.com/envoyproxy/bazel-registry/main/modules/libsxg/0.0.0-210708-beaa393.envoy/MODULE.bazel": "ba1ba6d9048e79fcad31819b98664b5e286e4cd7e0603bf052353c1c92f29ab1",
@@ -1701,7 +1701,7 @@
           "CARGO_BAZEL_GENERATOR_SHA256": null,
           "CARGO_BAZEL_GENERATOR_URL": null,
           "CARGO_BAZEL_ISOLATED": null,
-          "CARGO_BAZEL_REPIN": "true",
+          "CARGO_BAZEL_REPIN": null,
           "CARGO_BAZEL_REPIN_ONLY": null,
           "CARGO_BAZEL_TIMEOUT": null,
           "REPIN": null

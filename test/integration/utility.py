@@ -134,7 +134,8 @@ def rlocation(runfiles_instance, path):
   if not loc or not os.path.exists(loc):
     if path.startswith("nighthawk/external/envoy/"):
       for prefix in ("envoy+/", "envoy/"):
-        candidate = runfiles_instance.Rlocation(path.replace("nighthawk/external/envoy/", prefix, 1))
+        candidate = runfiles_instance.Rlocation(path.replace("nighthawk/external/envoy/", prefix,
+                                                             1))
         if candidate and os.path.exists(candidate):
           return candidate
     if path.startswith("nighthawk/"):

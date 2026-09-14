@@ -215,7 +215,8 @@ def test_connect_tunneling(tunneling_connect_test_server_fixture, tunnel_protoco
   ]
   from python.runfiles import runfiles
   rf = runfiles.Create()
-  path = utility.rlocation(rf, "nighthawk/external/envoy/test/config/integration/certs/upstreamcacert.pem")
+  path = utility.rlocation(
+      rf, "nighthawk/external/envoy/test/config/integration/certs/upstreamcacert.pem")
   if (tunnel_protocol == "http3"):
     client_params = client_params + [
         "--tunnel-tls-context", "{common_tls_context:{validation_context:{trusted_ca:{filename:\"" +
