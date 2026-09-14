@@ -19,7 +19,8 @@ def _inspect_line(bazel_output_base, file_path, line):
   match = re.findall(r'#include "([^"]*)"', line)
   if len(match) == 1:
     path = match[0]
-    if path.startswith("external/") or path.startswith("envoy/") or path.startswith("source/"):
+    if path.startswith("external/") or path.startswith("envoy/") or path.startswith(
+        "source/") or path.startswith("test/"):
       return True
     found_in_nighthawk_sources = os.path.isfile(path) or os.path.isfile(
         "source/" + path) or os.path.isfile("include/" + path)

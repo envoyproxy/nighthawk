@@ -1,9 +1,9 @@
 #include <chrono>
 
-#include "external/envoy/test/mocks/event/mocks.h"
-#include "external/envoy/test/mocks/stats/mocks.h"
-#include "external/envoy/test/test_common/simulated_time_system.h"
-#include "external/envoy/test/test_common/utility.h"
+#include "test/mocks/event/mocks.h"
+#include "test/mocks/stats/mocks.h"
+#include "test/test_common/simulated_time_system.h"
+#include "test/test_common/utility.h"
 
 #include "source/common/termination_predicate_impl.h"
 

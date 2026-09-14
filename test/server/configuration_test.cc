@@ -1,7 +1,7 @@
 #include "envoy/api/v2/core/base.pb.h"
 #include "envoy/config/core/v3/base.pb.h"
 
-#include "external/envoy/test/test_common/utility.h"
+#include "test/test_common/utility.h"
 
 #include "api/server/response_options.pb.h"
 #include "api/server/response_options.pb.validate.h"

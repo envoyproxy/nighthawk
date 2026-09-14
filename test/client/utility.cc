@@ -1,6 +1,6 @@
 #include "test/client/utility.h"
 
-#include "external/envoy/test/test_common/utility.h"
+#include "test/test_common/utility.h"
 
 namespace Nighthawk {
 namespace Client {

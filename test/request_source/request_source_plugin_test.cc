@@ -11,14 +11,14 @@
 #include "nighthawk/common/request_source.h"
 #include "nighthawk/request_source/request_source_plugin_config_factory.h"
 
-#include "external/envoy/source/common/config/utility.h"
-#include "external/envoy/source/common/http/header_map_impl.h"
-#include "external/envoy/source/common/protobuf/message_validator_impl.h"
-#include "external/envoy/source/common/protobuf/protobuf.h"
-#include "external/envoy/test/mocks/api/mocks.h"
-#include "external/envoy/test/mocks/stats/mocks.h"
-#include "external/envoy/test/test_common/file_system_for_test.h"
-#include "external/envoy/test/test_common/utility.h"
+#include "source/common/config/utility.h"
+#include "source/common/http/header_map_impl.h"
+#include "source/common/protobuf/message_validator_impl.h"
+#include "source/common/protobuf/protobuf.h"
+#include "test/mocks/api/mocks.h"
+#include "test/mocks/stats/mocks.h"
+#include "test/test_common/file_system_for_test.h"
+#include "test/test_common/utility.h"
 
 #include "source/request_source/request_options_list_plugin_impl.h"
 

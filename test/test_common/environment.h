@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "external/envoy/test/test_common/environment.h"
+#include "external/envoy+/test/test_common/environment.h"
 
 namespace Nighthawk {
 
@@ -12,11 +12,11 @@ namespace Nighthawk {
 class TestEnvironment : public Envoy::TestEnvironment {
 public:
   static std::string runfilesDirectory() {
-    return Envoy::TestEnvironment::runfilesDirectory("nighthawk");
+    return Envoy::TestEnvironment::runfilesDirectory("_main");
   }
 
   static std::string runfilesPath(const std::string& path) {
-    return Envoy::TestEnvironment::runfilesPath(path, "nighthawk");
+    return Envoy::TestEnvironment::runfilesPath(path, "_main");
   }
 };
 

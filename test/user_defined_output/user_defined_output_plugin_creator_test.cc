@@ -1,6 +1,6 @@
 #include "nighthawk/user_defined_output/user_defined_output_plugin.h"
 
-#include "external/envoy/source/common/config/utility.h"
+#include "source/common/config/utility.h"
 
 #include "source/user_defined_output/log_response_headers_plugin.h"
 #include "source/user_defined_output/user_defined_output_plugin_creator.h"
