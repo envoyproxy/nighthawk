@@ -142,7 +142,6 @@ envoy_cc_library(
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
-        "//:quiche_platform_impl_headers",
         "//api/client:base_cc_proto",
         "//api/client:grpc_service_lib",
         "//api/rate_limiter:rate_limiter_plugin_cc_proto",

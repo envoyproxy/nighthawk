@@ -31,7 +31,6 @@ envoy_cc_library(
     repository = "@envoy",
     deps = [
         ":well_known_headers_lib",
-        "//:quiche_platform_impl_headers",
         "//api/server:response_options_proto_cc_proto",
         "@envoy//envoy/server:filter_config_interface_with_external_headers",
         "@envoy//source/common/common:assert_lib_with_external_headers",
