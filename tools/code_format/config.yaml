@@ -43,6 +43,7 @@ paths:
   - bazel/external/http_parser/
   - bazel/rbe/toolchains/configs/
   - bazel-
+  - include/quiche_platform_impl/
   - compat/openssl/
   - build
   - contrib/contrib_build_config.bzl
