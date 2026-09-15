@@ -10,18 +10,6 @@ exports_files(["LICENSE"])
 
 envoy_package()
 
-cc_library(
-    name = "quiche_platform_impl_headers",
-    hdrs = [
-        "include/quiche_platform_impl/quiche_mem_slice_impl.h",
-        "quiche_platform_impl/quiche_mem_slice_impl.h",
-    ],
-    includes = [
-        "include",
-    ],
-    visibility = ["//visibility:public"],
-)
-
 filegroup(
     name = "nighthawk",
     srcs = [

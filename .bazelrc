@@ -544,6 +544,9 @@ build:remote --strategy=Genrule=remote,sandboxed,local
 build:remote --action_env=BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
 # This flag may be more generally useful - it sets foreign_cc builds -jauto.
 
+# QUICHE platform include path for Envoy QUIC integration
+build --copt=-Iexternal/envoy/source/common/quic/platform
+
 ## RBE (Engflow Envoy)
 
 # this is not included in the `--config=rbe` target - set it to publish to engflow ui

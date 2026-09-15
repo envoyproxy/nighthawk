@@ -93,7 +93,6 @@ envoy_cc_library(
         ":output_collector_impl_lib",
         ":output_formatter_impl_lib",
         ":process_bootstrap",
-        "//:quiche_platform_impl_headers",
         "//api/client:base_cc_proto",
         "//include/nighthawk/client:client_includes",
         "//include/nighthawk/common:base_includes",
