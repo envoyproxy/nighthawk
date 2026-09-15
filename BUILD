@@ -20,6 +20,7 @@ cc_library(
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "@envoy//source/common/buffer:buffer_lib_with_external_headers",
         "@envoy//source/common/quic/platform:quiche_mem_slice_impl_lib",
         "@quiche//:quiche_common_buffer_allocator_lib",
         "@quiche//:quiche_common_callbacks",
