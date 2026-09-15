@@ -105,6 +105,13 @@ Edit [MODULE.bazel](/MODULE.bazel):
 
 2. Run `ci/do_ci.sh build`. If the integrity checksum changed, update the `integrity` field in `MODULE.bazel`.
 
+3. Re-generate and verify `MODULE.bazel.lock`:
+   Bazel 8 (Bzlmod) records exact resolution hashes in `MODULE.bazel.lock`. Run:
+   ```bash
+   bazel mod deps --lockfile_mode=update
+   ```
+   If a clean CI build reports a registry checksum mismatch (e.g. for external Envoy registry dependencies like `libevent`), update the SHA256 entry in `MODULE.bazel.lock` to match the registry.
+
 #### Example commands
 
 Update the Envoy commit in `MODULE.bazel`:
@@ -113,12 +120,16 @@ Update the Envoy commit in `MODULE.bazel`:
 sed -i -e "s|urls = \[\"https://github.com/envoyproxy/envoy/archive/.*\.tar\.gz\"\]|urls = \[\"https://github.com/envoyproxy/envoy/archive/${envoy_commit}.tar.gz\"\]|" MODULE.bazel
 sed -i -e "s|strip_prefix = \"envoy-.*\"|strip_prefix = \"envoy-${envoy_commit}\"|" MODULE.bazel
 
+# Update lockfile resolution
+bazel mod deps --lockfile_mode=update
+
 git diff
 ```
 
 At this point:
 
 - `MODULE.bazel` will refer to the new Envoy commit.
+- `MODULE.bazel.lock` will be updated with the corresponding dependency graph resolution.
 
 ### Step 5
 
