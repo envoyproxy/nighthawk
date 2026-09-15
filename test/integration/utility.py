@@ -129,6 +129,15 @@ def run_stress_tests():
 
 
 def rlocation(runfiles_instance, path):
+  """Resolve a runfiles path with fallback for Bzlmod workspace names.
+
+  Args:
+    runfiles_instance: Runfiles instance.
+    path: Path to resolve.
+
+  Returns:
+    Resolved file path.
+  """
   path = path.strip()
   loc = runfiles_instance.Rlocation(path)
   if not loc or not os.path.exists(loc):
