@@ -683,6 +683,8 @@
     "https://raw.githubusercontent.com/envoyproxy/bazel-registry/b6e15c00b1c0493cd194b1b248c562bd8bc46648/bazel_registry.json": "51bd3a0b193753e419c5d3db38e92fbcb9f7f97fd992ef2e24a0addd7274b37a",
     "https://raw.githubusercontent.com/envoyproxy/bazel-registry/b6e15c00b1c0493cd194b1b248c562bd8bc46648/modules/envoy_toolshed/0.4.13.envoy/MODULE.bazel": "d860126ddc5a10ea98393ab0f26962a63a42784daa074f22f1692275e18e3bde",
     "https://raw.githubusercontent.com/envoyproxy/bazel-registry/b6e15c00b1c0493cd194b1b248c562bd8bc46648/modules/envoy_toolshed/0.4.13.envoy/source.json": "17b0148f9ee6c5d56dcd1c8927431f25fb91dd6929b838f682ff9e9aed536ae3",
+    "https://raw.githubusercontent.com/envoyproxy/bazel-registry/b6e15c00b1c0493cd194b1b248c562bd8bc46648/modules/proto-converter/0.0.0-20240625-1db7653.envoy/MODULE.bazel": "b084d12b8fd2b602a22c1fbbee28b5257df0e187f3c579291dd0e1dff9a9d712",
+    "https://raw.githubusercontent.com/envoyproxy/bazel-registry/b6e15c00b1c0493cd194b1b248c562bd8bc46648/modules/proto-converter/0.0.0-20240625-1db7653.envoy/source.json": "8112f8b4e048b5a5df809163ae6ad15f7da28e13d76c2d4dfba82bf40090cb6e",
     "https://raw.githubusercontent.com/envoyproxy/bazel-registry/main/bazel_registry.json": "51bd3a0b193753e419c5d3db38e92fbcb9f7f97fd992ef2e24a0addd7274b37a",
     "https://raw.githubusercontent.com/envoyproxy/bazel-registry/main/modules/aws-c-auth-testdata/0.10.4.envoy/MODULE.bazel": "ed40f4181373fb0e277d5511db521f5a77f5558141b5697499a9b22fa1dc96c4",
     "https://raw.githubusercontent.com/envoyproxy/bazel-registry/main/modules/aws-c-auth-testdata/0.10.4.envoy/source.json": "20b0d19dc5c1e83f57c1cbc7e54ab0131291cc2220b374b0d222e44a6a0d914e",
@@ -761,8 +763,7 @@
     "https://raw.githubusercontent.com/envoyproxy/bazel-registry/main/modules/perfetto/57.2.envoy/source.json": "f823054d455b84c3c5fd40462b4fdb9c06f15bdc918846ce5ba06b16498e28b3",
     "https://raw.githubusercontent.com/envoyproxy/bazel-registry/main/modules/prometheus-metrics-model/0.6.2.envoy/MODULE.bazel": "40e1b9b9db52c3238fcc3e85c08ef35eb9157783e620009ed01eeed7631a9f67",
     "https://raw.githubusercontent.com/envoyproxy/bazel-registry/main/modules/prometheus-metrics-model/0.6.2.envoy/source.json": "0943a090f19491879321638e307bf6bea1459659fb8de4d85ff7e1eb153f12c9",
-    "https://raw.githubusercontent.com/envoyproxy/bazel-registry/main/modules/proto-converter/0.0.0-20240625-1db7653.envoy/MODULE.bazel": "b084d12b8fd2b602a22c1fbbee28b5257df0e187f3c579291dd0e1dff9a9d712",
-    "https://raw.githubusercontent.com/envoyproxy/bazel-registry/main/modules/proto-converter/0.0.0-20240625-1db7653.envoy/source.json": "8112f8b4e048b5a5df809163ae6ad15f7da28e13d76c2d4dfba82bf40090cb6e",
+    "https://raw.githubusercontent.com/envoyproxy/bazel-registry/main/modules/proto-converter/0.0.0-20240625-1db7653.envoy/MODULE.bazel": "not found",
     "https://raw.githubusercontent.com/envoyproxy/bazel-registry/main/modules/proto-field-extraction/0.0.0-240710-d5d39f0.envoy/MODULE.bazel": "d99a43759299070160315edafc6808433e9ca6a0b427afcbdb7fa33d4e518185",
     "https://raw.githubusercontent.com/envoyproxy/bazel-registry/main/modules/proto-field-extraction/0.0.0-240710-d5d39f0.envoy/source.json": "701548f6ec18a892525214ee77cc88ce55a25368caaecff4e948cdff904cb15d",
     "https://raw.githubusercontent.com/envoyproxy/bazel-registry/main/modules/proto-processing/0.0.0-250110-279353c.envoy/MODULE.bazel": "8d8442ce2bad6c40700fa8e2200845de7d71cd0a4d7ac1c8f62ac9efb6791948",
@@ -1693,7 +1694,7 @@
         "recordedFileInputs": {
           "@@envoy+//Cargo.lock": "cabafbb8b90edd735465ed83f7f178c737b3fa21a425b34ac4e6f4539be04f8a",
           "@@envoy+//Cargo.toml": "c9efddb99563255164b111971f35618643cbd15948caa9a29199cc3fabb2b7fe",
-          "@@wasmtime+//Cargo.lock": "fe41703e177e8da68355f6bdc22054daf6b6b2c6b32effe1fc1ce8c9c705e52d"
+          "@@wasmtime+//Cargo.lock": "23dc066229af684ccd62f89b98775c49beb79d3add7f4f70bd3b8dd9e01037be"
         },
         "recordedDirentsInputs": {},
         "envVariables": {
