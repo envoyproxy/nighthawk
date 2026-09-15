@@ -12,14 +12,10 @@ envoy_package()
 
 cc_library(
     name = "quiche_platform_impl_headers",
-    hdrs = [
-        "@envoy//source/common/quic/platform:quiche_mem_slice_impl.h",
-        "@envoy//source/common/quic/platform:quiche_platform_impl/quiche_mem_slice_impl.h",
-    ],
-    strip_include_prefix = "/source/common/quic/platform",
     visibility = ["//visibility:public"],
     deps = [
         "@envoy//source/common/quic/platform:quiche_mem_slice_impl_lib",
+        "@envoy//source/common/quic/platform:quiche_mem_slice_impl_lib_with_external_headers",
         "@quiche//:quiche_common_buffer_allocator_lib",
         "@quiche//:quiche_common_callbacks",
     ],
