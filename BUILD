@@ -17,7 +17,6 @@ cc_library(
         "quiche_platform_impl/quiche_mem_slice_impl.h",
     ],
     includes = [
-        ".",
         "include",
     ],
     visibility = ["//visibility:public"],
