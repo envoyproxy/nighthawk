@@ -21,6 +21,9 @@ cc_library(
         "include",
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "@envoy//source/common/quic/platform:quiche_mem_slice_impl_lib",
+    ],
 )
 
 filegroup(
