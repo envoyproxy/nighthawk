@@ -82,6 +82,8 @@ cc_library(
 git_override(
     module_name = "envoy",
     commit = ENVOY_COMMIT,
+    patch_strip = 1,
+    patches = ["//patches:envoy_quiche_mem_slice.patch"],
     remote = "https://github.com/envoyproxy/envoy.git",
 )
 

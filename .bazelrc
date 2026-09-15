@@ -44,12 +44,6 @@ common --registry=https://bcr.bazel.build/
 common --registry=https://raw.githubusercontent.com/envoyproxy/bazel-registry/main
 common --copt=-Iinclude
 common --cxxopt=-Iinclude
-common --copt=-Iexternal/envoy+/source/common/quic/platform
-common --cxxopt=-Iexternal/envoy+/source/common/quic/platform
-common --copt=-Iexternal/envoy~/source/common/quic/platform
-common --cxxopt=-Iexternal/envoy~/source/common/quic/platform
-common --copt=-Iexternal/envoy/source/common/quic/platform
-common --cxxopt=-Iexternal/envoy/source/common/quic/platform
 # quiche
 build --@quiche//:zlib=@envoy//bazel:zlib
 build --@quiche//:ssl_lib=@envoy//bazel:ssl
