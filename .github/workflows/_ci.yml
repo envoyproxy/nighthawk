@@ -46,6 +46,7 @@ jobs:
       run: |
         echo "common --jobs=200" >> repo.bazelrc
         echo "test --local_test_jobs=4" >> repo.bazelrc
+        echo "build --bes_upload_mode=nowait_for_upload_complete" >> repo.bazelrc
         echo "common --show_progress" >> repo.bazelrc
         echo "common --show_progress_rate_limit=5" >> repo.bazelrc
     - name: Bind mount spare disk for build artifacts
