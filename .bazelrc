@@ -84,7 +84,6 @@ build --copt=-DABSL_MIN_LOG_LEVEL=4
 # Global C++ standard and common warning suppressions
 build --cxxopt=-std=c++20 --host_cxxopt=-std=c++20
 build --copt=-Wno-deprecated-declarations
-build --copt=-Wno-error=nullability-completeness
 build --define envoy_mobile_listener=enabled
 build --experimental_repository_downloader_retries=2
 build --experimental_cc_static_library
@@ -218,7 +217,9 @@ build:macos --@toolchains_llvm//toolchain/config:libunwind=false
 
 # Common flags for Clang (shared between all clang variants)
 common:clang-common --linkopt=-fuse-ld=lld
+common:clang-common --linkopt=-Wl,--no-keep-memory
 common:clang-common --cxxopt=-Wno-nullability-completeness
+common:clang-common --cxxopt=-Wno-error=nullability-completeness
 common:clang-common --@toolchains_llvm//toolchain/config:compiler-rt=false
 common:clang-common --@toolchains_llvm//toolchain/config:libunwind=false
 
