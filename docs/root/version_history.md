@@ -15,6 +15,8 @@ Version history
 ### Changelist
 
 - `--stats-sinks` now works: Nighthawk registers UDP statsd sinks under `envoy.stat_sinks.statsd` and `envoy.stat_sinks.dog_statsd` (previously no sink implementation was linked and any `--stats-sinks` value aborted at startup). Counters are flushed as deltas, latency samples as millisecond timings, optionally batched and tagged (`--stats-sink-tag`); see [statistics](statistics.md). `NighthawkStatsSinkFactory::createStatsSink` now receives the sink's typed config, a thread-local slot allocator and the configured tags.
+- `OptionsImpl::toCommandLineOptions()` now always emits `request_options.request_body_size`; it was only set when at least one `--request-header` was configured, so the size was lost on the gRPC service path otherwise.
+- The Envoy exception on the tunneling startup path is logged instead of printed to stdout, keeping stdout reserved for the formatted output.
 - Introducing termination predicates (https://github.com/envoyproxy/nighthawk/pull/167) and https://github.com/envoyproxy/nighthawk/pull/176
 
 0.2 (July 16, 2019)
