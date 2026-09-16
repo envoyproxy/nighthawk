@@ -21,6 +21,7 @@ bazel_dep(name = "grpc", version = "1.83.0.envoy")
 bazel_dep(name = "librdkafka", version = "2.6.0.envoy")
 bazel_dep(name = "quiche", version = "0.0.0-260831-5c9cc6b.envoy")
 bazel_dep(name = "toolchains_llvm", version = "1.9.0.envoy")
+bazel_dep(name = "envoy_toolshed", version = "0.4.13.envoy")
 bazel_dep(name = "zlib-ng", version = "2.3.2.envoy")
 bazel_dep(name = "googletest", version = "1.17.0.bcr.2")
 bazel_dep(name = "googleapis", version = "0.0.0-20251003-2193a2bf")
@@ -112,3 +113,11 @@ pip.parse(
     requirements_lock = "//tools/base:requirements.txt",
 )
 use_repo(pip, "nh_pip3")
+
+llvm = use_extension("@toolchains_llvm//toolchain/extensions:llvm.bzl", "llvm")
+use_repo(llvm, "llvm_toolchain")
+
+llvm_toolchain_alias_ext = use_extension("@envoy_toolshed//compile:extensions.bzl", "llvm_toolchain_alias_extension")
+use_repo(llvm_toolchain_alias_ext, "llvm_toolchain_llvm")
+
+

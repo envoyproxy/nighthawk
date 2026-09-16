@@ -1176,7 +1176,7 @@
     "@@envoy_toolshed+//compile:extensions.bzl%llvm_toolchain_alias_extension": {
       "general": {
         "bzlTransitiveDigest": "x8brdUaqutwZNWU2C3GzA+Sd3OjgtdDV37agyDaPhi0=",
-        "usagesDigest": "2KW7m0FL20Q0UbngzA462Lub31Yv8Cg5pWUsMmzzX3s=",
+        "usagesDigest": "gLf++o1+PEohypCA7ugbOqN2yK25pCQT6E32brBeF9o=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
         "envVariables": {},
