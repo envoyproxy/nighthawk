@@ -15,6 +15,8 @@ Version history
 ### Changelist
 
 - `nighthawk_client` no longer forks a child process unless `--tunnel-uri` is configured. The fork of the already multithreaded client could deadlock the child before it signaled the parent, leaving the client hung at startup without sending any request.
+- `OptionsImpl::toCommandLineOptions()` now always emits `request_options.request_body_size`; it was only set when at least one `--request-header` was configured, so the size was lost on the gRPC service path otherwise.
+- The Envoy exception on the tunneling startup path is logged instead of printed to stdout, keeping stdout reserved for the formatted output.
 - Introducing termination predicates (https://github.com/envoyproxy/nighthawk/pull/167) and https://github.com/envoyproxy/nighthawk/pull/176
 
 0.2 (July 16, 2019)
