@@ -1218,8 +1218,8 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
       } else {
         throw MalformedArgvException("A ':' is required in a header.");
       }
-      request_options->mutable_request_body_size()->set_value(requestBodySize());
     }
+    request_options->mutable_request_body_size()->set_value(requestBodySize());
     if (!request_body_.empty()) {
       request_options->set_request_body(request_body_);
     }
