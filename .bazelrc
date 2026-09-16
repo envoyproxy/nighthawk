@@ -84,6 +84,7 @@ build --copt=-DABSL_MIN_LOG_LEVEL=4
 # Global C++ standard and common warning suppressions
 build --cxxopt=-std=c++20 --host_cxxopt=-std=c++20
 build --copt=-Wno-deprecated-declarations
+build --copt=-Wno-error=nullability-completeness
 build --define envoy_mobile_listener=enabled
 build --experimental_repository_downloader_retries=2
 build --experimental_cc_static_library
