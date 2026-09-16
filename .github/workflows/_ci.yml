@@ -65,7 +65,6 @@ jobs:
         BAZEL_BUILD_EXTRA_OPTIONS: >-
           --config=remote-ci
           --config=rbe
-          --remote_download_outputs=all
           ${{ inputs.bazel-extra }}
         GH_BRANCH: ${{ github.ref }}
         GH_SHA1: ${{ github.sha }}
