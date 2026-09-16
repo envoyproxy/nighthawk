@@ -1137,8 +1137,8 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
       } else {
         throw MalformedArgvException("A ':' is required in a header.");
       }
-      request_options->mutable_request_body_size()->set_value(requestBodySize());
     }
+    request_options->mutable_request_body_size()->set_value(requestBodySize());
   }
 
   if (rate_limiter_plugin_config_.has_value()) {
