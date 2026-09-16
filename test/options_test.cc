@@ -382,6 +382,16 @@ TEST_F(OptionsImplTest, AlmostAll) {
 
 // We test RequestSource here and not in All above because it is exclusive to some of the other
 // options.
+TEST_F(OptionsImplTest, RequestBodySizeIsEmittedWithoutRequestHeaders) {
+  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(
+      fmt::format("{} --request-body-size 1234 {}", client_name_, good_test_uri_));
+  CommandLineOptionsPtr cmd = options->toCommandLineOptions();
+  EXPECT_EQ(0, cmd->request_options().request_headers_size());
+  EXPECT_EQ(1234, cmd->request_options().request_body_size().value());
+  OptionsImpl round_trip(*cmd);
+  EXPECT_EQ(1234, round_trip.requestBodySize());
+}
+
 TEST_F(OptionsImplTest, RequestSource) {
   Envoy::MessageUtil util;
   const std::string request_source = "127.9.9.4:32323";
