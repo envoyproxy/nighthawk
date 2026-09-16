@@ -97,6 +97,10 @@ public:
   virtual std::string multiTargetPath() const PURE;
   virtual bool multiTargetUseHttps() const PURE;
   virtual std::vector<std::string> labels() const PURE;
+  /**
+   * @return std::vector<std::string> "key:value" tags for tag-capable stats sinks.
+   */
+  virtual std::vector<std::string> statsSinkTags() const PURE;
   virtual bool simpleWarmup() const PURE;
   virtual bool noDuration() const PURE;
   virtual std::vector<envoy::config::metrics::v3::StatsSink> statsSinks() const PURE;

@@ -34,6 +34,23 @@ envoy_cc_test(
 )
 
 envoy_cc_test(
+    name = "statsd_sink_test",
+    srcs = ["statsd_sink_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/common:nighthawk_common_lib",
+        "//source/common:statsd_sink_lib",
+        "@envoy//source/common/config:utility_lib_with_external_headers",
+        "@envoy//source/common/network:address_lib_with_external_headers",
+        "@envoy//source/common/stats:isolated_store_lib_with_external_headers",
+        "@envoy//test/mocks/stats:stats_mocks",
+        "@envoy//test/mocks/thread_local:thread_local_mocks",
+        "@envoy//test/test_common:utility_lib",
+        "@envoy_api//envoy/config/metrics/v3:pkg_cc_proto",
+    ],
+)
+
+envoy_cc_test(
     name = "client_test",
     srcs = ["client_test.cc"],
     repository = "@envoy",

@@ -111,6 +111,30 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
+    name = "statsd_sink_lib",
+    srcs = ["statsd_sink.cc"],
+    hdrs = ["statsd_sink.h"],
+    repository = "@envoy",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":nighthawk_common_lib",
+        "//include/nighthawk/common:base_includes",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/synchronization",
+        "@envoy//envoy/network:socket_interface_interface",
+        "@envoy//envoy/registry",
+        "@envoy//source/common/buffer:buffer_lib_with_external_headers",
+        "@envoy//source/common/common:assert_lib_with_external_headers",
+        "@envoy//source/common/network:address_lib_with_external_headers",
+        "@envoy//source/common/network:resolver_lib_with_external_headers",
+        "@envoy//source/common/network:socket_interface_lib_with_external_headers",
+        "@envoy//source/common/network:utility_lib_with_external_headers",
+        "@envoy//source/common/protobuf:utility_lib_with_external_headers",
+        "@envoy_api//envoy/config/metrics/v3:pkg_cc_proto",
+    ],
+)
+
+envoy_cc_library(
     name = "nighthawk_common_lib",
     srcs = [
         "phase_impl.cc",

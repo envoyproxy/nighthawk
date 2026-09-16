@@ -877,7 +877,10 @@ void ProcessImpl::setupStatsSinks(const envoy::config::bootstrap::v3::Bootstrap&
     ENVOY_LOG(info, "loading stats sink configuration in Nighthawk");
     auto& factory =
         Envoy::Config::Utility::getAndCheckFactory<NighthawkStatsSinkFactory>(stats_sink);
-    stats_sinks.emplace_back(factory.createStatsSink(store_root_.symbolTable()));
+    Envoy::ProtobufTypes::MessagePtr message = Envoy::Config::Utility::translateToFactoryConfig(
+        stats_sink, Envoy::ProtobufMessage::getStrictValidationVisitor(), factory);
+    stats_sinks.emplace_back(factory.createStatsSink(*message, store_root_.symbolTable(), tls_,
+                                                     options_.statsSinkTags()));
   }
   for (std::unique_ptr<Envoy::Stats::Sink>& sink : stats_sinks) {
     store_root_.addSink(*sink);

@@ -63,7 +63,32 @@ backend-specific wire format. Currently Envoy supports the TCP and UDP
 [statsd](https://github.com/b/statsd_spec) protocol (implemented in
 [statsd.h](https://github.com/envoyproxy/envoy/blob/main/source/extensions/stat_sinks/common/statsd/statsd.h)).
 Users can create their own Sink subclass to translate Envoy metrics into
-backend-specific format.	
+backend-specific format.
+
+Nighthawk ships a UDP statsd sink, registered under the same names as Envoy's
+sinks so the `--stats-sinks` examples work as documented:
+`envoy.stat_sinks.statsd` (config `envoy.config.metrics.v3.StatsdSink`, UDP
+`address` only; an IP literal or a host name resolved at startup) and `envoy.stat_sinks.dog_statsd`
+(`envoy.config.metrics.v3.DogStatsdSink`, adds DogStatsD tags and optional
+datagram batching via `max_bytes_per_datagram`). Metric names are prefixed with
+`nighthawk` unless `prefix` is set. Counters are flushed as deltas (`|c`) every
+`--stats-flush-interval`, gauges as values (`|g`), and every latency sample of
+the sinkable Nighthawk statistics (`benchmark_http_client.latency_*`,
+`benchmark_http_client.latency_grpc_ok`, `benchmark_stream.message_latency`) is
+sent as a timing in milliseconds with microsecond precision (`|ms`). One UDP
+socket is shared by the whole process. With `max_bytes_per_datagram` set
+(DogStatsD sink), messages are packed newline-separated into datagrams of up to
+that size: counters and gauges per flush, latency samples per recording thread,
+which are sent when the batch fills, on the next flush, and when the sink is
+destroyed at the end of the run. `--stats-sink-tag key:value` adds tags to
+every message of the DogStatsD sink, e.g. to identify the run or pod. Per-worker metrics (the store's `cluster.<n>.` / `worker.<n>.` scopes and
+the per-worker latency statistics) are named `worker.<n>.<rest>` with the plain
+statsd sink; the DogStatsD sink drops the prefix and emits a `worker:<n>` tag
+instead. Example:
+
+```bash
+nighthawk_client --stats-sinks '{name:"envoy.stat_sinks.dog_statsd",typed_config:{"@type":"type.googleapis.com/envoy.config.metrics.v3.DogStatsdSink",address:{socket_address:{address:"127.0.0.1",port_value:8125}},max_bytes_per_datagram:1400}}' --stats-flush-interval 1 http://localhost:8080/
+```	
 
 Envoy metrics can be defined using a macro, e.g.	
 ```cc

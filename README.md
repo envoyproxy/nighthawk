@@ -170,7 +170,8 @@ bazel-bin/nighthawk_client  [--user-defined-plugin-config <string>] ...
 [--simple-warmup]
 [--rate-limiter-plugin-config <string>]
 [--request-source-plugin-config <string>]
-[--request-source <uri format>] [--label
+[--request-source <uri format>]
+[--stats-sink-tag <string>] ... [--label
 <string>] ... [--multi-target-use-https]
 [--multi-target-path <string>]
 [--multi-target-endpoint <string>] ...
@@ -275,6 +276,11 @@ Remote gRPC source that will deliver to-be-replayed traffic. Each
 worker will separately connect to this source. For example
 grpc://127.0.0.1:8443/. Mutually exclusive with
 --request_source_plugin_config.
+
+--stats-sink-tag <string>  (accepted multiple times)
+Tag in 'key:value' form added to every metric pushed to a tag-capable
+stats sink (envoy.stat_sinks.dog_statsd), e.g. run:phase-c. May be
+specified multiple times. Ignored by sinks that cannot carry tags.
 
 --label <string>  (accepted multiple times)
 Label. Allows specifying multiple labels which will be persisted in

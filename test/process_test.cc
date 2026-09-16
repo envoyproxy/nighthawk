@@ -68,7 +68,10 @@ public:
 // FakeStatsSinkFactory creates FakeStatsSink.
 class FakeStatsSinkFactory : public NighthawkStatsSinkFactory {
 public:
-  std::unique_ptr<Envoy::Stats::Sink> createStatsSink(Envoy::Stats::SymbolTable&) override {
+  std::unique_ptr<Envoy::Stats::Sink> createStatsSink(const Envoy::Protobuf::Message&,
+                                                      Envoy::Stats::SymbolTable&,
+                                                      Envoy::ThreadLocal::SlotAllocator&,
+                                                      const std::vector<std::string>&) override {
     return std::make_unique<FakeStatsSink>();
   }
 

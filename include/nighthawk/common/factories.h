@@ -1,11 +1,13 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 
 #include "envoy/api/api.h"
 #include "envoy/common/pure.h"
 #include "envoy/common/time.h"
 #include "envoy/event/dispatcher.h"
+#include "envoy/thread_local/thread_local.h"
 #include "envoy/upstream/cluster_manager.h"
 
 #include "nighthawk/common/platform_util.h"
@@ -63,11 +65,21 @@ public:
    * implementation is unable to produce a Sink with the provided parameters, it
    * should throw an EnvoyException. The returned pointer should always be
    * valid.
+   * @param config the sink's typed_config, already translated to the message type returned by
+   * createEmptyConfigProto() and validated.
    * @param symbol_table supplies the symbol_table instance. For the definition
    * of SymbolTable, see envoy/include/envoy/stats/symbol_table.h.
+   * @param tls thread local slot allocator, for sinks that keep per-thread state such as a
+   * socket. Sinks are created on the main thread before the flush worker starts, and may be
+   * invoked from the flush worker thread (flush) and from the client worker threads
+   * (onHistogramComplete).
+   * @param tags "key:value" tags the user asked to attach to every metric; sinks that cannot
+   * carry tags ignore them.
    */
   virtual std::unique_ptr<Envoy::Stats::Sink>
-  createStatsSink(Envoy::Stats::SymbolTable& symbol_table) PURE;
+  createStatsSink(const Envoy::Protobuf::Message& config, Envoy::Stats::SymbolTable& symbol_table,
+                  Envoy::ThreadLocal::SlotAllocator& tls,
+                  const std::vector<std::string>& tags) PURE;
 
   std::string category() const override { return "nighthawk.stats_sinks"; }
 };

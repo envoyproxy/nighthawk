@@ -182,6 +182,11 @@ message CommandLineOptions {
 
   TunnelOptions tunnel_options = 114;
 
+  // Tags added to every metric pushed to a tag-capable stats sink (currently
+  // envoy.stat_sinks.dog_statsd), as "key:value" strings, e.g. "run:phase-c" or "pod:driver-1".
+  // Ignored by sinks that cannot carry tags.
+  repeated string stats_sink_tags = 123;
+
   // Allows user to set specific HTTP3 protocol options.
   // Only valid when protocol is set to HTTP3.
   // Is exclusive with any other command line option that would modify the

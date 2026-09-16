@@ -107,6 +107,7 @@ public:
   std::chrono::nanoseconds jitterUniform() const override { return jitter_uniform_; }
   std::string nighthawkService() const override { return nighthawk_service_; }
   std::vector<std::string> labels() const override { return labels_; };
+  std::vector<std::string> statsSinkTags() const override { return stats_sink_tags_; }
 
   std::vector<nighthawk::client::MultiTarget::Endpoint> multiTargetEndpoints() const override {
     return multi_target_endpoints_;
@@ -199,6 +200,7 @@ private:
   std::string multi_target_path_;
   bool multi_target_use_https_{false};
   std::vector<std::string> labels_;
+  std::vector<std::string> stats_sink_tags_;
   bool simple_warmup_{false};
   bool no_duration_{false};
   std::vector<envoy::config::metrics::v3::StatsSink> stats_sinks_;

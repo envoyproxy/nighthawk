@@ -77,6 +77,7 @@ public:
   MOCK_METHOD(std::string, multiTargetPath, (), (const, override));
   MOCK_METHOD(bool, multiTargetUseHttps, (), (const, override));
   MOCK_METHOD(std::vector<std::string>, labels, (), (const, override));
+  MOCK_METHOD(std::vector<std::string>, statsSinkTags, (), (const, override));
   MOCK_METHOD(bool, simpleWarmup, (), (const, override));
   MOCK_METHOD(bool, noDuration, (), (const, override));
   MOCK_METHOD(std::vector<envoy::config::metrics::v3::StatsSink>, statsSinks, (),

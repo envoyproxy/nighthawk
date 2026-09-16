@@ -103,6 +103,7 @@ envoy_cc_library(
         "//source/common:nighthawk_common_lib",
         "//source/common:nighthawk_service_client_impl",
         "//source/common:request_source_impl_lib",
+        "//source/common:statsd_sink_lib",
         "//source/request_source:llm_request_source_plugin_cc_proto",
         "//source/request_source:llm_request_source_plugin_impl",
         "//source/request_source:request_options_list_plugin_impl",
