@@ -45,7 +45,7 @@ jobs:
     - name: Configure repo Bazel settings
       run: |
         echo "common --jobs=2" >> repo.bazelrc
-        echo "common --local_ram_resources=5120" >> repo.bazelrc
+        echo "common --local_resources=memory=5120" >> repo.bazelrc
         echo "test --local_test_jobs=2" >> repo.bazelrc
         echo "build --config=bes" >> repo.bazelrc
     - name: Bind mount spare disk for build artifacts
