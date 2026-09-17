@@ -190,6 +190,7 @@ bazel-bin/nighthawk_client  [--user-defined-plugin-config <string>] ...
 <uint32_t>] [--transport-socket <string>]
 [--upstream-bind-config <string>]
 [--tls-context <string>]
+[--request-body-file <string>]
 [--request-body-size <uint32_t>]
 [--request-header <string>] ...
 [--request-method <GET|HEAD|POST|PUT|DELETE
@@ -373,6 +374,12 @@ DEPRECATED, use --transport-socket instead. TlS context configuration
 in json. Mutually exclusive with --transport-socket. Example (json):
 {common_tls_context:{tls_params:{cipher_suites:["-ALL:ECDHE-RSA-AES128
 -SHA"]}}}
+
+--request-body-file <string>
+Path to a file whose bytes are sent verbatim as the request body on
+every request (binary safe). No Content-Type is set for it; pass one
+with --request-header if needed. Mutually exclusive with
+--request-body-size.
 
 --request-body-size <uint32_t>
 Size of the request body to send. NH will send a number of consecutive

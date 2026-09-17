@@ -207,9 +207,14 @@ RequestSourceFactoryImpl::create(const Envoy::Upstream::ClusterManagerPtr& clust
   }
 
   header->setMethod(envoy::config::core::v3::RequestMethod_Name(options_.requestMethod()));
-  const uint32_t content_length = options_.requestBodySize();
-  if (content_length > 0) {
-    header->setContentLength(content_length);
+  std::string body = options_.requestBody();
+  if (!body.empty()) {
+    header->setContentLength(body.size());
+  } else {
+    const uint32_t content_length = options_.requestBodySize();
+    if (content_length > 0) {
+      header->setContentLength(content_length);
+    }
   }
 
   auto request_options = options_.toCommandLineOptions()->request_options();
@@ -235,7 +240,8 @@ RequestSourceFactoryImpl::create(const Envoy::Upstream::ClusterManagerPtr& clust
     RequestSourcePtr request_source = std::move(plugin_or.value());
     return request_source;
   } else {
-    return std::make_unique<StaticRequestSourceImpl>(std::move(header));
+    return std::make_unique<StaticRequestSourceImpl>(std::move(header), UINT64_MAX,
+                                                     std::move(body));
   }
 }
 absl::StatusOr<RequestSourcePtr> RequestSourceFactoryImpl::LoadRequestSourcePlugin(
