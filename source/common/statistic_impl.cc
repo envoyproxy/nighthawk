@@ -418,14 +418,34 @@ Envoy::Stats::Histogram::Unit SinkableStatistic::unit() const {
 
 Envoy::Stats::SymbolTable& SinkableStatistic::symbolTable() { return scope_.symbolTable(); }
 
+Envoy::Stats::Histogram& SinkableStatistic::storeHistogram() {
+  if (store_histogram_ == nullptr) {
+    bindStoreHistogram();
+  }
+  return *store_histogram_;
+}
+
+void SinkableStatistic::bindStoreHistogram() {
+  // name() is the statistic's id; the scope supplies the "cluster.<n>." prefix. Resolved once and
+  // cached, so recording a sample stays a pointer dereference.
+  store_histogram_ = &scope_.histogramFromString(name(), unit());
+}
+
 SinkableHdrStatistic::SinkableHdrStatistic(Envoy::Stats::Scope& scope, std::optional<int> worker_id)
     : SinkableStatistic(scope, worker_id) {}
 
 void SinkableHdrStatistic::recordValue(uint64_t value) {
   HdrStatistic::addValue(value);
-  // Currently in Envoy Scope implementation, deliverHistogramToSinks() will flush the histogram
-  // value directly to stats Sinks.
-  scope_.store().deliverHistogramToSinks(*this, value);
+  // Recording into the store histogram delivers the sample to sinks implementing
+  // onHistogramComplete() and, unlike a direct deliverHistogramToSinks() call, also makes the
+  // statistic visible to sinks that only read MetricSnapshot::histograms() on flush, such as the
+  // OpenTelemetry and metrics service sinks. See SinkableStatistic::storeHistogram().
+  storeHistogram().recordValue(value);
+}
+
+void SinkableHdrStatistic::setId(absl::string_view id) {
+  HdrStatistic::setId(id);
+  bindStoreHistogram();
 }
 
 std::string SinkableHdrStatistic::tagExtractedName() const {
@@ -442,9 +462,13 @@ SinkableCircllhistStatistic::SinkableCircllhistStatistic(Envoy::Stats::Scope& sc
 
 void SinkableCircllhistStatistic::recordValue(uint64_t value) {
   CircllhistStatistic::addValue(value);
-  // Currently in Envoy Scope implementation, deliverHistogramToSinks() will flush the histogram
-  // value directly to stats Sinks.
-  scope_.store().deliverHistogramToSinks(*this, value);
+  // See the comment in SinkableHdrStatistic::recordValue().
+  storeHistogram().recordValue(value);
+}
+
+void SinkableCircllhistStatistic::setId(absl::string_view id) {
+  CircllhistStatistic::setId(id);
+  bindStoreHistogram();
 }
 
 std::string SinkableCircllhistStatistic::tagExtractedName() const {

@@ -14,6 +14,7 @@ Version history
 
 ### Changelist
 
+- Nighthawk's latency statistics are now recorded into an Envoy store histogram as well as their own HdrHistogram/Circllhist, so they appear in `MetricSnapshot::histograms()`. Stats sinks that only read the snapshot on flush, such as the OpenTelemetry and metrics service sinks, previously received nothing for them: Nighthawk delivered samples exclusively through `deliverHistogramToSinks()`, which those sinks implement as a no-op. Sinks reading `onHistogramComplete()` are unaffected, and the emitted metric names are unchanged, since the mirror is created in the worker's `cluster.<n>.` scope. Nighthawk's own output still comes from the statistic itself and keeps its nanosecond resolution.
 - `--request-body-file` sends a file's bytes verbatim as the request body (binary safe; no Content-Type is set). The `RequestOptions.request_body` (bytes) field carries it over the gRPC service API. Mutually exclusive with `--request-body-size`.
 - `OptionsImpl::toCommandLineOptions()` now always emits `request_options.request_body_size`; it was only set when at least one `--request-header` was configured, so the size was lost on the gRPC service path otherwise.
 - The Envoy exception on the tunneling startup path is logged instead of printed to stdout, keeping stdout reserved for the formatted output.

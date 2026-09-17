@@ -211,12 +211,37 @@ public:
   const std::optional<int> worker_id() const { return worker_id_; }
 
 protected:
+  /**
+   * The Envoy store histogram that mirrors this statistic, created on first use. Recording a
+   * sample into it both feeds the snapshot that flush based stats sinks read and delivers the
+   * sample to sinks implementing onHistogramComplete(), because
+   * Envoy::Stats::ParentHistogramImpl::recordValue() calls deliverHistogramToSinks() itself.
+   *
+   * It is created lazily rather than in the constructor because a statistic's id, which names the
+   * histogram, is assigned after construction. The scope is the worker's ("cluster.<n>."), so the
+   * histogram is named "cluster.<n>.<id>" and stats sinks can recover the worker from the name.
+   *
+   * Nighthawk's own output is unaffected: it is rendered from this statistic's HdrHistogram or
+   * Circllhist data, not from the mirror, so the mirror is free to carry a coarser representation
+   * than the nanoseconds recorded here.
+   */
+  Envoy::Stats::Histogram& storeHistogram();
+
+  /**
+   * Points storeHistogram() at the store histogram named by the statistic's current id. Called
+   * when the id is assigned, so that the mirror is named correctly regardless of whether any
+   * sample was recorded before that.
+   */
+  void bindStoreHistogram();
+
   // This is used in child class for delivering the histogram data to sinks.
   Envoy::Stats::Scope& scope_;
 
 private:
   // worker_id can be used in downstream stats Sinks as the stats tag.
   std::optional<int> worker_id_;
+  // Owned by the store; see storeHistogram().
+  Envoy::Stats::Histogram* store_histogram_{nullptr};
 };
 
 // Implementation of sinkable Nighthawk Statistic with HdrHistogram.
@@ -239,6 +264,8 @@ public:
 
   // Nighthawk::Statistic
   void addValue(uint64_t value) override { recordValue(value); }
+  // Rebinds the store histogram, which is named after the id.
+  void setId(absl::string_view id) override;
 };
 
 // Implementation of sinkable Nighthawk Statistic with Circllhist Histogram.
@@ -262,6 +289,8 @@ public:
 
   // Nighthawk::Statistic
   void addValue(uint64_t value) override { recordValue(value); }
+  // Rebinds the store histogram, which is named after the id.
+  void setId(absl::string_view id) override;
 };
 
 } // namespace Nighthawk
