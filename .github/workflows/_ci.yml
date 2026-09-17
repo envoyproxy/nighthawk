@@ -42,11 +42,15 @@ jobs:
         else
           echo "common --config=clang" >> repo.bazelrc
         fi
-    - name: Configure repo Bazel settings
-      run: |
-        echo "common --jobs=4" >> repo.bazelrc
-        echo "common --local_resources=memory=6144" >> repo.bazelrc
-        echo "test --local_test_jobs=2" >> repo.bazelrc
+        if [[ "${{ inputs.task }}" == *"tsan"* || "${{ inputs.task }}" == *"asan"* ]]; then
+          echo "common --jobs=2" >> repo.bazelrc
+          echo "common --local_resources=memory=4096" >> repo.bazelrc
+          echo "test --local_test_jobs=1" >> repo.bazelrc
+        else
+          echo "common --jobs=4" >> repo.bazelrc
+          echo "common --local_resources=memory=6144" >> repo.bazelrc
+          echo "test --local_test_jobs=2" >> repo.bazelrc
+        fi
         echo "build --config=bes" >> repo.bazelrc
     - name: Bind mount spare disk for build artifacts
       uses: envoyproxy/toolshed/actions/bind-mounts@actions-v0.4.25
