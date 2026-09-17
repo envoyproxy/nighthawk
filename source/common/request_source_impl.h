@@ -22,9 +22,10 @@ public:
   /**
    * @param max_yields the number of request specifiers to yield. The source will start yielding
    * nullptr when exceeded.
+   * @param body optional request body bytes, sent verbatim with every request.
    */
   StaticRequestSourceImpl(Envoy::Http::RequestHeaderMapPtr&&,
-                          const uint64_t max_yields = UINT64_MAX);
+                          const uint64_t max_yields = UINT64_MAX, std::string body = "");
   RequestGenerator get() override;
   void initOnThread() override {};
   void destroyOnThread() override {};
@@ -32,6 +33,7 @@ public:
 private:
   const HeaderMapPtr header_;
   uint64_t yields_left_;
+  const std::string body_;
 };
 
 /**

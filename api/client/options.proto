@@ -26,6 +26,10 @@ message RequestOptions {
   // If this isn't provided, Nighthawk sends its built-in request body (the character 'a'
   // repeated n times to the specified request size).
   string json_body = 4;
+  // Optional raw request body, sent verbatim (binary safe). Populated by --request-body-file.
+  // Nighthawk does not set a Content-Type for this body; supply one with request_headers.
+  // Mutually exclusive with request_body_size and json_body.
+  bytes request_body = 5;
 }
 
 // Used for providing multiple request options, especially for RequestSourcePlugins.
