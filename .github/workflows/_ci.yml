@@ -51,7 +51,9 @@ jobs:
           echo "common --jobs=4" >> repo.bazelrc
           echo "common --local_resources=memory=6144" >> repo.bazelrc
           echo "test --local_test_jobs=2" >> repo.bazelrc
-          echo "build --linkopt=-Wl,--threads=2" >> repo.bazelrc
+          if [[ "${{ inputs.task }}" != *"gcc"* ]]; then
+            echo "build --linkopt=-Wl,--threads=2" >> repo.bazelrc
+          fi
         fi
         echo "build --config=bes" >> repo.bazelrc
     - name: Bind mount spare disk for build artifacts
