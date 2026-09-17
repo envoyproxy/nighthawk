@@ -6,7 +6,9 @@
 #include <typeinfo> // std::bad_cast
 
 #include "external/envoy/source/common/protobuf/utility.h"
+#include "external/envoy/source/common/stats/allocator_impl.h"
 #include "external/envoy/source/common/stats/isolated_store_impl.h"
+#include "external/envoy/source/common/stats/thread_local_store.h"
 #include "external/envoy/test/mocks/stats/mocks.h"
 #include "external/envoy/test/test_common/file_system_for_test.h"
 #include "external/envoy/test/test_common/utility.h"
@@ -473,6 +475,32 @@ TYPED_TEST(SinkableStatisticTest, SimpleSinkableStatistic) {
   EXPECT_EQ("0.stat_name", stat.tagExtractedName());
   EXPECT_TRUE(stat.worker_id().has_value());
   EXPECT_EQ(worker_id, stat.worker_id().value());
+}
+
+TYPED_TEST(SinkableStatisticTest, IsVisibleInTheStoreSnapshot) {
+  // The point of mirroring into a store histogram: stats sinks that only read
+  // MetricSnapshot::histograms() on flush (the OpenTelemetry and metrics service sinks, which
+  // implement onHistogramComplete() as a no-op) see Nighthawk's latency statistics at all.
+  // A ThreadLocalStoreImpl as in ProcessImpl; IsolatedStoreImpl::histograms() always returns an
+  // empty vector, so it cannot show this.
+  Envoy::Stats::SymbolTableImpl symbol_table;
+  Envoy::Stats::AllocatorImpl allocator(symbol_table);
+  Envoy::Stats::ThreadLocalStoreImpl store(allocator);
+  Envoy::Stats::ScopeSharedPtr worker_scope = store.createScope("cluster.0.");
+  TypeParam stat(*worker_scope, /*worker_id=*/0);
+  stat.setId("benchmark_http_client.latency_2xx");
+  stat.recordValue(1500);
+
+  std::vector<std::string> histogram_names;
+  for (const Envoy::Stats::ParentHistogramSharedPtr& histogram : store.histograms()) {
+    histogram_names.push_back(histogram->name());
+  }
+  // The worker scope supplies the prefix, so a sink can recover the worker from the name.
+  EXPECT_THAT(histogram_names, Contains("cluster.0.benchmark_http_client.latency_2xx"));
+  // Nighthawk's own view of the statistic is unchanged; it is rendered from the Hdr/Circllhist
+  // data, not from the mirror.
+  EXPECT_EQ(1, stat.count());
+  EXPECT_EQ(1500, stat.max());
 }
 
 } // namespace Nighthawk
