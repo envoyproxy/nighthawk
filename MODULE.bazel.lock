@@ -1217,6 +1217,32 @@
         "recordedRepoMappingEntries": []
       }
     },
+    "@@envoy_toolshed+//compile:extensions.bzl%sanitizer_extension": {
+      "general": {
+        "bzlTransitiveDigest": "x8brdUaqutwZNWU2C3GzA+Sd3OjgtdDV37agyDaPhi0=",
+        "usagesDigest": "hakpQpF46t2OQfRzm/zoeJQF2gQG+W9JVF7J4xeiVFk=",
+        "recordedFileInputs": {},
+        "recordedDirentsInputs": {},
+        "envVariables": {},
+        "generatedRepoSpecs": {
+          "msan_libs": {
+            "repoRuleId": "@@envoy_toolshed+//compile:sanitizer_libs.bzl%msan_libs",
+            "attributes": {
+              "version": "0.2.14",
+              "sha256": "d0bb453af4fdb003f988ff84af9e6da57ff5da15f2f805c5d6c67bf0c1a54524"
+            }
+          },
+          "tsan_libs": {
+            "repoRuleId": "@@envoy_toolshed+//compile:sanitizer_libs.bzl%tsan_libs",
+            "attributes": {
+              "version": "0.2.14",
+              "sha256": "5f46d7a716096261f0abda64722b17ca8e1e52789f5cb4ff01dcad58fbbc543b"
+            }
+          }
+        },
+        "recordedRepoMappingEntries": []
+      }
+    },
     "@@envoy_toolshed+//sysroot:extensions.bzl%sysroot_extension": {
       "general": {
         "bzlTransitiveDigest": "CQlHTk2wRBJ3aOM7jzKA9zRO6JoNhMR68mo4qJZ5uZw=",
