@@ -17,15 +17,15 @@ using EnvoyException = Envoy::EnvoyException;
 } // namespace
 
 StaticRequestSourceImpl::StaticRequestSourceImpl(Envoy::Http::RequestHeaderMapPtr&& header,
-                                                 const uint64_t max_yields)
-    : header_(std::move(header)), yields_left_(max_yields) {
+                                                 const uint64_t max_yields, std::string body)
+    : header_(std::move(header)), yields_left_(max_yields), body_(std::move(body)) {
   RELEASE_ASSERT(header_ != nullptr, "header can't equal nullptr");
 }
 
 RequestGenerator StaticRequestSourceImpl::get() {
   return [this]() -> RequestPtr {
     while (yields_left_--) {
-      return std::make_unique<RequestImpl>(header_);
+      return std::make_unique<RequestImpl>(header_, body_);
     }
     return nullptr;
   };
