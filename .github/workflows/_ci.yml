@@ -61,6 +61,7 @@ jobs:
           fi
         fi
         echo "build --config=bes" >> repo.bazelrc
+        echo "build --experimental_reuse_sandbox_directories=true" >> repo.bazelrc
     - name: Bind mount spare disk for build artifacts
       uses: envoyproxy/toolshed/actions/bind-mounts@actions-v0.4.25
       with:
