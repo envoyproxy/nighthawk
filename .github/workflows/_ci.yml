@@ -44,8 +44,9 @@ jobs:
         fi
     - name: Configure repo Bazel settings
       run: |
-        echo "common --jobs=4" >> repo.bazelrc
-        echo "test --local_test_jobs=4" >> repo.bazelrc
+        echo "common --jobs=2" >> repo.bazelrc
+        echo "common --local_ram_resources=5120" >> repo.bazelrc
+        echo "test --local_test_jobs=2" >> repo.bazelrc
         echo "build --config=bes" >> repo.bazelrc
     - name: Bind mount spare disk for build artifacts
       uses: envoyproxy/toolshed/actions/bind-mounts@actions-v0.4.25
