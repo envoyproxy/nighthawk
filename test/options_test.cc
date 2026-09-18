@@ -411,6 +411,137 @@ TEST_F(OptionsImplTest, RequestBodyFileAndRequestBodySizeAreMutuallyExclusive) {
                           MalformedArgvException, "mutually exclusive");
 }
 
+TEST_F(OptionsImplTest, GrpcImpliesHttp2AndPostAndRoundTrips) {
+  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(
+      fmt::format("{} --grpc-mode unary {}", client_name_, good_test_uri_));
+  EXPECT_EQ(nighthawk::client::GrpcMode::UNARY, options->grpcMode());
+  EXPECT_EQ(Envoy::Http::Protocol::Http2, options->protocol());
+  EXPECT_EQ(envoy::config::core::v3::RequestMethod::POST, options->requestMethod());
+
+  CommandLineOptionsPtr cmd = options->toCommandLineOptions();
+  EXPECT_EQ(nighthawk::client::GrpcMode::UNARY, cmd->grpc_mode().value());
+  EXPECT_EQ(nighthawk::client::Protocol::HTTP2, cmd->protocol().value());
+  OptionsImpl round_trip(*cmd);
+  EXPECT_EQ(nighthawk::client::GrpcMode::UNARY, round_trip.grpcMode());
+  EXPECT_EQ(Envoy::Http::Protocol::Http2, round_trip.protocol());
+  EXPECT_EQ(envoy::config::core::v3::RequestMethod::POST, round_trip.requestMethod());
+
+  // Explicit http2 and the deprecated --h2 spelling are accepted too.
+  EXPECT_EQ(nighthawk::client::GrpcMode::UNARY,
+            TestUtility::createOptionsImpl(fmt::format("{} --grpc-mode unary --protocol http2 {}",
+                                                       client_name_, good_test_uri_))
+                ->grpcMode());
+  EXPECT_EQ(nighthawk::client::GrpcMode::UNARY,
+            TestUtility::createOptionsImpl(
+                fmt::format("{} --grpc-mode unary --h2 {}", client_name_, good_test_uri_))
+                ->grpcMode());
+}
+
+TEST_F(OptionsImplTest, GrpcFromProtoWithoutProtocolImpliesHttp2) {
+  nighthawk::client::CommandLineOptions cmd;
+  cmd.mutable_uri()->set_value(good_test_uri_);
+  cmd.mutable_grpc_mode()->set_value(nighthawk::client::GrpcMode::UNARY);
+  OptionsImpl options(cmd);
+  EXPECT_EQ(nighthawk::client::GrpcMode::UNARY, options.grpcMode());
+  EXPECT_EQ(Envoy::Http::Protocol::Http2, options.protocol());
+  EXPECT_EQ(envoy::config::core::v3::RequestMethod::POST, options.requestMethod());
+}
+
+TEST_F(OptionsImplTest, GrpcStreamDefaultsAndRoundTrip) {
+  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(fmt::format(
+      "{} --grpc-mode bidi-stream --concurrency 2 --rps 400 --max-active-requests 128 {}",
+      client_name_, good_test_uri_));
+  EXPECT_EQ(nighthawk::client::GrpcMode::BIDI_STREAM, options->grpcMode());
+  EXPECT_EQ(Envoy::Http::Protocol::Http2, options->protocol());
+  EXPECT_EQ(envoy::config::core::v3::RequestMethod::POST, options->requestMethod());
+  EXPECT_EQ(20, options->streams());
+  EXPECT_EQ(256, options->maxInflightPerStream());
+  EXPECT_EQ(std::chrono::milliseconds(500), options->streamDrainDuration());
+  // 20 streams over 2 workers: the pending-request breaker is raised to hold 10 opening streams.
+  EXPECT_EQ(10, options->maxPendingRequests());
+
+  CommandLineOptionsPtr cmd = options->toCommandLineOptions();
+  ASSERT_TRUE(cmd->has_grpc_stream());
+  EXPECT_EQ(20, cmd->grpc_stream().streams().value());
+  EXPECT_EQ(256, cmd->grpc_stream().max_inflight_per_stream().value());
+  EXPECT_EQ(500000000, cmd->grpc_stream().drain_duration().nanos());
+  OptionsImpl round_trip(*cmd);
+  EXPECT_EQ(nighthawk::client::GrpcMode::BIDI_STREAM, round_trip.grpcMode());
+  EXPECT_EQ(20, round_trip.streams());
+  EXPECT_EQ(std::chrono::milliseconds(500), round_trip.streamDrainDuration());
+}
+
+TEST_F(OptionsImplTest, GrpcStreamExplicitValues) {
+  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(
+      fmt::format("{} --grpc-mode bidi-stream --concurrency 4 --rps 16000 --streams 40 "
+                  "--max-inflight-per-stream 64 --stream-drain-duration 1.25s "
+                  "--max-active-requests 10 {}",
+                  client_name_, good_test_uri_));
+  EXPECT_EQ(40, options->streams());
+  EXPECT_EQ(64, options->maxInflightPerStream());
+  EXPECT_EQ(std::chrono::milliseconds(1250), options->streamDrainDuration());
+  EXPECT_EQ(10, options->maxPendingRequests());
+  // An explicitly larger value is left alone.
+  std::unique_ptr<OptionsImpl> explicit_pending = TestUtility::createOptionsImpl(
+      fmt::format("{} --grpc-mode bidi-stream --concurrency 1 --rps 100 --streams 4 "
+                  "--max-pending-requests 50 {}",
+                  client_name_, good_test_uri_));
+  EXPECT_EQ(50, explicit_pending->maxPendingRequests());
+}
+
+TEST_F(OptionsImplTest, GrpcStreamValidation) {
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(fmt::format("{} --grpc-mode bidi-stream --concurrency auto {}",
+                                                 client_name_, good_test_uri_)),
+      MalformedArgvException, "requires a numeric --concurrency");
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} --grpc-mode bidi-stream --concurrency 3 --streams 20 {}",
+                              client_name_, good_test_uri_)),
+                          MalformedArgvException,
+                          "--streams must be a positive multiple of --concurrency");
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(
+          fmt::format("{} --grpc-mode bidi-stream --concurrency 2 --streams 20 --rps 401 {}",
+                      client_name_, good_test_uri_)),
+      MalformedArgvException, "must be a multiple of --concurrency");
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} --grpc-mode bidi-stream --concurrency 1 --streams 200 --rps 400 "
+                              "--max-active-requests 100 {}",
+                              client_name_, good_test_uri_)),
+                          MalformedArgvException, "--max-active-requests");
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(fmt::format(
+          "{} --grpc-mode bidi-stream --concurrency 1 --rps 400 --stream-drain-duration "
+          "bogus {}",
+          client_name_, good_test_uri_)),
+      MalformedArgvException, "Invalid value for --stream-drain-duration");
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(
+          fmt::format("{} --grpc-mode bidi-stream --concurrency 1 --rps 400 --protocol http1 {}",
+                      client_name_, good_test_uri_)),
+      MalformedArgvException, "--grpc-mode requires --protocol http2");
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(
+          fmt::format("{} --grpc-mode bidi-stream --concurrency 1 --rps 400 --simple-warmup {}",
+                      client_name_, good_test_uri_)),
+      MalformedArgvException, "--simple-warmup");
+}
+
+TEST_F(OptionsImplTest, GrpcRejectsOtherProtocolsAndMethods) {
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(
+          fmt::format("{} --grpc-mode unary --protocol http1 {}", client_name_, good_test_uri_)),
+      MalformedArgvException, "--grpc-mode requires --protocol http2");
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(
+          fmt::format("{} --grpc-mode unary --protocol http3 {}", client_name_, good_test_uri_)),
+      MalformedArgvException, "--grpc-mode requires --protocol http2");
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(fmt::format("{} --grpc-mode unary --request-method GET {}",
+                                                 client_name_, good_test_uri_)),
+      MalformedArgvException, "--grpc-mode requires --request-method POST");
+}
+
 TEST_F(OptionsImplTest, RequestBodySizeIsEmittedWithoutRequestHeaders) {
   std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(
       fmt::format("{} --request-body-size 1234 {}", client_name_, good_test_uri_));

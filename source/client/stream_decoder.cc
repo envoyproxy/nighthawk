@@ -2,6 +2,7 @@
 
 #include <memory>
 
+#include "external/envoy/source/common/grpc/common.h"
 #include "external/envoy/source/common/http/header_map_impl.h"
 #include "external/envoy/source/common/http/http1/codec_impl.h"
 #include "external/envoy/source/common/http/utility.h"
@@ -28,6 +29,10 @@ void StreamDecoder::decodeHeaders(Envoy::Http::ResponseHeaderMapPtr&& headers, b
   response_header_sizes_statistic_.addValue(response_headers_->byteSize());
   const uint64_t response_code = Envoy::Http::Utility::getResponseStatus(*response_headers_);
   stream_info_.setResponseCode(static_cast<uint32_t>(response_code));
+  // A gRPC trailers-only response carries grpc-status in the headers. Keep it as a provisional
+  // value; real trailers, when they arrive, take precedence.
+  grpc_status_ = Envoy::Grpc::Common::getGrpcStatus(*response_headers_,
+                                                    /*allow_user_defined=*/true);
   if (!latency_response_header_name_.empty()) {
     const auto timing_header_name = Envoy::Http::LowerCaseString(latency_response_header_name_);
     const Envoy::Http::HeaderMap::GetResult& timing_header =
@@ -64,6 +69,11 @@ void StreamDecoder::decodeData(Envoy::Buffer::Instance& data, bool end_stream) {
 void StreamDecoder::decodeTrailers(Envoy::Http::ResponseTrailerMapPtr&& headers) {
   ASSERT(!complete_);
   complete_ = true;
+  const GrpcStatusOpt trailer_status =
+      Envoy::Grpc::Common::getGrpcStatus(*headers, /*allow_user_defined=*/true);
+  if (trailer_status.has_value()) {
+    grpc_status_ = trailer_status;
+  }
   if (active_span_ != nullptr) {
     // Save a copy of the trailer headers, as we need them in finalizeActiveSpan()
     trailer_headers_ = std::move(headers);
@@ -79,7 +89,7 @@ void StreamDecoder::onComplete(bool success) {
     if (stream_info_.responseCode().has_value()) {
       decoder_completion_callback_.exportLatency(
           stream_info_.responseCode().value(),
-          (time_source_.monotonicTime() - request_start_).count());
+          (time_source_.monotonicTime() - request_start_).count(), grpc_status_);
     } else {
       ENVOY_LOG_EVERY_POW_2(warn, "response_code is not available in onComplete");
     }
@@ -88,11 +98,11 @@ void StreamDecoder::onComplete(bool success) {
   response_body_sizes_statistic_.addValue(stream_info_.bytesSent());
   stream_info_.onRequestComplete();
   if (response_headers_ != nullptr) {
-    decoder_completion_callback_.onComplete(success, *response_headers_);
+    decoder_completion_callback_.onComplete(success, *response_headers_, grpc_status_);
   } else {
     Envoy::Http::ResponseHeaderMapPtr empty_headers = Envoy::Http::ResponseHeaderMapImpl::create(
         /* max_headers_kb = */ 0, /* max_headers_count = */ 0);
-    decoder_completion_callback_.onComplete(success, *empty_headers);
+    decoder_completion_callback_.onComplete(success, *empty_headers, grpc_status_);
   }
   finalizeActiveSpan();
   caller_completion_callback_(complete_, success);

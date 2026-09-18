@@ -118,9 +118,11 @@ TEST_F(ClientWorkerTest, BasicTest) {
     EXPECT_CALL(*benchmark_client_, setShouldMeasureLatencies(false));
     EXPECT_CALL(*benchmark_client_, tryStartRequest(_))
         .WillOnce(Invoke(this, &ClientWorkerTest::CheckThreadChanged));
+    EXPECT_CALL(*benchmark_client_, prepare());
     EXPECT_CALL(*benchmark_client_, setShouldMeasureLatencies(true));
     EXPECT_CALL(*sequencer_, start);
     EXPECT_CALL(*sequencer_, waitForCompletion);
+    EXPECT_CALL(*benchmark_client_, finish());
     EXPECT_CALL(*benchmark_client_, terminate());
   }
   int worker_number = 12345;

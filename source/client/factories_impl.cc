@@ -14,6 +14,7 @@
 #include "api/client/options.pb.h"
 
 #include "source/client/benchmark_client_impl.h"
+#include "source/client/grpc_stream_client_impl.h"
 #include "source/client/output_collector_impl.h"
 #include "source/client/output_formatter_impl.h"
 #include "source/common/platform_util_impl.h"
@@ -42,6 +43,14 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
     absl::string_view cluster_name, int worker_id, RequestSource& request_generator,
     std::vector<UserDefinedOutputNamePluginPair> user_defined_output_plugins) const {
   StatisticFactoryImpl statistic_factory(options_);
+  if (options_.grpcMode() == nighthawk::client::GrpcMode::BIDI_STREAM) {
+    const uint32_t concurrency = std::stoi(options_.concurrency());
+    auto stream_client = std::make_unique<GrpcStreamBenchmarkClientImpl>(
+        api, dispatcher, scope, std::make_unique<SinkableHdrStatistic>(scope, worker_id),
+        cluster_manager, cluster_name, request_generator.get(), options_.streams() / concurrency,
+        options_.maxInflightPerStream(), options_.streamDrainDuration(), options_.timeout());
+    return stream_client;
+  }
   // While we lack options to configure which statistic backend goes where, we directly pass
   // StreamingStatistic for the stats that track response sizes. Ideally we would have options
   // for this to route the right stat to the right backend (HdrStatistic, SimpleStatistic,
@@ -51,6 +60,7 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
   BenchmarkClientStatistic statistic(statistic_factory.create(), statistic_factory.create(),
                                      std::make_unique<StreamingStatistic>(),
                                      std::make_unique<StreamingStatistic>(),
+                                     std::make_unique<SinkableHdrStatistic>(scope, worker_id),
                                      std::make_unique<SinkableHdrStatistic>(scope, worker_id),
                                      std::make_unique<SinkableHdrStatistic>(scope, worker_id),
                                      std::make_unique<SinkableHdrStatistic>(scope, worker_id),
@@ -67,6 +77,7 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
   benchmark_client->setMaxActiveRequests(options_.maxActiveRequests());
   benchmark_client->setMaxRequestsPerConnection(options_.maxRequestsPerConnection());
   benchmark_client->setTimeout(options_.timeout());
+  benchmark_client->setGrpc(options_.grpcMode() != nighthawk::client::GrpcMode::NONE);
 
   return benchmark_client;
 }
@@ -98,7 +109,11 @@ SequencerPtr SequencerFactoryImpl::create(Envoy::TimeSource& time_source,
 
     // If no rate limiter plugin is set, use the default linear rate limiter.
   } else {
-    Frequency frequency(options_.requestsPerSecond());
+    // In --grpc-mode bidi-stream --rps is the aggregate message rate, divided over the workers.
+    const uint32_t rps = options_.grpcMode() == nighthawk::client::GrpcMode::BIDI_STREAM
+                             ? options_.requestsPerSecond() / std::stoi(options_.concurrency())
+                             : options_.requestsPerSecond();
+    Frequency frequency(rps);
     rate_limiter = std::make_unique<ScheduledStartingRateLimiter>(
         std::make_unique<LinearRateLimiter>(time_source, frequency), scheduled_starting_time);
     const uint64_t burst_size = options_.burstSize();
@@ -208,7 +223,12 @@ RequestSourceFactoryImpl::create(const Envoy::Upstream::ClusterManagerPtr& clust
 
   header->setMethod(envoy::config::core::v3::RequestMethod_Name(options_.requestMethod()));
   std::string body = options_.requestBody();
-  if (!body.empty()) {
+  if (options_.grpcMode() != nighthawk::client::GrpcMode::NONE) {
+    // gRPC over HTTP/2: no content-length, message framed on the wire.
+    header->setReferenceContentType(Envoy::Http::Headers::get().ContentTypeValues.Grpc);
+    header->setReferenceTE(Envoy::Http::Headers::get().TEValues.Trailers);
+    body = grpcFrameMessage(body);
+  } else if (!body.empty()) {
     header->setContentLength(body.size());
   } else {
     const uint32_t content_length = options_.requestBodySize();
