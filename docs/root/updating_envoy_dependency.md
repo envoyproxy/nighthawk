@@ -96,30 +96,15 @@ Click the link in the terminal to double check the date of the Envoy commit to w
 
 ### Step 4
 
-(See **Example commands** for shell commands covering this entire step.)
-
 Edit [MODULE.bazel](/MODULE.bazel):
 
-1. Update `archive_override` for module `envoy` with the target Envoy commit from
+1. Update the `ENVOY_COMMIT` variable with the target Envoy commit hash from
    [this page](https://github.com/envoyproxy/envoy/commits/main).
 
-2. Run `ci/do_ci.sh build`. If the integrity checksum changed, update the `integrity` field in `MODULE.bazel`.
-
-3. Re-generate and verify `MODULE.bazel.lock`:
-   Bazel 8 (Bzlmod) records exact resolution hashes in `MODULE.bazel.lock`. Run:
-   ```bash
-   bazel mod deps --lockfile_mode=update
-   ```
-   If a clean CI build reports a registry checksum mismatch (e.g. for external Envoy registry dependencies like `libevent`), update the SHA256 entry in `MODULE.bazel.lock` to match the registry.
-
-#### Example commands
-
-Update the Envoy commit in `MODULE.bazel`:
+2. Re-generate `MODULE.bazel.lock`:
+   Bazel 8 (Bzlmod) records exact resolution hashes in `MODULE.bazel.lock`.
 
 ```bash
-sed -i -e "s|urls = \[\"https://github.com/envoyproxy/envoy/archive/.*\.tar\.gz\"\]|urls = \[\"https://github.com/envoyproxy/envoy/archive/${envoy_commit}.tar.gz\"\]|" MODULE.bazel
-sed -i -e "s|strip_prefix = \"envoy-.*\"|strip_prefix = \"envoy-${envoy_commit}\"|" MODULE.bazel
-
 # Update lockfile resolution
 bazel mod deps --lockfile_mode=update
 
