@@ -120,6 +120,7 @@ envoy_cc_library(
         "@envoy//source/common/config:xds_manager_lib",
         "@envoy//source/common/event:dispatcher_includes_with_external_headers",
         "@envoy//source/common/event:real_time_system_lib_with_external_headers",
+        "@envoy//source/common/grpc:common_lib_with_external_headers",
         "@envoy//source/common/grpc:context_lib_with_external_headers",
         "@envoy//source/common/http:context_lib_with_external_headers",
         "@envoy//source/common/http:header_map_lib_with_external_headers",

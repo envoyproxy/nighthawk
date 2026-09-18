@@ -26,6 +26,8 @@
 #include "source/client/stream_decoder.h"
 #include "source/common/statistic_impl.h"
 
+#include "absl/container/flat_hash_map.h"
+
 namespace Nighthawk {
 namespace Client {
 
@@ -40,6 +42,7 @@ using namespace std::chrono_literals;
   COUNTER(http_5xx)                                                                                \
   COUNTER(http_xxx)                                                                                \
   COUNTER(pool_overflow)                                                                           \
+  COUNTER(grpc_error)                                                                              \
   COUNTER(pool_connection_failure)                                                                 \
   COUNTER(user_defined_plugin_handle_headers_failure)                                              \
   COUNTER(user_defined_plugin_handle_data_failure)
@@ -59,8 +62,8 @@ struct BenchmarkClientStatistic {
                            StatisticPtr&& response_body_size_stat, StatisticPtr&& latency_1xx_stat,
                            StatisticPtr&& latency_2xx_stat, StatisticPtr&& latency_3xx_stat,
                            StatisticPtr&& latency_4xx_stat, StatisticPtr&& latency_5xx_stat,
-                           StatisticPtr&& latency_xxx_stat,
-                           StatisticPtr&& origin_latency_statistic);
+                           StatisticPtr&& latency_xxx_stat, StatisticPtr&& origin_latency_statistic,
+                           StatisticPtr&& latency_grpc_ok_stat);
 
   // These are declared order dependent. Changing ordering may trigger on assert upon
   // destruction when tls has been involved during usage.
@@ -75,6 +78,7 @@ struct BenchmarkClientStatistic {
   StatisticPtr latency_5xx_statistic;
   StatisticPtr latency_xxx_statistic;
   StatisticPtr origin_latency_statistic;
+  StatisticPtr latency_grpc_ok_statistic;
 };
 
 class Http1PoolImpl : public Envoy::Http::FixedHttpConnPoolImpl {
@@ -124,6 +128,10 @@ public:
     max_requests_per_connection_ = max_requests_per_connection;
   }
   void setTimeout(std::chrono::seconds timeout) { timeout_ = timeout; }
+  /**
+   * Enables gRPC scoring: responses are judged by grpc-status rather than HTTP status alone.
+   */
+  void setGrpc(bool grpc) { grpc_ = grpc; }
 
   // BenchmarkClient
   void terminate() override;
@@ -141,9 +149,11 @@ public:
   std::vector<nighthawk::client::UserDefinedOutput> getUserDefinedOutputResults() const override;
 
   // StreamDecoderCompletionCallback
-  void onComplete(bool success, const Envoy::Http::ResponseHeaderMap& headers) override;
+  void onComplete(bool success, const Envoy::Http::ResponseHeaderMap& headers,
+                  GrpcStatusOpt grpc_status) override;
   void onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason reason) override;
-  void exportLatency(const uint32_t response_code, const uint64_t latency_ns) override;
+  void exportLatency(const uint32_t response_code, const uint64_t latency_ns,
+                     GrpcStatusOpt grpc_status) override;
   void handleResponseData(const Envoy::Buffer::Instance& response_data) override;
 
   // Helpers
@@ -157,6 +167,13 @@ public:
   }
 
 private:
+  /**
+   * Records the outcome of a gRPC call in the per-status counters.
+   * @return true when the call succeeded (grpc-status 0).
+   */
+  bool trackGrpcStatus(GrpcStatusOpt grpc_status);
+  Envoy::Stats::Counter& grpcStatusCounter(GrpcStatusOpt grpc_status);
+
   Envoy::Api::Api& api_;
   Envoy::Event::Dispatcher& dispatcher_;
   Envoy::Stats::ScopeSharedPtr scope_;
@@ -181,6 +198,11 @@ private:
   const std::string latency_response_header_name_;
   Envoy::Event::TimerPtr drain_timer_;
   std::vector<UserDefinedOutputNamePluginPair> user_defined_output_plugins_;
+  bool grpc_{false};
+  // Lazily created "grpc_status.<code>" counters, keyed by code; nullopt keys
+  // "grpc_status.missing".
+  absl::flat_hash_map<std::optional<Envoy::Grpc::Status::GrpcStatus>, Envoy::Stats::Counter*>
+      grpc_status_counters_;
 };
 
 } // namespace Client
