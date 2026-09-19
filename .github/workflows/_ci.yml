@@ -33,14 +33,17 @@ jobs:
       contents: read
       packages: read
     runs-on: ubuntu-22.04
+    timeout-minutes: 180
     steps:
     - uses: actions/checkout@v7.0.1
     - name: Set gcc
       run: |
         if [[ "${{ inputs.task }}" == *"gcc"* ]]; then
           echo "build --config=gcc" >> repo.bazelrc
+          echo "build:gcc --copt=-g0" >> repo.bazelrc
         else
           echo "common --config=clang" >> repo.bazelrc
+          echo "build --copt=-g1" >> repo.bazelrc
         fi
         echo "common --jobs=2" >> repo.bazelrc
         echo "common --local_resources=memory=3000" >> repo.bazelrc
@@ -48,7 +51,6 @@ jobs:
         if [[ "${{ inputs.task }}" != *"gcc"* ]]; then
           echo "build --linkopt=-Wl,--threads=1" >> repo.bazelrc
         fi
-        echo "build --copt=-g1" >> repo.bazelrc
         echo "build --strip=always" >> repo.bazelrc
         echo "build --config=bes" >> repo.bazelrc
         echo "build --experimental_reuse_sandbox_directories=true" >> repo.bazelrc
@@ -63,6 +65,7 @@ jobs:
             target: /tmp/bazel-shared
             chown: runner:runner
     - name: Run CI script
+      timeout-minutes: 180
       run: |
         ./ci/run_envoy_docker.sh './ci/do_ci.sh ${{ inputs.task }}'
       env:
