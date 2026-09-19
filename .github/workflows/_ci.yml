@@ -39,6 +39,7 @@ jobs:
       run: |
         if [[ "${{ inputs.task }}" == *"gcc"* ]]; then
           echo "build --config=gcc" >> repo.bazelrc
+          echo "build:gcc --host_linkopt=-fuse-ld=bfd" >> repo.bazelrc
         else
           echo "common --config=clang" >> repo.bazelrc
         fi
