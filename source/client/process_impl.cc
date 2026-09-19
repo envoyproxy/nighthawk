@@ -40,6 +40,7 @@
 #include "external/envoy/source/common/stats/tag_producer_impl.h"
 #include "external/envoy/source/common/thread_local/thread_local_impl.h"
 #include "external/envoy/source/exe/main_common.h"
+#include "external/envoy/source/server/configuration_impl.h"
 #include "external/envoy/source/server/null_overload_manager.h"
 #include "external/envoy/source/server/server.h"
 #include "external/envoy_api/envoy/config/core/v3/resolver.pb.h"
@@ -879,6 +880,22 @@ void ProcessImpl::setupStatsSinks(const envoy::config::bootstrap::v3::Bootstrap&
         Envoy::Config::Utility::getAndCheckFactory<NighthawkStatsSinkFactory>(stats_sink);
     stats_sinks.emplace_back(factory.createStatsSink(store_root_.symbolTable()));
   }
+  // Sinks implemented as Envoy stats sink plugins. These are resolved from Envoy's own factory
+  // registry, so any Envoy sink linked into this binary works without a Nighthawk specific
+  // factory. They receive Nighthawk's statistics through the same paths Envoy's own stats take:
+  // MetricSnapshot::histograms() on flush, and onHistogramComplete() per sample.
+  for (const envoy::config::metrics::v3::StatsSink& stats_sink : options_.envoyStatsSinks()) {
+    ENVOY_LOG(info, "loading Envoy stats sink configuration in Nighthawk");
+    auto& factory =
+        Envoy::Config::Utility::getAndCheckFactory<Envoy::Server::Configuration::StatsSinkFactory>(
+            stats_sink);
+    Envoy::ProtobufTypes::MessagePtr message = Envoy::Config::Utility::translateToFactoryConfig(
+        stats_sink, Envoy::ProtobufMessage::getStrictValidationVisitor(), factory);
+    absl::StatusOr<Envoy::Stats::SinkPtr> sink_or_error =
+        factory.createStatsSink(*message, server_->serverFactoryContext());
+    THROW_IF_NOT_OK_REF(sink_or_error.status());
+    stats_sinks.emplace_back(std::move(sink_or_error.value()));
+  }
   for (std::unique_ptr<Envoy::Stats::Sink>& sink : stats_sinks) {
     store_root_.addSink(*sink);
   }
@@ -969,7 +986,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
 
       // Needs to happen as early as possible (before createWorkers()) in the instantiation to
       // preempt the objects that require stats.
-      if (!options_.statsSinks().empty()) {
+      if (!options_.statsSinks().empty() || !options_.envoyStatsSinks().empty()) {
         absl::StatusOr<Envoy::Stats::TagProducerPtr> producer_or_error =
             Envoy::Stats::TagProducerImpl::createTagProducer(bootstrap_.stats_config(),
                                                              envoy_options_.statsTags());
@@ -1063,7 +1080,11 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
 
       ENVOY_LOG(error, bootstrap_.DebugString());
 
-      if (!options_.statsSinks().empty()) {
+      // The flush worker takes ownership of the sinks, which the stats store holds references to
+      // via addSink(). It must therefore be created whenever any sink was configured, of either
+      // kind: otherwise the sinks are destroyed at the end of this scope and the next
+      // deliverHistogramToSinks() call dereferences freed memory.
+      if (!options_.statsSinks().empty() || !options_.envoyStatsSinks().empty()) {
         // There should be only a single live flush worker instance at any time.
         flush_worker_ = std::make_unique<FlushWorkerImpl>(
             stats_flush_interval, *api_, tls_, store_root_, stats_sinks, *cluster_manager_);
@@ -1091,9 +1112,10 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     w->waitForCompletion();
   }
 
-  if (!options_.statsSinks().empty() && flush_worker_ != nullptr) {
+  if (flush_worker_ != nullptr) {
     // Stop the running dispatcher in flush_worker_. Needs to be called after all
-    // client workers are complete so that all the metrics can be flushed.
+    // client workers are complete so that all the metrics can be flushed. Gating this on the
+    // flush worker existing is enough; it is created for sinks of either kind.
     flush_worker_->exitDispatcher();
     flush_worker_->waitForCompletion();
   }

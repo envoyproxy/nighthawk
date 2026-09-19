@@ -82,6 +82,8 @@ public:
   MOCK_METHOD(bool, noDuration, (), (const, override));
   MOCK_METHOD(std::vector<envoy::config::metrics::v3::StatsSink>, statsSinks, (),
               (const, override));
+  MOCK_METHOD(std::vector<envoy::config::metrics::v3::StatsSink>, envoyStatsSinks, (),
+              (const, override));
   MOCK_METHOD(uint32_t, statsFlushInterval, (), (const, override));
   MOCK_METHOD(Envoy::Protobuf::Duration, statsFlushIntervalDuration, (), (const, override));
   MOCK_METHOD(std::string, responseHeaderWithLatencyInput, (), (const, override));

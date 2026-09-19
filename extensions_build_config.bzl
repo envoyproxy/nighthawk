@@ -7,6 +7,8 @@ EXTENSIONS = {
     "envoy.tracers.zipkin": "//source/extensions/tracers/zipkin:config",
     "envoy.transport_sockets.raw_buffer": "//source/extensions/transport_sockets/raw_buffer:config",
     "envoy.access_loggers.file": "//source/extensions/access_loggers/file:config",
+    "envoy.stat_sinks.statsd": "//source/extensions/stat_sinks/statsd:config",
+    "envoy.stat_sinks.dog_statsd": "//source/extensions/stat_sinks/dog_statsd:config",
     "envoy.clusters.dns": "//source/extensions/clusters/dns:dns_cluster_lib",
     "envoy.clusters.eds": "//source/extensions/clusters/eds:eds_lib",
     "envoy.clusters.static": "//source/extensions/clusters/static:static_cluster_lib",

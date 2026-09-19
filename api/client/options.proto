@@ -308,6 +308,12 @@ message CommandLineOptions {
   // Optional set of stat sinks where Nighthawk metrics will be flushed to.
   repeated envoy.config.metrics.v3.StatsSink stats_sinks = 34;
 
+  // Stats sinks implemented as Envoy stats sink plugins, resolved through
+  // envoy.server.configuration.StatsSinkFactory rather than Nighthawk's own
+  // NighthawkStatsSinkFactory, so that any Envoy sink linked into the binary can be used without
+  // a Nighthawk specific factory. Sinks configured here and in stats_sinks are both flushed.
+  repeated envoy.config.metrics.v3.StatsSink envoy_stats_sinks = 124;
+
   oneof oneof_stats_flush_interval {
     // Time interval (number of seconds) between periodical flushes to
     // configured stats sinks. If not specified the default is 5 seconds.

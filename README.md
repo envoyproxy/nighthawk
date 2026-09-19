@@ -166,6 +166,7 @@ bazel-bin/nighthawk_client  [--user-defined-plugin-config <string>] ...
 [--latency-response-header-name <string>]
 [--stats-flush-interval-duration <duration>]
 [--stats-flush-interval <uint32_t>]
+[--envoy-stats-sinks <string>] ...
 [--stats-sinks <string>] ... [--no-duration]
 [--simple-warmup]
 [--rate-limiter-plugin-config <string>]
@@ -237,6 +238,18 @@ For example '1s' or '1.000000001s'. Mutually exclusive with
 --stats-flush-interval <uint32_t>
 Time interval (in seconds) between flushes to configured stats sinks.
 Mutually exclusive with --stats-flush-interval-duration. Default: 5.
+
+--envoy-stats-sinks <string>  (accepted multiple times)
+Stats sinks (in json) implemented as Envoy stats sink plugins,
+resolved through Envoy's own factory registry rather than Nighthawk's,
+so any Envoy sink linked into this binary can be used without a
+Nighthawk specific factory. This argument is intended to be specified
+multiple times, and can be combined with --stats-sinks. Sinks that
+hold a gRPC client are not usable yet, see the version history.
+Example (json): {name:"envoy.stat_sinks.dog_statsd"
+,typed_config:{"@type":"type.googleapis.com/envoy.config.metrics.v3.Do
+gStatsdSink",address:{socket_address:{address:"127.0.0.1"
+,port_value:8125}}}}
 
 --stats-sinks <string>  (accepted multiple times)
 Stats sinks (in json) where Nighthawk metrics will be flushed. This

@@ -401,6 +401,17 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "googleapis.com/"
       "envoy.config.metrics.v3.StatsdSink\",tcp_cluster_name:\"statsd\"}}",
       false, "string", cmd);
+  TCLAP::MultiArg<std::string> envoy_stats_sinks(
+      "", "envoy-stats-sinks",
+      "Stats sinks (in json) implemented as Envoy stats sink plugins, resolved through Envoy's own "
+      "factory registry rather than Nighthawk's, so any Envoy sink linked into this binary can be "
+      "used without a Nighthawk specific factory. This argument is intended to be specified "
+      "multiple times, and can be combined with --stats-sinks. Sinks that hold a gRPC client are "
+      "not usable yet, see the version history. Example (json): "
+      "{name:\"envoy.stat_sinks.dog_statsd\",typed_config:{\"@type\":\"type.googleapis.com/"
+      "envoy.config.metrics.v3.DogStatsdSink\",address:{socket_address:{address:\"127.0.0.1\","
+      "port_value:8125}}}}",
+      false, "string", cmd);
 
   TCLAP::ValueArg<uint32_t> stats_flush_interval(
       "", "stats-flush-interval",
@@ -460,10 +471,10 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   // Verify that if --stats-flush-interval or --stats-flush-interval-duration is
   // set, then --stats-sinks must also be set.
   if ((stats_flush_interval.isSet() || stats_flush_interval_duration.isSet()) &&
-      !stats_sinks.isSet()) {
+      !stats_sinks.isSet() && !envoy_stats_sinks.isSet()) {
     throw MalformedArgvException(
         "if --stats-flush-interval or --stats-flush-interval-duration is set, "
-        "then --stats-sinks must also be set");
+        "then --stats-sinks or --envoy-stats-sinks must also be set");
   }
 
   TCLAP_SET_IF_SPECIFIED(requests_per_second, requests_per_second_);
@@ -620,6 +631,18 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
         throw MalformedArgvException(e.what());
       }
       stats_sinks_.push_back(sink);
+    }
+  }
+  if (envoy_stats_sinks.isSet()) {
+    for (const std::string& stats_sink : envoy_stats_sinks.getValue()) {
+      envoy::config::metrics::v3::StatsSink sink;
+      try {
+        Envoy::MessageUtil::loadFromJson(stats_sink, sink,
+                                         Envoy::ProtobufMessage::getStrictValidationVisitor());
+      } catch (const Envoy::EnvoyException& e) {
+        throw MalformedArgvException(e.what());
+      }
+      envoy_stats_sinks_.push_back(sink);
     }
   }
   TCLAP_SET_IF_SPECIFIED(stats_flush_interval, stats_flush_interval_);
@@ -978,6 +1001,9 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   for (const envoy::config::metrics::v3::StatsSink& stats_sink : options.stats_sinks()) {
     stats_sinks_.push_back(stats_sink);
   }
+  for (const envoy::config::metrics::v3::StatsSink& stats_sink : options.envoy_stats_sinks()) {
+    envoy_stats_sinks_.push_back(stats_sink);
+  }
   stats_flush_interval_ =
       PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, stats_flush_interval, stats_flush_interval_);
   if (options.has_stats_flush_interval_duration()) {
@@ -1230,6 +1256,9 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
   }
   for (const envoy::config::metrics::v3::StatsSink& stats_sink : stats_sinks_) {
     *command_line_options->add_stats_sinks() = stats_sink;
+  }
+  for (const envoy::config::metrics::v3::StatsSink& stats_sink : envoy_stats_sinks_) {
+    *command_line_options->add_envoy_stats_sinks() = stats_sink;
   }
   if (stats_flush_interval_duration_.seconds() > 0 || stats_flush_interval_duration_.nanos() > 0) {
     *command_line_options->mutable_stats_flush_interval_duration() = stats_flush_interval_duration_;
