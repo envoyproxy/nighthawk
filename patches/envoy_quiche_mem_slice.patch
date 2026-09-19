@@ -1,0 +1,18 @@
+--- a/source/common/quic/BUILD
++++ b/source/common/quic/BUILD
+@@ -322,6 +322,7 @@
+         "envoy_quic_server_stream.h",
+     ]),
+     deps = envoy_select_enable_http3([
++        "//source/common/quic/platform:quiche_mem_slice_impl_lib",
+         ":envoy_quic_connection_debug_visitor_factory_interface",
+         ":envoy_quic_server_connection_lib",
+         ":envoy_quic_server_crypto_stream_factory_lib",
+@@ -490,6 +491,7 @@
+     srcs = envoy_select_enable_http3(["envoy_quic_dispatcher.cc"]),
+     hdrs = envoy_select_enable_http3(["envoy_quic_dispatcher.h"]),
+     deps = envoy_select_enable_http3([
++        "//source/common/quic/platform:quiche_mem_slice_impl_lib",
+         ":envoy_quic_connection_debug_visitor_factory_interface",
+         ":envoy_quic_proof_source_lib",
+         ":envoy_quic_server_connection_lib",

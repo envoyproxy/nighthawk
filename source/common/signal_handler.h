@@ -5,7 +5,7 @@
 #include <thread>
 #include <vector>
 
-#include "external/envoy/source/common/common/logger.h"
+#include "source/common/common/logger.h"
 
 namespace Nighthawk {
 

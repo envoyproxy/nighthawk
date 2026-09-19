@@ -21,6 +21,7 @@ envoy_cc_library(
         "@envoy//source/exe:platform_header_lib_with_external_headers",
         "@envoy//source/exe:platform_impl_lib",
     ],
+    alwayslink = True,
 )
 
 envoy_cc_library(
@@ -33,6 +34,7 @@ envoy_cc_library(
         "//source/common:version_linkstamp",
         "@com_google_absl//absl/debugging:symbolize",
     ],
+    alwayslink = True,
 )
 
 envoy_cc_library(
@@ -45,6 +47,7 @@ envoy_cc_library(
         "//source/common:version_linkstamp",
         "@com_google_absl//absl/debugging:symbolize",
     ],
+    alwayslink = True,
 )
 
 envoy_cc_library(
@@ -56,4 +59,5 @@ envoy_cc_library(
         "//source/client:output_transform_main_lib",
         "//source/common:version_linkstamp",
     ],
+    alwayslink = True,
 )

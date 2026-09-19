@@ -7,10 +7,10 @@
 
 #include "nighthawk/common/stopwatch.h"
 
-#include "external/envoy/source/common/common/statusor.h"
-#include "external/envoy/source/common/protobuf/message_validator_impl.h"
-#include "external/envoy/source/common/protobuf/utility.h"
-#include "external/envoy/source/extensions/filters/http/common/pass_through_filter.h"
+#include "source/common/common/statusor.h"
+#include "source/common/protobuf/message_validator_impl.h"
+#include "source/common/protobuf/utility.h"
+#include "source/extensions/filters/http/common/pass_through_filter.h"
 
 #include "api/server/time_tracking.pb.h"
 

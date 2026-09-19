@@ -4,8 +4,8 @@
 
 #include "nighthawk/common/nighthawk_service_client.h"
 
-#include "external/envoy/source/common/common/logger.h"
-#include "external/envoy/source/common/common/statusor.h"
+#include "source/common/common/logger.h"
+#include "source/common/common/statusor.h"
 
 #include "api/distributor/distributor.grpc.pb.h"
 

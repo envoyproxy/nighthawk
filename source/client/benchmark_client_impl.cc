@@ -7,10 +7,10 @@
 #include "nighthawk/common/statistic.h"
 #include "nighthawk/user_defined_output/user_defined_output_plugin.h"
 
-#include "external/envoy/source/common/http/header_map_impl.h"
-#include "external/envoy/source/common/http/headers.h"
-#include "external/envoy/source/common/http/utility.h"
-#include "external/envoy/source/common/network/utility.h"
+#include "source/common/http/header_map_impl.h"
+#include "source/common/http/headers.h"
+#include "source/common/http/utility.h"
+#include "source/common/network/utility.h"
 
 #include "source/client/stream_decoder.h"
 

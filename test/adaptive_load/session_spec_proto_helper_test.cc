@@ -1,6 +1,6 @@
 #include "envoy/registry/registry.h"
 
-#include "external/envoy/source/common/config/utility.h"
+#include "source/common/config/utility.h"
 
 #include "api/adaptive_load/adaptive_load.pb.h"
 #include "api/adaptive_load/metric_spec.pb.h"

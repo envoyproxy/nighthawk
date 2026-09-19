@@ -18,6 +18,9 @@ export SRCDIR=${SRCDIR:="${PWD}"}
 export CLANG_FORMAT=clang-format
 export NIGHTHAWK_BUILD_ARCH=$(uname -m)
 export BAZEL_REMOTE_CACHE=${BAZEL_REMOTE_CACHE:=""}
+if [ -d "${HOME}/.local/lib" ]; then
+    export LD_LIBRARY_PATH="${HOME}/.local/lib:${LD_LIBRARY_PATH:-}"
+fi
 # The directory to copy built binaries to.
 export BUILD_DIR=""
 

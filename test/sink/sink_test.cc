@@ -1,7 +1,7 @@
 #include <filesystem>
 #include <fstream>
 
-#include "external/envoy/source/common/common/random_generator.h"
+#include "source/common/common/random_generator.h"
 
 #include "source/sink/sink_impl.h"
 

@@ -3,7 +3,7 @@
 
 #include "envoy/http/header_map.h"
 
-#include "external/envoy/source/common/http/utility.h"
+#include "source/common/http/utility.h"
 
 #include "api/user_defined_output/log_response_headers.pb.h"
 

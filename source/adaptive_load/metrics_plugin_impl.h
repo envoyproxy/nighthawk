@@ -2,7 +2,7 @@
 
 #include "nighthawk/adaptive_load/metrics_plugin.h"
 
-#include "external/envoy/source/common/common/logger.h"
+#include "source/common/common/logger.h"
 
 #include "api/adaptive_load/metrics_plugin_impl.pb.h"
 #include "api/client/options.pb.h"

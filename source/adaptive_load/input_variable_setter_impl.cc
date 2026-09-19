@@ -2,7 +2,7 @@
 
 #include <limits>
 
-#include "external/envoy/source/common/protobuf/protobuf.h"
+#include "source/common/protobuf/protobuf.h"
 
 namespace Nighthawk {
 

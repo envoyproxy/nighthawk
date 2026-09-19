@@ -2,7 +2,7 @@
 
 #include "nighthawk/adaptive_load/input_variable_setter.h"
 
-#include "external/envoy/source/common/config/utility.h"
+#include "source/common/config/utility.h"
 
 #include "api/adaptive_load/benchmark_result.pb.h"
 #include "api/adaptive_load/input_variable_setter_impl.pb.h"

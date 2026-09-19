@@ -2,7 +2,7 @@
 
 #include "envoy/common/pure.h"
 
-#include "external/envoy/source/common/protobuf/protobuf.h"
+#include "source/common/protobuf/protobuf.h"
 
 #include "absl/status/status.h"
 
