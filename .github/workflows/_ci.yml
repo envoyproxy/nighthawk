@@ -42,7 +42,7 @@ jobs:
         else
           echo "common --config=clang" >> repo.bazelrc
         fi
-        echo "common --jobs=1" >> repo.bazelrc
+        echo "common --jobs=2" >> repo.bazelrc
         echo "common --local_resources=memory=4096" >> repo.bazelrc
         echo "test --local_test_jobs=1" >> repo.bazelrc
         if [[ "${{ inputs.task }}" != *"gcc"* ]]; then
