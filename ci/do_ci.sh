@@ -347,7 +347,9 @@ case "$1" in
     ;;
     test_gcc)
         setup_gcc_toolchain
-        do_test
+        BAZEL_BUILD_OPTIONS="$BAZEL_BUILD_OPTIONS --copt=-g0 --strip=always"
+        BAZEL_TEST_OPTIONS="$BAZEL_TEST_OPTIONS --copt=-g0 --strip=always"
+        bazel test -c opt $BAZEL_TEST_OPTIONS //test/...
         exit 0
     ;;
     clang_tidy)
