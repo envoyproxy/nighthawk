@@ -65,6 +65,16 @@ jobs:
           - src: /mnt/bazel-shared
             target: /tmp/bazel-shared
             chown: runner:runner
+    - name: Cache Bazel build output
+      uses: actions/cache@v4
+      with:
+        path: |
+          /mnt/envoy-docker-build
+          /mnt/bazel-shared
+        key: bazel-cache-${{ runner.os }}-${{ inputs.task }}-${{ github.sha }}
+        restore-keys: |
+          bazel-cache-${{ runner.os }}-${{ inputs.task }}-
+          bazel-cache-${{ runner.os }}-
     - name: Run CI script
       timeout-minutes: 180
       run: |

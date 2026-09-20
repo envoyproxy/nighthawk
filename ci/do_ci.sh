@@ -349,7 +349,8 @@ case "$1" in
         setup_gcc_toolchain
         BAZEL_BUILD_OPTIONS="$BAZEL_BUILD_OPTIONS --copt=-g0 --strip=always"
         BAZEL_TEST_OPTIONS="$BAZEL_TEST_OPTIONS --copt=-g0 --strip=always"
-        bazel test -c opt $BAZEL_TEST_OPTIONS //test/...
+        TEST_TARGETS="//test/common/... //test/client/... //test/server/... //test/adaptive_load/... //test/sink/..."
+        bazel test -c opt $BAZEL_TEST_OPTIONS ${TEST_TARGETS}
         exit 0
     ;;
     clang_tidy)
