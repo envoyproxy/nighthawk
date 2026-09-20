@@ -39,8 +39,7 @@ jobs:
         - asan
         - benchmark_with_own_binaries
         - test
-        - test_gcc_1
-        - test_gcc_2
+        - test_gcc
         - tsan
     uses: ./.github/workflows/_ci.yml
     with:

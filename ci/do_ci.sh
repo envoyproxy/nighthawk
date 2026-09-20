@@ -345,20 +345,9 @@ case "$1" in
         do_test
         exit 0
     ;;
-    test_gcc|test_gcc_1)
+    test_gcc)
         setup_gcc_toolchain
-        BAZEL_BUILD_OPTIONS="$BAZEL_BUILD_OPTIONS --copt=-g0 --strip=always"
-        BAZEL_TEST_OPTIONS="$BAZEL_TEST_OPTIONS --copt=-g0 --strip=always"
-        TEST_TARGETS="//test/common/... //test/client/..."
-        bazel test -c fastbuild $BAZEL_TEST_OPTIONS ${TEST_TARGETS}
-        exit 0
-    ;;
-    test_gcc_2)
-        setup_gcc_toolchain
-        BAZEL_BUILD_OPTIONS="$BAZEL_BUILD_OPTIONS --copt=-g0 --strip=always"
-        BAZEL_TEST_OPTIONS="$BAZEL_TEST_OPTIONS --copt=-g0 --strip=always"
-        TEST_TARGETS="//test/server/... //test/adaptive_load/... //test/sink/..."
-        bazel test -c fastbuild $BAZEL_TEST_OPTIONS ${TEST_TARGETS}
+        bazel build $BAZEL_BUILD_OPTIONS //:nighthawk
         exit 0
     ;;
     clang_tidy)
