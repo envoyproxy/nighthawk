@@ -14,7 +14,6 @@ concurrency:
 
 jobs:
   check:
-    timeout-minutes: 180
     permissions:
       contents: read
       packages: read
@@ -29,7 +28,6 @@ jobs:
       task: ${{ matrix.target }}
 
   test:
-    timeout-minutes: 180
     permissions:
       contents: read
       packages: read
