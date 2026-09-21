@@ -348,7 +348,7 @@ case "$1" in
     test_gcc)
         setup_gcc_toolchain
         BAZEL_BUILD_OPTIONS="$BAZEL_BUILD_OPTIONS --copt=-g0 --strip=always"
-        bazel build -c fastbuild $BAZEL_BUILD_OPTIONS //:nighthawk_client
+        bazel build -c fastbuild $BAZEL_BUILD_OPTIONS //:nighthawk
         exit 0
     ;;
     clang_tidy)
