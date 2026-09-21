@@ -79,13 +79,11 @@ jobs:
         if [[ "${{ inputs.task }}" == *"gcc"* ]]; then
           export BAZEL_BUILD_EXTRA_OPTIONS=""
         else
-          export BAZEL_BUILD_EXTRA_OPTIONS="--config=remote-ci"
+          export BAZEL_BUILD_EXTRA_OPTIONS="--config=remote-ci --config=rbe ${{ inputs.bazel-extra }}"
         fi
         ./ci/run_envoy_docker.sh './ci/do_ci.sh ${{ inputs.task }}'
       env:
         GITHUB_TOKEN: ${{ github.token }}
-          --config=rbe
-          ${{ inputs.bazel-extra }}
         GH_BRANCH: ${{ github.ref }}
         GH_SHA1: ${{ github.sha }}
         ENVOY_DOCKER_IN_DOCKER: ${{ inputs.docker-in-docker && '1' || '' }}
