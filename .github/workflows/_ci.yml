@@ -41,12 +41,11 @@ jobs:
         if [[ "${{ inputs.task }}" == *"gcc"* ]]; then
           echo "build --config=gcc" >> repo.bazelrc
           echo "build:gcc --copt=-g0" >> repo.bazelrc
-          echo "common --jobs=2" >> repo.bazelrc
         else
           echo "common --config=clang" >> repo.bazelrc
           echo "build --copt=-g1" >> repo.bazelrc
-          echo "common --jobs=2" >> repo.bazelrc
         fi
+        echo "common --jobs=2" >> repo.bazelrc
         echo "common --local_resources=memory=3000" >> repo.bazelrc
         echo "test --local_test_jobs=1" >> repo.bazelrc
         echo "build --linkopt=-Wl,--threads=1" >> repo.bazelrc
@@ -76,11 +75,7 @@ jobs:
     - name: Run CI script
       timeout-minutes: 180
       run: |
-        if [[ "${{ inputs.task }}" == *"gcc"* ]]; then
-          export BAZEL_BUILD_EXTRA_OPTIONS=""
-        else
-          export BAZEL_BUILD_EXTRA_OPTIONS="--config=remote-ci --config=rbe ${{ inputs.bazel-extra }}"
-        fi
+        export BAZEL_BUILD_EXTRA_OPTIONS="--config=remote-ci --config=rbe ${{ inputs.bazel-extra }}"
         ./ci/run_envoy_docker.sh './ci/do_ci.sh ${{ inputs.task }}'
       env:
         GITHUB_TOKEN: ${{ github.token }}
