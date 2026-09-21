@@ -76,11 +76,14 @@ jobs:
     - name: Run CI script
       timeout-minutes: 180
       run: |
+        if [[ "${{ inputs.task }}" == *"gcc"* ]]; then
+          export BAZEL_BUILD_EXTRA_OPTIONS=""
+        else
+          export BAZEL_BUILD_EXTRA_OPTIONS="--config=remote-ci"
+        fi
         ./ci/run_envoy_docker.sh './ci/do_ci.sh ${{ inputs.task }}'
       env:
         GITHUB_TOKEN: ${{ github.token }}
-        BAZEL_BUILD_EXTRA_OPTIONS: >-
-          --config=remote-ci
           --config=rbe
           ${{ inputs.bazel-extra }}
         GH_BRANCH: ${{ github.ref }}
