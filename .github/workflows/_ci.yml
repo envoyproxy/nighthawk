@@ -49,9 +49,7 @@ jobs:
         fi
         echo "common --local_resources=memory=3000" >> repo.bazelrc
         echo "test --local_test_jobs=1" >> repo.bazelrc
-        if [[ "${{ inputs.task }}" != *"gcc"* ]]; then
-          echo "build --linkopt=-Wl,--threads=1" >> repo.bazelrc
-        fi
+        echo "build --linkopt=-Wl,--threads=1" >> repo.bazelrc
         echo "build --strip=always" >> repo.bazelrc
         echo "build --config=bes" >> repo.bazelrc
         echo "build --experimental_reuse_sandbox_directories=true" >> repo.bazelrc
