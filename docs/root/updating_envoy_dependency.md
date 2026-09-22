@@ -98,23 +98,13 @@ Click the link in the terminal to double check the date of the Envoy commit to w
 
 Edit [MODULE.bazel](/MODULE.bazel):
 
-1. Update the `ENVOY_COMMIT` variable with the target Envoy commit hash from
-   [this page](https://github.com/envoyproxy/envoy/commits/main).
-
-2. Re-generate `MODULE.bazel.lock`:
-   Bazel 8 (Bzlmod) records exact resolution hashes in `MODULE.bazel.lock`.
+Update the `ENVOY_COMMIT` variable with the target Envoy commit hash:
 
 ```bash
-# Update lockfile resolution
-bazel mod deps --lockfile_mode=update
-
-git diff
+sed -i -e "s/ENVOY_COMMIT =.*/ENVOY_COMMIT = \"${envoy_commit}\"/" MODULE.bazel
 ```
 
-At this point:
-
-- `MODULE.bazel` will refer to the new Envoy commit.
-- `MODULE.bazel.lock` will be updated with the corresponding dependency graph resolution.
+> **Note:** `MODULE.bazel.lock` will be re-generated in Step 6 after updating `.bazelrc` with Envoy's pinned registry SHA.
 
 ### Step 5
 
