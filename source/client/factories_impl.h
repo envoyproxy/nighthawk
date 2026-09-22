@@ -9,8 +9,8 @@
 #include "nighthawk/common/termination_predicate.h"
 #include "nighthawk/common/uri.h"
 
-#include "external/envoy/source/common/common/statusor.h"
-#include "external/envoy/source/common/config/utility.h"
+#include "source/common/common/statusor.h"
+#include "source/common/config/utility.h"
 
 #include "source/common/platform_util_impl.h"
 

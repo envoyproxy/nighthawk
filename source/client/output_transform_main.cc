@@ -2,7 +2,7 @@
 
 #include "nighthawk/common/exception.h"
 
-#include "external/envoy/source/common/protobuf/message_validator_impl.h"
+#include "source/common/protobuf/message_validator_impl.h"
 
 #include "api/client/service.pb.h"
 

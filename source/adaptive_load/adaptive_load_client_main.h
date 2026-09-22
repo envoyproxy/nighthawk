@@ -5,7 +5,7 @@
 
 #include "nighthawk/adaptive_load/adaptive_load_controller.h"
 
-#include "external/envoy/source/common/common/logger.h"
+#include "source/common/common/logger.h"
 
 namespace Nighthawk {
 

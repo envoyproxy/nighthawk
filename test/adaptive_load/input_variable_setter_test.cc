@@ -1,4 +1,4 @@
-#include "external/envoy/source/common/config/utility.h"
+#include "source/common/config/utility.h"
 
 #include "source/adaptive_load/input_variable_setter_impl.h"
 

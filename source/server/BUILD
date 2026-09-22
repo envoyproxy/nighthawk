@@ -81,7 +81,6 @@ envoy_cc_library(
         "//api/server:response_options_proto_cc_proto",
         "@envoy//source/common/common:statusor_lib_with_external_headers",
         "@envoy//source/exe:all_extensions_lib_with_external_headers",
-        "@envoy//source/extensions/filters/http/fault:fault_filter_lib_with_external_headers",
     ],
 )
 

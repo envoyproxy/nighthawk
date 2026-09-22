@@ -10,9 +10,9 @@
 #include "nighthawk/adaptive_load/scoring_function.h"
 #include "nighthawk/adaptive_load/step_controller.h"
 
-#include "external/envoy/source/common/common/statusor.h"
-#include "external/envoy/source/common/config/utility.h"
-#include "external/envoy/source/common/protobuf/protobuf.h"
+#include "source/common/common/statusor.h"
+#include "source/common/config/utility.h"
+#include "source/common/protobuf/protobuf.h"
 
 #include "api/adaptive_load/adaptive_load.pb.h"
 #include "api/adaptive_load/benchmark_result.pb.h"

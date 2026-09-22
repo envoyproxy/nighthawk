@@ -1,6 +1,6 @@
 #include "envoy/registry/registry.h"
 
-#include "external/envoy/source/common/config/utility.h"
+#include "source/common/config/utility.h"
 
 #include "api/adaptive_load/benchmark_result.pb.h"
 #include "api/client/options.pb.h"

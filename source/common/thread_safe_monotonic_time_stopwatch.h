@@ -2,8 +2,8 @@
 
 #include "nighthawk/common/stopwatch.h"
 
-#include "external/envoy/source/common/common/lock_guard.h"
-#include "external/envoy/source/common/common/thread.h"
+#include "source/common/common/lock_guard.h"
+#include "source/common/common/thread.h"
 
 namespace Nighthawk {
 

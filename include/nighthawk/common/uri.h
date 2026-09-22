@@ -4,8 +4,8 @@
 
 #include "nighthawk/common/exception.h"
 
-#include "external/envoy/envoy/network/dns.h"
-#include "external/envoy/source/common/network/utility.h"
+#include "envoy/network/dns.h"
+#include "source/common/network/utility.h"
 
 #include "absl/strings/string_view.h"
 

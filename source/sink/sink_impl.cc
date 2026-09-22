@@ -4,8 +4,8 @@
 #include <filesystem>
 #include <fstream>
 
-#include "external/envoy/source/common/common/logger.h"
-#include "external/envoy/source/common/common/random_generator.h"
+#include "source/common/common/logger.h"
+#include "source/common/common/random_generator.h"
 
 #include "fmt/ostream.h"
 

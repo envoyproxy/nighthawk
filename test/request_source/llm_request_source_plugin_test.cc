@@ -9,12 +9,12 @@
 #include "nighthawk/common/request.h"
 #include "nighthawk/common/request_source.h"
 
-#include "external/envoy/source/common/common/assert.h"
-#include "external/envoy/source/common/http/header_map_impl.h"
-#include "external/envoy/source/common/json/json_loader.h"
-#include "external/envoy/source/common/protobuf/protobuf.h"
-#include "external/envoy/source/common/protobuf/utility.h"
-#include "external/envoy/test/mocks/api/mocks.h"
+#include "source/common/common/assert.h"
+#include "source/common/http/header_map_impl.h"
+#include "source/common/json/json_loader.h"
+#include "source/common/protobuf/protobuf.h"
+#include "source/common/protobuf/utility.h"
+#include "test/mocks/api/mocks.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

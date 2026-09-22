@@ -5,7 +5,7 @@
 #include "nighthawk/client/process.h"
 #include "nighthawk/common/nighthawk_service_client.h"
 
-#include "external/envoy/source/common/common/logger.h"
+#include "source/common/common/logger.h"
 
 #include "api/client/service.grpc.pb.h"
 

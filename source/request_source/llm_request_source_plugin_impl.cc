@@ -18,9 +18,9 @@
 #include "envoy/config/core/v3/extension.pb.h"
 #include "envoy/http/header_map.h"
 #include "envoy/registry/registry.h"
-#include "external/envoy/source/common/http/header_map_impl.h"
-#include "external/envoy/source/common/protobuf/protobuf.h"
-#include "external/envoy/source/common/protobuf/utility.h"
+#include "source/common/http/header_map_impl.h"
+#include "source/common/protobuf/protobuf.h"
+#include "source/common/protobuf/utility.h"
 
 #include "api/client/options.pb.h"
 #include "api/request_source/request_source_plugin.pb.h"

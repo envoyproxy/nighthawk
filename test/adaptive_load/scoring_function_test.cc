@@ -2,7 +2,7 @@
 
 #include "envoy/common/exception.h"
 
-#include "external/envoy/source/common/config/utility.h"
+#include "source/common/config/utility.h"
 
 #include "source/adaptive_load/scoring_function_impl.h"
 

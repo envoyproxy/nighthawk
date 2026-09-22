@@ -5,9 +5,9 @@
 #include "envoy/api/v2/core/base.pb.h"
 #include "envoy/config/core/v3/base.pb.h"
 
-#include "external/envoy/source/common/common/assert.h"
-#include "external/envoy/source/common/protobuf/message_validator_impl.h"
-#include "external/envoy/source/common/protobuf/utility.h"
+#include "source/common/common/assert.h"
+#include "source/common/protobuf/message_validator_impl.h"
+#include "source/common/protobuf/utility.h"
 
 #include "api/server/response_options.pb.validate.h"
 
