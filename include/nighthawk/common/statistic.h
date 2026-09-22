@@ -7,7 +7,7 @@
 #include "envoy/common/exception.h"
 #include "envoy/common/pure.h"
 
-#include "external/envoy/source/common/common/non_copyable.h"
+#include "source/common/common/non_copyable.h"
 
 #include "api/client/output.pb.h"
 

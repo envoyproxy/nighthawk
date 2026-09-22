@@ -1,6 +1,6 @@
 #include <tuple>
 
-#include "external/envoy/source/common/config/utility.h"
+#include "source/common/config/utility.h"
 
 #include "source/adaptive_load/metrics_plugin_impl.h"
 

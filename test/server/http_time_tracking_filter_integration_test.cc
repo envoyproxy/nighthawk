@@ -1,6 +1,6 @@
 #include <chrono>
 
-#include "external/envoy/test/test_common/simulated_time_system.h"
+#include "test/test_common/simulated_time_system.h"
 
 #include "api/server/response_options.pb.h"
 #include "api/server/response_options.pb.validate.h"

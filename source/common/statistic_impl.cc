@@ -5,9 +5,9 @@
 #include <fstream>
 #include <sstream>
 
-#include "external/dep_hdrhistogram_c/include/hdr/hdr_histogram_log.h"
-#include "external/envoy/source/common/common/assert.h"
-#include "external/envoy/source/common/protobuf/utility.h"
+#include "hdr/hdr_histogram_log.h"
+#include "source/common/common/assert.h"
+#include "source/common/protobuf/utility.h"
 
 #include "absl/strings/str_cat.h"
 #include "internal_proto/statistic/statistic.pb.h"

@@ -11,9 +11,9 @@
 #include "nighthawk/common/request.h"
 #include "nighthawk/common/request_stream_grpc_client.h"
 
-#include "external/envoy/source/common/common/logger.h"
-#include "external/envoy/source/common/grpc/typed_async_client.h"
-#include "external/envoy/source/common/http/header_map_impl.h"
+#include "source/common/common/logger.h"
+#include "source/common/grpc/typed_async_client.h"
+#include "source/common/http/header_map_impl.h"
 
 #ifdef __clang__
 #pragma clang diagnostic push

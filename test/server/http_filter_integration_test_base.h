@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "external/envoy/test/integration/http_integration.h"
+#include "test/integration/http_integration.h"
 
 namespace Nighthawk {
 

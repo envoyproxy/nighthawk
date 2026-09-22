@@ -2,8 +2,8 @@
 
 #include "nighthawk/sink/nighthawk_sink_client.h"
 
-#include "external/envoy/source/common/common/statusor.h"
-#include "external/envoy/source/common/protobuf/protobuf.h"
+#include "source/common/common/statusor.h"
+#include "source/common/protobuf/protobuf.h"
 
 namespace Nighthawk {
 

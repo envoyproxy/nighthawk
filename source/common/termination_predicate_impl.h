@@ -7,7 +7,7 @@
 
 #include "nighthawk/common/termination_predicate.h"
 
-#include "external/envoy/source/common/common/assert.h"
+#include "source/common/common/assert.h"
 
 namespace Nighthawk {
 

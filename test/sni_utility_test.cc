@@ -1,4 +1,4 @@
-#include "external/envoy/test/test_common/utility.h"
+#include "test/test_common/utility.h"
 
 #include "source/client/sni_utility.h"
 #include "source/common/uri_impl.h"

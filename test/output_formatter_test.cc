@@ -2,10 +2,10 @@
 
 #include "nighthawk/common/exception.h"
 
-#include "external/envoy/source/common/protobuf/message_validator_impl.h"
-#include "external/envoy/source/common/protobuf/utility.h"
-#include "external/envoy/test/test_common/file_system_for_test.h"
-#include "external/envoy/test/test_common/simulated_time_system.h"
+#include "source/common/protobuf/message_validator_impl.h"
+#include "source/common/protobuf/utility.h"
+#include "test/test_common/file_system_for_test.h"
+#include "test/test_common/simulated_time_system.h"
 
 #include "api/client/options.pb.h"
 #include "api/client/output.pb.h"

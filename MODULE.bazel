@@ -1,0 +1,123 @@
+# Envoy commit to use
+ENVOY_COMMIT = "b6e7e12ed27300f21f4436ec6e6c119c128edb0f"
+
+module(
+    name = "nighthawk",
+    version = "1.0.0-dev",
+)
+
+####################################################################################
+# deps: Module
+####################################################################################
+
+bazel_dep(name = "envoy", version = "1.40.0-dev")
+bazel_dep(name = "envoy_api", version = "1.40.0-dev")
+bazel_dep(name = "rules_python", version = "2.2.0")
+bazel_dep(name = "protobuf", version = "35.1.bcr.envoy")
+bazel_dep(name = "proxy-wasm-cpp-host", version = "0.0.0-260704-f2db56a.envoy")
+bazel_dep(name = "googleurl", version = "0.0.0-221103-dd4080f.envoy")
+bazel_dep(name = "rules_rust", version = "0.69.0.envoy")
+bazel_dep(name = "grpc", version = "1.83.0.envoy")
+bazel_dep(name = "librdkafka", version = "2.6.0.envoy")
+bazel_dep(name = "quiche", version = "0.0.0-260831-5c9cc6b.envoy")
+bazel_dep(name = "toolchains_llvm", version = "1.9.0.envoy")
+bazel_dep(name = "envoy_toolshed", version = "0.4.13.envoy")
+bazel_dep(name = "zlib-ng", version = "2.3.2.envoy")
+bazel_dep(name = "googletest", version = "1.17.0.bcr.2")
+bazel_dep(name = "googleapis", version = "0.0.0-20251003-2193a2bf")
+bazel_dep(name = "protoc-gen-validate", version = "1.3.3.envoy")
+bazel_dep(name = "re2", version = "2025-08-12.bcr.1")
+bazel_dep(name = "libsxg", version = "0.0.0-210708-beaa393.envoy")
+bazel_dep(name = "platforms", version = "1.0.0")
+bazel_dep(name = "abseil-cpp", version = "20260107.1", repo_name = "com_google_absl")
+bazel_dep(name = "bazel_skylib", version = "1.9.0")
+
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
+    name = "dep_hdrhistogram_c",
+    build_file_content = """
+cc_library(
+    name = "hdrhistogram_c",
+    srcs = [
+        "src/hdr_encoding.c",
+        "src/hdr_histogram.c",
+        "src/hdr_histogram_log.c",
+        "src/hdr_interval_recorder.c",
+        "src/hdr_malloc.h",
+        "src/hdr_thread.c",
+        "src/hdr_time.c",
+        "src/hdr_writer_reader_phaser.c",
+    ],
+    hdrs = [
+        "src/hdr_atomic.h",
+        "src/hdr_encoding.h",
+        "src/hdr_endian.h",
+        "include/hdr/hdr_histogram.h",
+        "include/hdr/hdr_histogram_log.h",
+        "include/hdr/hdr_interval_recorder.h",
+        "include/hdr/hdr_writer_reader_phaser.h",
+        "src/hdr_tests.h",
+        "include/hdr/hdr_thread.h",
+        "include/hdr/hdr_time.h",
+    ],
+    includes = ["include"],
+    copts = [
+        "-std=gnu99",
+        "-Wno-implicit-function-declaration",
+        "-Wno-error",
+    ],
+    deps = ["@zlib-ng"],
+    visibility = ["//visibility:public"],
+)
+""",
+    sha256 = "bb95351a6a8b242dc9be1f28562761a84d4cf0a874ffc90a9b630770a6468e94",
+    strip_prefix = "HdrHistogram_c-0.11.8",
+    url = "https://github.com/HdrHistogram/HdrHistogram_c/archive/0.11.8.tar.gz",
+)
+
+####################################################################################
+# deps: Overrides - Use constant for commit
+####################################################################################
+
+git_override(
+    module_name = "envoy",
+    commit = ENVOY_COMMIT,
+    patch_strip = 1,
+    patches = ["//patches:envoy_quiche_mem_slice.patch"],
+    remote = "https://github.com/envoyproxy/envoy.git",
+)
+
+git_override(
+    module_name = "envoy_api",
+    commit = ENVOY_COMMIT,
+    remote = "https://github.com/envoyproxy/envoy.git",
+    strip_prefix = "api",
+)
+
+####################################################################################
+# setup: Languages - Python
+####################################################################################
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+python.toolchain(
+    is_default = True,
+    python_version = "3.12",
+)
+use_repo(python, "python_3_12", python = "python_versions")
+
+pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
+pip.parse(
+    hub_name = "nh_pip3",
+    python_version = "3.12",
+    requirements_lock = "//tools/base:requirements.txt",
+)
+use_repo(pip, "nh_pip3")
+
+llvm = use_extension("@toolchains_llvm//toolchain/extensions:llvm.bzl", "llvm")
+use_repo(llvm, "llvm_toolchain")
+
+llvm_toolchain_alias_ext = use_extension("@envoy_toolshed//compile:extensions.bzl", "llvm_toolchain_alias_extension")
+use_repo(llvm_toolchain_alias_ext, "llvm_toolchain_llvm")
+
+

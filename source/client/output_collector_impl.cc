@@ -5,7 +5,7 @@
 #include <chrono>
 #include <sstream>
 
-#include "external/envoy/source/common/protobuf/utility.h"
+#include "source/common/protobuf/utility.h"
 
 #include "source/common/version_info.h"
 

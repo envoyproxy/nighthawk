@@ -492,16 +492,11 @@ class EnvoyCommitIntegration(StepHandler[EnvoyCommitIntegrationStep]):
             shell=True,
         )
       case EnvoyCommitIntegrationStep.SET_NIGHTHAWK_BAZEL_DEP:
-        repo_file = self.nighthawk_git_repo_dir / "bazel/repositories.bzl"
+        module_file = self.nighthawk_git_repo_dir / "MODULE.bazel"
         _run_sed_replace(
             old_pattern='ENVOY_COMMIT = ".*"',
             new_pattern=f'ENVOY_COMMIT = "{self.target_envoy_commit}"',
-            filename=str(repo_file),
-        )
-        _run_sed_replace(
-            old_pattern='ENVOY_SHA = ".*"',
-            new_pattern=f'ENVOY_SHA = "{self.envoy_sha}"',
-            filename=str(repo_file),
+            filename=str(module_file),
         )
       case EnvoyCommitIntegrationStep.COPY_EXACT_FILES:
         for copied_file in COPIED_FILES:
@@ -793,13 +788,13 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
           )
           _run_command(["git", "rebase", "origin/main"], cwd=self.nighthawk_git_repo_dir)
       case NighthawkEnvoyUpdateStep.GET_ORIGINAL_ENVOY_COMMIT:
-        repo_file = self.nighthawk_git_repo_dir / "bazel/repositories.bzl"
+        module_file = self.nighthawk_git_repo_dir / "MODULE.bazel"
         self.current_envoy_commit = _run_command(
-            [r"""sed -nE 's/^ENVOY_COMMIT = "(.*)"$/\1/p' """ + str(repo_file)],
+            [r"""sed -nE 's/^ENVOY_COMMIT = "(.*)"$/\1/p' """ + str(module_file)],
             shell=True,
         )
         if (not self.current_envoy_commit or len(self.current_envoy_commit) != 40):
-          raise RuntimeError(f"Failed to extract current Envoy commit from {repo_file}")
+          raise RuntimeError(f"Failed to extract current Envoy commit from {module_file}")
       case NighthawkEnvoyUpdateStep.CLONE_ENVOY:
         _run_command([
             "git",

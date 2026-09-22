@@ -1,10 +1,10 @@
 #include "envoy/registry/registry.h"
 
-#include "external/envoy/source/common/common/statusor.h"
-#include "external/envoy/source/common/config/utility.h"
-#include "external/envoy/source/common/protobuf/message_validator_impl.h"
-#include "external/envoy/source/common/protobuf/protobuf.h"
-#include "external/envoy/test/mocks/buffer/mocks.h"
+#include "source/common/common/statusor.h"
+#include "source/common/config/utility.h"
+#include "source/common/protobuf/message_validator_impl.h"
+#include "source/common/protobuf/protobuf.h"
+#include "test/mocks/buffer/mocks.h"
 
 #include "api/client/output.pb.h"
 

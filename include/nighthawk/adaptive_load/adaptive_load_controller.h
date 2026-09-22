@@ -2,7 +2,7 @@
 
 #include "envoy/common/pure.h"
 
-#include "external/envoy/source/common/common/statusor.h"
+#include "source/common/common/statusor.h"
 
 #include "api/adaptive_load/adaptive_load.pb.h"
 #include "api/client/service.grpc.pb.h"

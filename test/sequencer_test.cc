@@ -4,10 +4,10 @@
 #include "nighthawk/common/exception.h"
 #include "nighthawk/common/platform_util.h"
 
-#include "external/envoy/source/common/event/dispatcher_impl.h"
-#include "external/envoy/source/common/stats/isolated_store_impl.h"
-#include "external/envoy/test/mocks/event/mocks.h"
-#include "external/envoy/test/test_common/simulated_time_system.h"
+#include "source/common/event/dispatcher_impl.h"
+#include "source/common/stats/isolated_store_impl.h"
+#include "test/mocks/event/mocks.h"
+#include "test/test_common/simulated_time_system.h"
 
 #include "source/common/rate_limiter_impl.h"
 #include "source/common/sequencer_impl.h"

@@ -281,7 +281,11 @@ class IntegrationTestBase():
     if logs:
       logging.info("Nighthawk client stderr: [%s]" % logs)
     if as_json:
-      output = json.loads(output)
+      json_start = output.find("{")
+      if json_start != -1:
+        output = json.loads(output[json_start:])
+      else:
+        output = json.loads(output)
     if check_return_code:
       if expect_failure:
         assert (client_process.returncode != 0)

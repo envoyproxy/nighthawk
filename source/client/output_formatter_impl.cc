@@ -10,7 +10,7 @@
 
 #include "nighthawk/common/exception.h"
 
-#include "external/envoy/source/common/protobuf/utility.h"
+#include "source/common/protobuf/utility.h"
 
 #include "api/client/options.pb.h"
 #include "api/client/transform/fortio.pb.h"

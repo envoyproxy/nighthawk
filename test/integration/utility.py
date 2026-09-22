@@ -128,13 +128,39 @@ def run_stress_tests():
   return os.environ.get("NH_RUN_STRESS_TESTS", "false") == "true"
 
 
-def substitute_yaml_values(runfiles_instance, obj: Union[dict, list, str], params: dict) -> str:
-  """Substitute params into the given template.
+def rlocation(runfiles_instance, path):
+  """Resolve a runfiles path with fallback for Bzlmod workspace names.
 
   Args:
-    runfiles_instance: A Runfiles instance.
-    obj: Either a list of templates strings, a dict of template string or a template string.
-    params: dict used to populate the provided templates.
+    runfiles_instance: Runfiles instance.
+    path: Path to resolve.
+
+  Returns:
+    Resolved file path.
+  """
+  path = path.strip()
+  loc = runfiles_instance.Rlocation(path)
+  if not loc or not os.path.exists(loc):
+    if path.startswith("nighthawk/external/envoy/"):
+      for prefix in ("envoy+/", "envoy/"):
+        candidate = runfiles_instance.Rlocation(path.replace("nighthawk/external/envoy/", prefix,
+                                                             1))
+        if candidate and os.path.exists(candidate):
+          return candidate
+    if path.startswith("nighthawk/"):
+      candidate = runfiles_instance.Rlocation(path.replace("nighthawk/", "_main/", 1))
+      if candidate and os.path.exists(candidate):
+        return candidate
+  return loc
+
+
+def substitute_yaml_values(runfiles_instance, obj, params):
+  """Traverse a data structure loaded from YAML and substitute variables.
+
+  Args:
+      runfiles_instance: A runfiles instance.
+      obj: The data structure to traverse.
+      params: The parameters to substitute.
 
   Returns:
       str: The template with the substituted parameters.
@@ -148,10 +174,10 @@ def substitute_yaml_values(runfiles_instance, obj: Union[dict, list, str], param
   elif isinstance(obj, str):
     # Inspect string values and substitute where applicable.
     INJECT_RUNFILE_MARKER = '@inject-runfile:'
-    if obj[0] == '$':
+    if obj.startswith('$'):
       return string.Template(obj).substitute(params)
     elif obj.startswith(INJECT_RUNFILE_MARKER):
-      with open(runfiles_instance.Rlocation(obj[len(INJECT_RUNFILE_MARKER):].strip()), 'r') as file:
+      with open(rlocation(runfiles_instance, obj[len(INJECT_RUNFILE_MARKER):]), 'r') as file:
         return file.read()
   return obj
 
