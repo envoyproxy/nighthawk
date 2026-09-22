@@ -76,11 +76,7 @@ jobs:
     - name: Run CI script
       timeout-minutes: 180
       run: |
-        if [[ "${{ inputs.task }}" == *"docker"* ]]; then
-          export BAZEL_BUILD_EXTRA_OPTIONS="--config=remote-ci ${{ inputs.bazel-extra }}"
-        else
-          export BAZEL_BUILD_EXTRA_OPTIONS="--config=remote-ci --config=rbe ${{ inputs.bazel-extra }}"
-        fi
+        export BAZEL_BUILD_EXTRA_OPTIONS="--config=remote-ci --config=rbe ${{ inputs.bazel-extra }}"
         ./ci/run_envoy_docker.sh './ci/do_ci.sh ${{ inputs.task }}'
       env:
         GITHUB_TOKEN: ${{ github.token }}
