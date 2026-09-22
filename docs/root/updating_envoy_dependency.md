@@ -168,6 +168,20 @@ all lines that are unique to Nighthawk are marked with comment `# unique`.
 merge_from_envoy ".bazelrc"
 ```
 
+#### Updating the Bazel Registry SHA
+
+Envoy pins `bazel-registry` in `.bazelrc` to a specific commit SHA. Update Nighthawk's `.bazelrc` with the pinned registry SHA from Envoy:
+
+```bash
+registry_sha=$(sed -n 's|.*raw.githubusercontent.com/envoyproxy/bazel-registry/\([0-9a-fA-F]\{40\}\).*|\1|p' "$envoy_dir/.bazelrc")
+sed -i "s|raw.githubusercontent.com/envoyproxy/bazel-registry/[0-9a-fA-F]\{40\}|raw.githubusercontent.com/envoyproxy/bazel-registry/$registry_sha|g" .bazelrc
+```
+
+After updating `.bazelrc`, re-generate `MODULE.bazel.lock` to resolve dependencies against the new registry commit:
+```bash
+bazel mod deps --lockfile_mode=update
+```
+
 ### Step 7
 
 Sync (copy) [.bazelversion](/.bazelversion) from
