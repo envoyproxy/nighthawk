@@ -11,7 +11,6 @@ envoy_package()
 envoy_cc_test(
     name = "user_defined_output_plugin_creator_test",
     srcs = ["user_defined_output_plugin_creator_test.cc"],
-    repository = "@envoy",
     deps = [
         "//api/user_defined_output:log_response_headers_proto_cc_proto",
         "//include/nighthawk/user_defined_output:user_defined_output_plugin",
@@ -25,7 +24,6 @@ envoy_cc_test(
 envoy_cc_test(
     name = "log_response_headers_plugin_test",
     srcs = ["log_response_headers_plugin_test.cc"],
-    repository = "@envoy",
     deps = [
         "//api/user_defined_output:log_response_headers_proto_cc_proto",
         "//include/nighthawk/user_defined_output:user_defined_output_plugin",

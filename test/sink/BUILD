@@ -12,7 +12,6 @@ envoy_package()
 envoy_cc_test(
     name = "sink_test",
     srcs = ["sink_test.cc"],
-    repository = "@envoy",
     deps = [
         "//source/sink:sink_impl_lib",
         "//test/test_common:mock_stream",  # necessary to pass coverage tests.
@@ -23,7 +22,6 @@ envoy_cc_test(
 envoy_cc_test(
     name = "nighthawk_sink_client_test",
     srcs = ["nighthawk_sink_client_test.cc"],
-    repository = "@envoy",
     deps = [
         "//source/sink:nighthawk_sink_client_impl",
         "//test/test_common:mock_stream",
@@ -34,7 +32,6 @@ envoy_cc_test(
 envoy_cc_test(
     name = "sink_service_test",
     srcs = ["sink_service_test.cc"],
-    repository = "@envoy",
     deps = [
         "//source/sink:grpc_service_lib",
         "//test/mocks/sink:mock_sink",

@@ -30,7 +30,6 @@ envoy_cc_test_library(
     hdrs = [
         "fake_step_controller.h",
     ],
-    repository = "@envoy",
     deps = [
         ":fake_step_controller_proto_cc_proto",
         "//api/client:grpc_service_lib",
@@ -46,7 +45,6 @@ envoy_cc_test_library(
 envoy_cc_test(
     name = "fake_step_controller_test",
     srcs = ["fake_step_controller_test.cc"],
-    repository = "@envoy",
     deps = [
         ":fake_step_controller",
         "//source/adaptive_load:plugin_loader",

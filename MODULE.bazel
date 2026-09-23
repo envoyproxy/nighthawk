@@ -1,5 +1,5 @@
 # Envoy commit to use
-ENVOY_COMMIT = "40e1405c4df85d8d14cf0856e3e07906dbce581d"
+ENVOY_COMMIT = "c140f1779559c44797ddfbb79007b0e2c82d3be6"
 
 module(
     name = "nighthawk",

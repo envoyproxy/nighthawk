@@ -36,7 +36,6 @@ envoy_cc_binary(
         "-l:libatomic.a",
         "-lrt",
     ],
-    repository = "@envoy",
     deps = [
         "@envoy//source/exe:envoy_main_entry_lib",
         "@envoy//source/extensions/clusters/logical_dns:logical_dns_cluster_lib",
