@@ -98,23 +98,13 @@ Click the link in the terminal to double check the date of the Envoy commit to w
 
 Edit [MODULE.bazel](/MODULE.bazel):
 
-1. Update the `ENVOY_COMMIT` variable with the target Envoy commit hash from
-   [this page](https://github.com/envoyproxy/envoy/commits/main).
-
-2. Re-generate `MODULE.bazel.lock`:
-   Bazel 8 (Bzlmod) records exact resolution hashes in `MODULE.bazel.lock`.
+Update the `ENVOY_COMMIT` variable with the target Envoy commit hash:
 
 ```bash
-# Update lockfile resolution
-bazel mod deps --lockfile_mode=update
-
-git diff
+sed -i -e "s/ENVOY_COMMIT =.*/ENVOY_COMMIT = \"${envoy_commit}\"/" MODULE.bazel
 ```
 
-At this point:
-
-- `MODULE.bazel` will refer to the new Envoy commit.
-- `MODULE.bazel.lock` will be updated with the corresponding dependency graph resolution.
+> **Note:** `MODULE.bazel.lock` will be re-generated in Step 6 after updating `.bazelrc` with Envoy's pinned registry SHA.
 
 ### Step 5
 
@@ -166,6 +156,20 @@ all lines that are unique to Nighthawk are marked with comment `# unique`.
 
 ```bash
 merge_from_envoy ".bazelrc"
+```
+
+#### Updating the Bazel Registry SHA
+
+Envoy pins `bazel-registry` in `.bazelrc` to a specific commit SHA. Update Nighthawk's `.bazelrc` with the pinned registry SHA from Envoy:
+
+```bash
+registry_sha=$(sed -n 's|.*raw.githubusercontent.com/envoyproxy/bazel-registry/\([0-9a-fA-F]\{40\}\).*|\1|p' "$envoy_dir/.bazelrc")
+sed -i "s|raw.githubusercontent.com/envoyproxy/bazel-registry/[0-9a-fA-F]\{40\}|raw.githubusercontent.com/envoyproxy/bazel-registry/$registry_sha|g" .bazelrc
+```
+
+After updating `.bazelrc`, re-generate `MODULE.bazel.lock` to resolve dependencies against the new registry commit:
+```bash
+bazel mod deps --lockfile_mode=update
 ```
 
 ### Step 7
