@@ -64,7 +64,7 @@ jobs:
             target: /tmp/bazel-shared
             chown: runner:runner
     - name: Cache Bazel build output
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: |
           /mnt/envoy-docker-build
