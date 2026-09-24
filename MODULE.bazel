@@ -1,5 +1,5 @@
 # Envoy commit to use
-ENVOY_COMMIT = "b6e7e12ed27300f21f4436ec6e6c119c128edb0f"
+ENVOY_COMMIT = "c140f1779559c44797ddfbb79007b0e2c82d3be6"
 
 module(
     name = "nighthawk",
@@ -21,16 +21,16 @@ bazel_dep(name = "grpc", version = "1.83.0.envoy")
 bazel_dep(name = "librdkafka", version = "2.6.0.envoy")
 bazel_dep(name = "quiche", version = "0.0.0-260831-5c9cc6b.envoy")
 bazel_dep(name = "toolchains_llvm", version = "1.9.0.envoy")
-bazel_dep(name = "envoy_toolshed", version = "0.4.13.envoy")
+bazel_dep(name = "envoy_toolshed", version = "0.4.15.envoy")
 bazel_dep(name = "zlib-ng", version = "2.3.2.envoy")
-bazel_dep(name = "googletest", version = "1.17.0.bcr.2")
+bazel_dep(name = "googletest", version = "1.18.0.bcr.1")
 bazel_dep(name = "googleapis", version = "0.0.0-20251003-2193a2bf")
 bazel_dep(name = "protoc-gen-validate", version = "1.3.3.envoy")
-bazel_dep(name = "re2", version = "2025-08-12.bcr.1")
+bazel_dep(name = "re2", version = "2025-11-05.bcr.1")
 bazel_dep(name = "libsxg", version = "0.0.0-210708-beaa393.envoy")
-bazel_dep(name = "platforms", version = "1.0.0")
-bazel_dep(name = "abseil-cpp", version = "20260107.1", repo_name = "com_google_absl")
-bazel_dep(name = "bazel_skylib", version = "1.9.0")
+bazel_dep(name = "platforms", version = "1.1.0")
+bazel_dep(name = "abseil-cpp", version = "20260817.0", repo_name = "com_google_absl")
+bazel_dep(name = "bazel_skylib", version = "1.9.2")
 
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
@@ -83,8 +83,6 @@ cc_library(
 git_override(
     module_name = "envoy",
     commit = ENVOY_COMMIT,
-    patch_strip = 1,
-    patches = ["//patches:envoy_quiche_mem_slice.patch"],
     remote = "https://github.com/envoyproxy/envoy.git",
 )
 

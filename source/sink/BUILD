@@ -16,7 +16,6 @@ envoy_cc_library(
     hdrs = [
         "nighthawk_sink_client_impl.h",
     ],
-    repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         "//include/nighthawk/sink:nighthawk_sink_client",
@@ -31,7 +30,6 @@ envoy_cc_library(
     hdrs = [
         "sink_impl.h",
     ],
-    repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         "//include/nighthawk/sink:sink_lib",
@@ -48,7 +46,6 @@ envoy_cc_library(
     hdrs = [
         "service_impl.h",
     ],
-    repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         "//api/sink:sink_grpc_lib",

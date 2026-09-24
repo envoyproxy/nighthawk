@@ -16,7 +16,6 @@ envoy_cc_library(
     hdrs = [
         "user_defined_output_plugin_creator.h",
     ],
-    repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         "//include/nighthawk/user_defined_output:user_defined_output_plugin",
@@ -34,7 +33,6 @@ envoy_cc_library(
     hdrs = [
         "log_response_headers_plugin.h",
     ],
-    repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         "//api/user_defined_output:log_response_headers_proto_cc_proto",

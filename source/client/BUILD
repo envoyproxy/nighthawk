@@ -16,7 +16,6 @@ envoy_cc_library(
     hdrs = [
         "options_impl.h",
     ],
-    repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         ":output_formatter_impl_lib",
@@ -31,7 +30,6 @@ envoy_cc_library(
     name = "sni_utility",
     srcs = ["sni_utility.cc"],
     hdrs = ["sni_utility.h"],
-    repository = "@envoy",
     visibility = ["//:__subpackages__"],
     deps = [
         "//source/common:nighthawk_common_lib",
@@ -43,7 +41,6 @@ envoy_cc_library(
     name = "process_bootstrap",
     srcs = ["process_bootstrap.cc"],
     hdrs = ["process_bootstrap.h"],
-    repository = "@envoy",
     visibility = ["//:__subpackages__"],
     deps = [
         ":sni_utility",
@@ -86,7 +83,6 @@ envoy_cc_library(
         "//bazel:zipkin_disabled": [],
         "//conditions:default": ["-DZIPKIN_ENABLED=1"],
     }),
-    repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         ":options_impl_lib",
@@ -162,7 +158,6 @@ envoy_cc_library(
     hdrs = [
         "output_collector_impl.h",
     ],
-    repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         "//api/client:base_cc_proto",
@@ -181,7 +176,6 @@ envoy_cc_library(
     hdrs = [
         "output_formatter_impl.h",
     ],
-    repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         "//api/client:base_cc_proto",
@@ -204,7 +198,6 @@ envoy_cc_library(
         "service_impl.h",
         "service_main.h",
     ],
-    repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         ":nighthawk_client_lib",
@@ -223,7 +216,6 @@ envoy_cc_library(
     hdrs = [
         "output_transform_main.h",
     ],
-    repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         ":nighthawk_client_lib",

@@ -11,7 +11,6 @@ envoy_package()
 envoy_cc_test(
     name = "nighthawk_distributor_client_test",
     srcs = ["nighthawk_distributor_client_test.cc"],
-    repository = "@envoy",
     deps = [
         "//source/distributor:nighthawk_distributor_client_impl",
         "//test/test_common:mock_stream",
@@ -22,7 +21,6 @@ envoy_cc_test(
 envoy_cc_test(
     name = "distributor_service_test",
     srcs = ["distributor_service_test.cc"],
-    repository = "@envoy",
     deps = [
         "//source/common:nighthawk_service_client_impl",
         "//source/distributor:grpc_service_lib",

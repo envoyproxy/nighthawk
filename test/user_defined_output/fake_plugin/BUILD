@@ -30,7 +30,6 @@ envoy_cc_library(
     hdrs = [
         "fake_user_defined_output.h",
     ],
-    repository = "@envoy",
     deps = [
         ":fake_user_defined_output_proto_cc_proto",
         "//include/nighthawk/user_defined_output:user_defined_output_plugin",
@@ -46,7 +45,6 @@ envoy_cc_library(
 envoy_cc_test(
     name = "fake_user_defined_output_test",
     srcs = ["fake_user_defined_output_test.cc"],
-    repository = "@envoy",
     deps = [
         ":fake_user_defined_output",
         ":fake_user_defined_output_proto_cc_proto",

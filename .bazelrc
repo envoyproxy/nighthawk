@@ -63,7 +63,7 @@ run --color=yes
 build --color=yes
 
 common --registry=https://bcr.bazel.build/
-common --registry=https://raw.githubusercontent.com/envoyproxy/bazel-registry/b6e15c00b1c0493cd194b1b248c562bd8bc46648
+common --registry=https://raw.githubusercontent.com/envoyproxy/bazel-registry/dfb07d6381f23ec6713bda30445542d72f302f77
 # common --registry=file:///bazel-registry
 # this can be useful for dev
 # common --lockfile_mode=off
@@ -131,6 +131,9 @@ build --test_env=HEAPCHECK=normal --test_env=PPROF_PATH
 coverage --config=coverage
 coverage --build_tests_only
 
+# Envoy deprecation
+common --@envoy//bazel:deprecated_repo_arg_allowed=false
+
 #############################################################################
 # global: deps
 #############################################################################
@@ -175,7 +178,6 @@ build --@quiche//:quiche_export_impl_lib=@envoy//source/common/quic/platform:qui
 build --@quiche//:quiche_flags_impl_lib=@envoy//source/common/quic/platform:quiche_flags_impl_lib
 build --@quiche//:quiche_logging_impl_lib=@envoy//source/common/quic/platform:quiche_logging_impl_lib
 build --@quiche//:quiche_lower_case_string_impl_lib=@envoy//source/common/quic/platform:quiche_lower_case_string_impl_lib
-build --@quiche//:quiche_mem_slice_impl_lib=@envoy//source/common/quic/platform:quiche_mem_slice_impl_lib
 build --@quiche//:quiche_platform_iovec_impl_lib=@envoy//source/common/quic/platform:quiche_platform_iovec_impl_lib
 build --@quiche//:quiche_stack_trace_impl_lib=@envoy//source/common/quic/platform:quiche_stack_trace_impl_lib
 build --@quiche//:quiche_time_utils_impl_lib=@envoy//source/common/quic/platform:quiche_time_utils_impl_lib
