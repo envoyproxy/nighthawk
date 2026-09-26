@@ -104,6 +104,11 @@ public:
   virtual bool simpleWarmup() const PURE;
   virtual bool noDuration() const PURE;
   virtual std::vector<envoy::config::metrics::v3::StatsSink> statsSinks() const PURE;
+  /**
+   * @return std::vector<envoy::config::metrics::v3::StatsSink> sinks to be created through Envoy's
+   * own Server::Configuration::StatsSinkFactory.
+   */
+  virtual std::vector<envoy::config::metrics::v3::StatsSink> envoyStatsSinks() const PURE;
   virtual uint32_t statsFlushInterval() const PURE;
   virtual Envoy::Protobuf::Duration statsFlushIntervalDuration() const PURE;
   virtual std::string responseHeaderWithLatencyInput() const PURE;

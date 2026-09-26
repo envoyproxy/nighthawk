@@ -103,7 +103,7 @@ TEST_F(OptionsImplTest, StatsSinksMustBeSetWhenStatsFlushIntervalSet) {
       TestUtility::createOptionsImpl(fmt::format("{} --stats-flush-interval 10", client_name_)),
       MalformedArgvException,
       "if --stats-flush-interval or --stats-flush-interval-duration is set, then --stats-sinks "
-      "must also be set");
+      "or --envoy-stats-sinks must also be set");
 }
 
 TEST_F(OptionsImplTest, StatsSinksMustBeSetWhenStatsFlushIntervalDurationSet) {
@@ -111,7 +111,48 @@ TEST_F(OptionsImplTest, StatsSinksMustBeSetWhenStatsFlushIntervalDurationSet) {
                               "{} --stats-flush-interval-duration 1.000000001s", client_name_)),
                           MalformedArgvException,
                           "if --stats-flush-interval or --stats-flush-interval-duration is set, "
-                          "then --stats-sinks must also be set");
+                          "then --stats-sinks or --envoy-stats-sinks must also be set");
+}
+
+TEST_F(OptionsImplTest, EnvoyStatsSinksRoundTrip) {
+  // Sinks resolved through Envoy's own StatsSinkFactory are carried separately from the Nighthawk
+  // ones, and both may be set at once.
+  const std::string envoy_sink_json =
+      "{name:\"envoy.stat_sinks.dog_statsd\",typed_config:{\"@type\":\"type.googleapis.com/"
+      "envoy.config.metrics.v3.DogStatsdSink\",address:{socket_address:{address:\"127.0.0.1\","
+      "port_value:8125}}}}";
+  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(
+      fmt::format("{} --envoy-stats-sinks {} {}", client_name_, envoy_sink_json, good_test_uri_));
+  ASSERT_EQ(1, options->envoyStatsSinks().size());
+  EXPECT_EQ("envoy.stat_sinks.dog_statsd", options->envoyStatsSinks()[0].name());
+  EXPECT_EQ(0, options->statsSinks().size());
+
+  CommandLineOptionsPtr cmd = options->toCommandLineOptions();
+  ASSERT_EQ(1, cmd->envoy_stats_sinks_size());
+  EXPECT_EQ("envoy.stat_sinks.dog_statsd", cmd->envoy_stats_sinks(0).name());
+  OptionsImpl round_trip(*cmd);
+  ASSERT_EQ(1, round_trip.envoyStatsSinks().size());
+  EXPECT_EQ("envoy.stat_sinks.dog_statsd", round_trip.envoyStatsSinks()[0].name());
+}
+
+TEST_F(OptionsImplTest, EnvoyStatsSinksSatisfiesTheFlushIntervalRequirement) {
+  const std::string envoy_sink_json =
+      "{name:\"envoy.stat_sinks.dog_statsd\",typed_config:{\"@type\":\"type.googleapis.com/"
+      "envoy.config.metrics.v3.DogStatsdSink\",address:{socket_address:{address:\"127.0.0.1\","
+      "port_value:8125}}}}";
+  // --stats-flush-interval requires some sink, and an Envoy one counts.
+  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(
+      fmt::format("{} --stats-flush-interval 10 --envoy-stats-sinks {} {}", client_name_,
+                  envoy_sink_json, good_test_uri_));
+  EXPECT_EQ(10, options->statsFlushInterval());
+  EXPECT_EQ(1, options->envoyStatsSinks().size());
+}
+
+TEST_F(OptionsImplTest, MalformedEnvoyStatsSinkIsRejected) {
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(
+          fmt::format("{} --envoy-stats-sinks {} {}", client_name_, "{not-json", good_test_uri_)),
+      MalformedArgvException, "");
 }
 
 TEST_F(OptionsImplTest, InvalidStatsFlushIntervalDuration) {
