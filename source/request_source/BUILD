@@ -17,7 +17,6 @@ envoy_cc_library(
     hdrs = [
         "request_options_list_plugin_impl.h",
     ],
-    repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         "//include/nighthawk/request_source:request_source_plugin_config_factory_lib",
@@ -52,7 +51,6 @@ envoy_cc_library(
     hdrs = [
         "llm_request_source_plugin_impl.h",
     ],
-    repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         ":llm_request_source_plugin_cc_proto",

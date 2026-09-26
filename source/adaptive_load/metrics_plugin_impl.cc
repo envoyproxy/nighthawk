@@ -4,8 +4,8 @@
 
 #include "envoy/registry/registry.h"
 
-#include "external/envoy/source/common/common/assert.h"
-#include "external/envoy/source/common/protobuf/protobuf.h"
+#include "source/common/common/assert.h"
+#include "source/common/protobuf/protobuf.h"
 
 #include "absl/status/status.h"
 #include "absl/strings/numbers.h"

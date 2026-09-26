@@ -5,10 +5,10 @@
 
 #include "envoy/server/filter_config.h"
 
-#include "external/envoy/source/common/common/statusor.h"
-#include "external/envoy/source/common/protobuf/message_validator_impl.h"
-#include "external/envoy/source/common/protobuf/utility.h"
-#include "external/envoy/source/extensions/filters/http/fault/fault_filter.h"
+#include "source/common/common/statusor.h"
+#include "source/common/protobuf/message_validator_impl.h"
+#include "source/common/protobuf/utility.h"
+#include "source/extensions/filters/http/fault/fault_filter.h"
 
 #include "api/server/dynamic_delay.pb.h"
 

@@ -1,6 +1,6 @@
 #include "test/adaptive_load/fake_plugins/fake_step_controller/fake_step_controller.h"
 
-#include "external/envoy/source/common/protobuf/protobuf.h"
+#include "source/common/protobuf/protobuf.h"
 
 #include "api/adaptive_load/benchmark_result.pb.h"
 

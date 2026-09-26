@@ -10,8 +10,8 @@
 #include "nighthawk/adaptive_load/adaptive_load_controller.h"
 #include "nighthawk/common/exception.h"
 
-#include "external/envoy/source/common/grpc/google_grpc_utils.h"
-#include "external/envoy/source/common/protobuf/protobuf.h"
+#include "source/common/grpc/google_grpc_utils.h"
+#include "source/common/protobuf/protobuf.h"
 
 #include "api/adaptive_load/adaptive_load.pb.h"
 #include "api/client/service.grpc.pb.h"

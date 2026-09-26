@@ -16,7 +16,6 @@ envoy_cc_library(
     hdrs = [
         "nighthawk_distributor_client_impl.h",
     ],
-    repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         "//include/nighthawk/distributor:nighthawk_distributor_client",
@@ -31,7 +30,6 @@ envoy_cc_library(
     hdrs = [
         "service_impl.h",
     ],
-    repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         "//api/distributor:distributor_grpc_lib",

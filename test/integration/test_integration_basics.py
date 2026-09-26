@@ -213,8 +213,10 @@ def test_connect_tunneling(tunneling_connect_test_server_fixture, tunnel_protoco
       tunneling_connect_test_server_fixture.getTestServerRootUri(), "--max-active-requests", "1",
       "--duration", "100", "--termination-predicate", "benchmark.http_2xx:24", "--rps", "100"
   ]
-  path = os.path.join(os.environ["TEST_SRCDIR"], os.environ["TEST_WORKSPACE"],
-                      "external/envoy/test/config/integration/certs/upstreamcacert.pem")
+  from python.runfiles import runfiles
+  rf = runfiles.Create()
+  path = utility.rlocation(
+      rf, "nighthawk/external/envoy/test/config/integration/certs/upstreamcacert.pem")
   if (tunnel_protocol == "http3"):
     client_params = client_params + [
         "--tunnel-tls-context", "{common_tls_context:{validation_context:{trusted_ca:{filename:\"" +

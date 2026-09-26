@@ -12,12 +12,12 @@
 
 #include "nighthawk/client/output_collector.h"
 
-#include "external/envoy/source/common/common/cleanup.h"
-#include "external/envoy/source/common/event/dispatcher_impl.h"
-#include "external/envoy/source/common/event/real_time_system.h"
-#include "external/envoy/source/common/network/utility.h"
-#include "external/envoy/source/common/runtime/runtime_impl.h"
-#include "external/envoy/source/common/thread_local/thread_local_impl.h"
+#include "source/common/common/cleanup.h"
+#include "source/common/event/dispatcher_impl.h"
+#include "source/common/event/real_time_system.h"
+#include "source/common/network/utility.h"
+#include "source/common/runtime/runtime_impl.h"
+#include "source/common/thread_local/thread_local_impl.h"
 
 #include "api/client/output.pb.h"
 #include "api/client/service.grpc.pb.h"

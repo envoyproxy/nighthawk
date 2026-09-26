@@ -2,7 +2,7 @@
 
 #include "envoy/common/exception.h"
 
-#include "external/envoy/source/common/protobuf/protobuf.h"
+#include "source/common/protobuf/protobuf.h"
 
 #include "api/adaptive_load/benchmark_result.pb.h"
 

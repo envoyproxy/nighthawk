@@ -16,7 +16,6 @@ envoy_cc_library(
     hdrs = [
         "options_impl.h",
     ],
-    repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         ":output_formatter_impl_lib",
@@ -31,7 +30,6 @@ envoy_cc_library(
     name = "sni_utility",
     srcs = ["sni_utility.cc"],
     hdrs = ["sni_utility.h"],
-    repository = "@envoy",
     visibility = ["//:__subpackages__"],
     deps = [
         "//source/common:nighthawk_common_lib",
@@ -43,7 +41,6 @@ envoy_cc_library(
     name = "process_bootstrap",
     srcs = ["process_bootstrap.cc"],
     hdrs = ["process_bootstrap.h"],
-    repository = "@envoy",
     visibility = ["//:__subpackages__"],
     deps = [
         ":sni_utility",
@@ -51,10 +48,7 @@ envoy_cc_library(
         "//source/common:nighthawk_common_lib",
         "@envoy//source/common/common:statusor_lib_with_external_headers",
         "@envoy//source/common/formatter:formatter_extension_lib",
-        "@envoy//source/extensions/filters/network/tcp_proxy:config",
-        "@envoy//source/extensions/filters/udp/udp_proxy:config",
-        "@envoy//source/extensions/filters/udp/udp_proxy:udp_proxy_filter_lib",
-        "@envoy//source/extensions/filters/udp/udp_proxy/session_filters/http_capsule:config",
+        "@envoy//source/exe:all_extensions_lib_with_external_headers",
         "@envoy_api//envoy/config/bootstrap/v3:pkg_cc_proto",
         "@envoy_api//envoy/extensions/filters/network/tcp_proxy/v3:pkg_cc_proto",
         "@envoy_api//envoy/extensions/filters/udp/udp_proxy/session/dynamic_forward_proxy/v3:pkg_cc_proto",
@@ -89,7 +83,6 @@ envoy_cc_library(
         "//bazel:zipkin_disabled": [],
         "//conditions:default": ["-DZIPKIN_ENABLED=1"],
     }),
-    repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         ":options_impl_lib",
@@ -154,12 +147,7 @@ envoy_cc_library(
         "@envoy//source/server:server_lib_with_external_headers",
         "@envoy//source/server/config_validation:admin_lib_with_external_headers",
         "@envoy_api//envoy/config/core/v3:pkg_cc_proto",
-    ] + select({
-        "//bazel:zipkin_disabled": [],
-        "//conditions:default": [
-            "@envoy//source/extensions/tracers/zipkin:zipkin_lib_with_external_headers",
-        ],
-    }),
+    ],
 )
 
 envoy_cc_library(
@@ -170,7 +158,6 @@ envoy_cc_library(
     hdrs = [
         "output_collector_impl.h",
     ],
-    repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         "//api/client:base_cc_proto",
@@ -189,7 +176,6 @@ envoy_cc_library(
     hdrs = [
         "output_formatter_impl.h",
     ],
-    repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         "//api/client:base_cc_proto",
@@ -212,7 +198,6 @@ envoy_cc_library(
         "service_impl.h",
         "service_main.h",
     ],
-    repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         ":nighthawk_client_lib",
@@ -231,7 +216,6 @@ envoy_cc_library(
     hdrs = [
         "output_transform_main.h",
     ],
-    repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         ":nighthawk_client_lib",

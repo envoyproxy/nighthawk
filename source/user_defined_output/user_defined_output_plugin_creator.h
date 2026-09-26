@@ -4,8 +4,8 @@
 
 #include "nighthawk/user_defined_output/user_defined_output_plugin.h"
 
-#include "external/envoy/source/common/common/statusor.h"
-#include "external/envoy_api/envoy/config/core/v3/extension.pb.h"
+#include "envoy/config/core/v3/extension.pb.h"
+#include "source/common/common/statusor.h"
 
 namespace Nighthawk {
 

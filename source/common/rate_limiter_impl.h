@@ -8,7 +8,7 @@
 
 #include "nighthawk/common/rate_limiter.h"
 
-#include "external/envoy/source/common/common/logger.h"
+#include "source/common/common/logger.h"
 
 #include "source/common/frequency.h"
 

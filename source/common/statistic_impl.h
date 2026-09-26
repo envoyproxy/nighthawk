@@ -5,9 +5,9 @@
 
 #include "nighthawk/common/statistic.h"
 
-#include "external/dep_hdrhistogram_c/include/hdr/hdr_histogram.h"
-#include "external/envoy/source/common/common/logger.h"
-#include "external/envoy/source/common/stats/histogram_impl.h"
+#include "hdr/hdr_histogram.h"
+#include "source/common/common/logger.h"
+#include "source/common/stats/histogram_impl.h"
 
 #include "source/common/frequency.h"
 

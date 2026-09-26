@@ -3,8 +3,8 @@
 
 #include "nighthawk/common/exception.h"
 
-#include "external/envoy/source/common/event/real_time_system.h"
-#include "external/envoy/source/exe/platform_impl.h"
+#include "source/common/event/real_time_system.h"
+#include "source/exe/platform_impl.h"
 
 #include "source/adaptive_load/adaptive_load_client_main.h"
 #include "source/adaptive_load/adaptive_load_controller_impl.h"

@@ -138,7 +138,7 @@ class TestServerBase(SubprocessMixin):
     Derived classes may wish to extend to for additional configuration files.
     """
     runfiles_instance = runfiles.Create()
-    with open(runfiles_instance.Rlocation(self._config_template_path)) as f:
+    with open(utility.rlocation(runfiles_instance, self._config_template_path)) as f:
       data = yaml.load(f, Loader=yaml.FullLoader)
       data = utility.substitute_yaml_values(runfiles_instance, data, self._parameters)
 

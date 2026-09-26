@@ -3,16 +3,16 @@
 
 #include "envoy/common/exception.h"
 
-#include "external/envoy/source/common/common/random_generator.h"
-#include "external/envoy/source/common/event/dispatcher_impl.h"
-#include "external/envoy/source/common/runtime/runtime_impl.h"
-#include "external/envoy/source/common/stats/isolated_store_impl.h"
-#include "external/envoy/test/mocks/api/mocks.h"
-#include "external/envoy/test/mocks/local_info/mocks.h"
-#include "external/envoy/test/mocks/protobuf/mocks.h"
-#include "external/envoy/test/mocks/stats/mocks.h"
-#include "external/envoy/test/mocks/thread_local/mocks.h"
-#include "external/envoy/test/mocks/upstream/cluster_manager.h"
+#include "source/common/common/random_generator.h"
+#include "source/common/event/dispatcher_impl.h"
+#include "source/common/runtime/runtime_impl.h"
+#include "source/common/stats/isolated_store_impl.h"
+#include "test/mocks/api/mocks.h"
+#include "test/mocks/local_info/mocks.h"
+#include "test/mocks/protobuf/mocks.h"
+#include "test/mocks/stats/mocks.h"
+#include "test/mocks/thread_local/mocks.h"
+#include "test/mocks/upstream/cluster_manager.h"
 
 #include "source/client/flush_worker_impl.h"
 

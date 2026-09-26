@@ -13,14 +13,14 @@
 
 #include "absl/synchronization/notification.h"
 
-#include "external/envoy/source/common/event/dispatcher_impl.h"
-#include "external/envoy/source/common/network/utility.h"
-#include "external/envoy/source/common/stats/allocator_impl.h"
-#include "external/envoy/source/common/stats/thread_local_store.h"
-#include "external/envoy/source/common/thread_local/thread_local_impl.h"
-#include "external/envoy/source/extensions/stat_sinks/common/statsd/statsd.h"
-#include "external/envoy/test/mocks/event/mocks.h"
-#include "external/envoy/test/test_common/utility.h"
+#include "source/common/event/dispatcher_impl.h"
+#include "source/common/network/utility.h"
+#include "source/common/stats/allocator_impl.h"
+#include "source/common/stats/thread_local_store.h"
+#include "source/common/thread_local/thread_local_impl.h"
+#include "source/extensions/stat_sinks/common/statsd/statsd.h"
+#include "test/mocks/event/mocks.h"
+#include "test/test_common/utility.h"
 
 #include "gtest/gtest.h"
 
