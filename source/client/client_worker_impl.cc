@@ -64,8 +64,12 @@ void ClientWorkerImpl::work() {
   if (hardcoded_warmup_style_ == HardCodedWarmupStyle::ON) {
     simpleWarmup();
   }
+  benchmark_client_->prepare();
   benchmark_client_->setShouldMeasureLatencies(phase_->shouldMeasureLatencies());
   phase_->run();
+  // Let the client wrap up work that must still be reported (e.g. drain streaming echoes)
+  // before the counters are snapshotted below.
+  benchmark_client_->finish();
 
   // Save a final snapshot of the worker-specific counter accumulations before
   // we exit the thread.

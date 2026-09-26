@@ -5,6 +5,7 @@
 #include "envoy/common/time.h"
 #include "envoy/event/deferred_deletable.h"
 #include "envoy/event/dispatcher.h"
+#include "envoy/grpc/status.h"
 #include "envoy/http/conn_pool.h"
 #include "envoy/server/tracer_config.h"
 
@@ -20,12 +21,22 @@
 namespace Nighthawk {
 namespace Client {
 
+using GrpcStatusOpt = std::optional<Envoy::Grpc::Status::GrpcStatus>;
+
 class StreamDecoderCompletionCallback {
 public:
   virtual ~StreamDecoderCompletionCallback() = default;
-  virtual void onComplete(bool success, const Envoy::Http::ResponseHeaderMap& headers) PURE;
+  /**
+   * @param success false when the stream was reset before completing.
+   * @param headers the response headers (empty when none were received).
+   * @param grpc_status the grpc-status observed in the response trailers, or in the response
+   * headers for trailers-only responses; nullopt when absent.
+   */
+  virtual void onComplete(bool success, const Envoy::Http::ResponseHeaderMap& headers,
+                          GrpcStatusOpt grpc_status) PURE;
   virtual void onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason reason) PURE;
-  virtual void exportLatency(const uint32_t response_code, const uint64_t latency_ns) PURE;
+  virtual void exportLatency(const uint32_t response_code, const uint64_t latency_ns,
+                             GrpcStatusOpt grpc_status) PURE;
   virtual void handleResponseData(const Envoy::Buffer::Instance& response_data) PURE;
 };
 
@@ -126,6 +137,7 @@ private:
   const std::string request_body_;
   Envoy::Http::ResponseHeaderMapPtr response_headers_;
   Envoy::Http::ResponseTrailerMapPtr trailer_headers_;
+  GrpcStatusOpt grpc_status_;
   const Envoy::MonotonicTime connect_start_;
   Envoy::MonotonicTime request_start_;
   bool complete_ = false;
