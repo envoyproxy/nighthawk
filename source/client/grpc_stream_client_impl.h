@@ -21,8 +21,8 @@
 #include "nighthawk/common/request_source.h"
 #include "nighthawk/common/statistic.h"
 
-#include "external/envoy/source/common/common/logger.h"
-#include "external/envoy/source/common/grpc/codec.h"
+#include "source/common/common/logger.h"
+#include "source/common/grpc/codec.h"
 
 #include "absl/container/flat_hash_map.h"
 

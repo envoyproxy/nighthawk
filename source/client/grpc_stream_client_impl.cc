@@ -2,9 +2,9 @@
 
 #include <utility>
 
-#include "external/envoy/source/common/buffer/buffer_impl.h"
-#include "external/envoy/source/common/grpc/common.h"
-#include "external/envoy/source/common/http/utility.h"
+#include "source/common/buffer/buffer_impl.h"
+#include "source/common/grpc/common.h"
+#include "source/common/http/utility.h"
 
 #include "absl/strings/str_cat.h"
 

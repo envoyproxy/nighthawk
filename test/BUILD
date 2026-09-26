@@ -35,7 +35,6 @@ envoy_cc_test(
 envoy_cc_test(
     name = "grpc_stream_client_test",
     srcs = ["grpc_stream_client_test.cc"],
-    repository = "@envoy",
     deps = [
         "//source/client:nighthawk_client_lib",
         "//source/common:request_impl_lib",

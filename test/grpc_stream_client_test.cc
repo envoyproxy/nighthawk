@@ -3,14 +3,14 @@
 #include <string>
 #include <vector>
 
-#include "external/envoy/source/common/buffer/buffer_impl.h"
-#include "external/envoy/source/common/http/header_map_impl.h"
-#include "external/envoy/source/common/stats/isolated_store_impl.h"
-#include "external/envoy/source/exe/process_wide.h"
-#include "external/envoy/test/mocks/http/mocks.h"
-#include "external/envoy/test/mocks/stream_info/mocks.h"
-#include "external/envoy/test/mocks/upstream/mocks.h"
-#include "external/envoy/test/test_common/utility.h"
+#include "source/common/buffer/buffer_impl.h"
+#include "source/common/http/header_map_impl.h"
+#include "source/common/stats/isolated_store_impl.h"
+#include "source/exe/process_wide.h"
+#include "test/mocks/http/mocks.h"
+#include "test/mocks/stream_info/mocks.h"
+#include "test/mocks/upstream/mocks.h"
+#include "test/test_common/utility.h"
 
 #include "source/client/grpc_stream_client_impl.h"
 #include "source/common/request_impl.h"
