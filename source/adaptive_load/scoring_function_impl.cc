@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-#include "external/envoy/source/common/protobuf/protobuf.h"
+#include "source/common/protobuf/protobuf.h"
 
 #include "api/adaptive_load/scoring_function_impl.pb.h"
 

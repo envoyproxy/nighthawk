@@ -2,13 +2,13 @@
 
 #include <memory>
 
-#include "external/envoy/source/common/grpc/common.h"
-#include "external/envoy/source/common/http/header_map_impl.h"
-#include "external/envoy/source/common/http/http1/codec_impl.h"
-#include "external/envoy/source/common/http/utility.h"
-#include "external/envoy/source/common/network/address_impl.h"
-#include "external/envoy/source/common/stream_info/stream_info_impl.h"
-#include "external/envoy/source/extensions/request_id/uuid/config.h"
+#include "source/common/grpc/common.h"
+#include "source/common/http/header_map_impl.h"
+#include "source/common/http/http1/codec_impl.h"
+#include "source/common/http/utility.h"
+#include "source/common/network/address_impl.h"
+#include "source/common/stream_info/stream_info_impl.h"
+#include "source/extensions/request_id/uuid/config.h"
 
 #include "fmt/ostream.h"
 

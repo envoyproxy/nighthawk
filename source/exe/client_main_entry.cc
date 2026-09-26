@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "nighthawk/common/exception.h"
 
 #include "source/client/client.h"

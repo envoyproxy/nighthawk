@@ -1,12 +1,12 @@
 #include <chrono>
 
-#include "external/envoy/source/common/common/random_generator.h"
-#include "external/envoy/source/common/event/dispatcher_impl.h"
-#include "external/envoy/source/common/http/header_map_impl.h"
-#include "external/envoy/source/common/network/utility.h"
-#include "external/envoy/source/common/stats/isolated_store_impl.h"
-#include "external/envoy/test/mocks/http/mocks.h"
-#include "external/envoy/test/mocks/stream_info/mocks.h"
+#include "source/common/common/random_generator.h"
+#include "source/common/event/dispatcher_impl.h"
+#include "source/common/http/header_map_impl.h"
+#include "source/common/network/utility.h"
+#include "source/common/stats/isolated_store_impl.h"
+#include "test/mocks/http/mocks.h"
+#include "test/mocks/stream_info/mocks.h"
 
 #include "source/client/stream_decoder.h"
 #include "source/common/statistic_impl.h"

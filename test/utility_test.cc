@@ -1,10 +1,10 @@
 #include <cstdint>
 #include <string>
 
-#include "external/envoy/source/common/network/dns_resolver/dns_factory_util.h"
-#include "external/envoy/source/common/network/utility.h"
-#include "external/envoy/source/common/stats/isolated_store_impl.h"
-#include "external/envoy/test/test_common/utility.h"
+#include "source/common/network/dns_resolver/dns_factory_util.h"
+#include "source/common/network/utility.h"
+#include "source/common/stats/isolated_store_impl.h"
+#include "test/test_common/utility.h"
 
 #include "source/common/uri_impl.h"
 #include "source/common/utility.h"

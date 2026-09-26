@@ -9,8 +9,8 @@
 #include "nighthawk/client/options.h"
 #include "nighthawk/common/exception.h"
 
-#include "external/envoy/source/common/common/logger.h"
-#include "external/envoy/source/common/protobuf/protobuf.h"
+#include "source/common/common/logger.h"
+#include "source/common/protobuf/protobuf.h"
 
 #include "tclap/CmdLine.h"
 

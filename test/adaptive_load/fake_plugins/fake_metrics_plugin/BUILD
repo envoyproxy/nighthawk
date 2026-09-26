@@ -30,7 +30,6 @@ envoy_cc_test_library(
     hdrs = [
         "fake_metrics_plugin.h",
     ],
-    repository = "@envoy",
     deps = [
         ":fake_metrics_plugin_proto_cc_proto",
         "//include/nighthawk/adaptive_load:metrics_plugin",
@@ -44,7 +43,6 @@ envoy_cc_test_library(
 envoy_cc_test(
     name = "fake_metrics_plugin_test",
     srcs = ["fake_metrics_plugin_test.cc"],
-    repository = "@envoy",
     deps = [
         ":fake_metrics_plugin",
         "//source/adaptive_load:plugin_loader",

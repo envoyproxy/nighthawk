@@ -6,13 +6,13 @@
 
 #include "nighthawk/user_defined_output/user_defined_output_plugin.h"
 
-#include "external/envoy/source/common/common/random_generator.h"
-#include "external/envoy/source/common/runtime/runtime_impl.h"
-#include "external/envoy/source/common/stats/isolated_store_impl.h"
-#include "external/envoy/test/mocks/local_info/mocks.h"
-#include "external/envoy/test/mocks/protobuf/mocks.h"
-#include "external/envoy/test/mocks/thread_local/mocks.h"
-#include "external/envoy/test/test_common/simulated_time_system.h"
+#include "source/common/common/random_generator.h"
+#include "source/common/runtime/runtime_impl.h"
+#include "source/common/stats/isolated_store_impl.h"
+#include "test/mocks/local_info/mocks.h"
+#include "test/mocks/protobuf/mocks.h"
+#include "test/mocks/thread_local/mocks.h"
+#include "test/test_common/simulated_time_system.h"
 
 #include "source/client/client_worker_impl.h"
 #include "source/common/statistic_impl.h"

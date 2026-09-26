@@ -1,4 +1,4 @@
-#include "external/envoy/source/common/protobuf/protobuf.h"
+#include "source/common/protobuf/protobuf.h"
 
 #include "api/client/output.pb.h"
 #include "api/sink/sink.grpc.pb.h"

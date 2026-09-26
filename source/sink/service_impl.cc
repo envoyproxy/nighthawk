@@ -4,7 +4,7 @@
 
 #include "envoy/config/core/v3/base.pb.h"
 
-#include "external/envoy/source/common/common/assert.h"
+#include "source/common/common/assert.h"
 
 #include "source/sink/nighthawk_sink_client_impl.h"
 #include "source/sink/sink_impl.h"

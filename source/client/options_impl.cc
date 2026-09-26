@@ -8,10 +8,10 @@
 #include <iterator>
 #include <optional>
 
-#include "external/envoy/source/common/common/utility.h"
-#include "external/envoy/source/common/protobuf/message_validator_impl.h"
-#include "external/envoy/source/common/protobuf/protobuf.h"
-#include "external/envoy/source/common/protobuf/utility.h"
+#include "source/common/common/utility.h"
+#include "source/common/protobuf/message_validator_impl.h"
+#include "source/common/protobuf/protobuf.h"
+#include "source/common/protobuf/utility.h"
 
 #include "api/client/options.pb.validate.h"
 
