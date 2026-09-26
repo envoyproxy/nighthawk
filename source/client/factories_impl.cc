@@ -6,10 +6,11 @@
 
 #include "nighthawk/common/rate_limiter.h"
 #include "nighthawk/common/rate_limiter_plugin_config_factory.h"
+#include "nighthawk/request_source/request_source_plugin_config_factory.h"
 #include "nighthawk/user_defined_output/user_defined_output_plugin.h"
 
-#include "external/envoy/source/common/config/utility.h"
-#include "external/envoy/source/common/http/header_map_impl.h"
+#include "source/common/config/utility.h"
+#include "source/common/http/header_map_impl.h"
 
 #include "api/client/options.pb.h"
 

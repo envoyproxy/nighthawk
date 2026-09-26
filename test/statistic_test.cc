@@ -5,11 +5,11 @@
 #include <string>
 #include <typeinfo> // std::bad_cast
 
-#include "external/envoy/source/common/protobuf/utility.h"
-#include "external/envoy/source/common/stats/isolated_store_impl.h"
-#include "external/envoy/test/mocks/stats/mocks.h"
-#include "external/envoy/test/test_common/file_system_for_test.h"
-#include "external/envoy/test/test_common/utility.h"
+#include "source/common/protobuf/utility.h"
+#include "source/common/stats/isolated_store_impl.h"
+#include "test/mocks/stats/mocks.h"
+#include "test/test_common/file_system_for_test.h"
+#include "test/test_common/utility.h"
 
 #include "source/common/statistic_impl.h"
 

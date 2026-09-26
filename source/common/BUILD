@@ -16,7 +16,6 @@ envoy_cc_library(
     hdrs = [
         "nighthawk_service_client_impl.h",
     ],
-    repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         "//api/client:base_cc_proto",
@@ -33,7 +32,6 @@ envoy_cc_library(
     hdrs = [
         "request_impl.h",
     ],
-    repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         ":nighthawk_common_lib",
@@ -45,7 +43,6 @@ envoy_cc_library(
     name = "request_stream_grpc_client_lib",
     srcs = ["request_stream_grpc_client_impl.cc"],
     hdrs = ["request_stream_grpc_client_impl.h"],
-    repository = "@envoy",
     deps = [
         ":request_impl_lib",
         "//api/client:base_cc_proto",
@@ -73,7 +70,6 @@ envoy_cc_library(
     hdrs = [
         "request_source_impl.h",
     ],
-    repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         ":nighthawk_common_lib",
@@ -86,7 +82,6 @@ envoy_cc_library(
 envoy_cc_library(
     name = "version_linkstamp",
     srcs = ["version_linkstamp.cc"],
-    repository = "@envoy",
     deps = [
         "@envoy//source/common/version:version_includes",
     ],
@@ -100,7 +95,6 @@ envoy_cc_library(
     hdrs = [
         "thread_safe_monotonic_time_stopwatch.h",
     ],
-    repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         "//include/nighthawk/common:stopwatch_lib",
@@ -139,7 +133,6 @@ envoy_cc_library(
         "version_info.h",
         "worker_impl.h",
     ],
-    repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         "//api/client:base_cc_proto",

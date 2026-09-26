@@ -3,7 +3,7 @@
 
 #include "nighthawk/common/exception.h"
 
-#include "external/envoy/test/test_common/simulated_time_system.h"
+#include "test/test_common/simulated_time_system.h"
 
 #include "source/common/frequency.h"
 #include "source/common/rate_limiter_impl.h"

@@ -13,10 +13,10 @@
 #include <future>
 #include <memory>
 
-#include "external/envoy/source/common/common/logger.h"
-#include "external/envoy/source/common/common/thread.h"
-#include "external/envoy/source/common/event/real_time_system.h"
-#include "external/envoy/source/exe/process_wide.h"
+#include "source/common/common/logger.h"
+#include "source/common/common/thread.h"
+#include "source/common/event/real_time_system.h"
+#include "source/exe/process_wide.h"
 
 #include "nighthawk/client/process.h"
 #include "nighthawk/common/request_source.h"

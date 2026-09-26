@@ -6,7 +6,7 @@
 
 #include "nighthawk/common/exception.h"
 
-#include "external/envoy/envoy/network/dns.h"
+#include "envoy/network/dns.h"
 
 #include "api/client/options.pb.h"
 

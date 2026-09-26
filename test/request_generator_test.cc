@@ -1,6 +1,6 @@
 #include <chrono>
 
-#include "external/envoy/test/test_common/utility.h"
+#include "test/test_common/utility.h"
 
 #include "source/common/request_source_impl.h"
 

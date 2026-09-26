@@ -26,7 +26,6 @@ envoy_cc_test_library(
     hdrs = [
         "stub_plugin_impl.h",
     ],
-    repository = "@envoy",
     deps = [
         "//include/nighthawk/request_source:request_source_plugin_config_factory_lib",
         "//source/common:nighthawk_common_lib",
@@ -48,7 +47,6 @@ envoy_cc_test(
         "test_data/test-config-c.yaml",
         "test_data/test-jsonconfig-ab.yaml",
     ],
-    repository = "@envoy",
     deps = [
         "//source/request_source:request_options_list_plugin_impl",
         "//test/request_source:stub_plugin_impl",
@@ -62,7 +60,6 @@ envoy_cc_test(
 envoy_cc_test(
     name = "llm_request_source_plugin_test",
     srcs = ["llm_request_source_plugin_test.cc"],
-    repository = "@envoy",
     deps = [
         "//source/common:request_impl_lib",
         "//source/common:request_source_impl_lib",

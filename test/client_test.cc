@@ -1,7 +1,7 @@
 #include <chrono>
 
-#include "external/envoy/test/test_common/environment.h"
-#include "external/envoy/test/test_common/utility.h"
+#include "test/test_common/environment.h"
+#include "test/test_common/utility.h"
 
 #include "source/client/client.h"
 

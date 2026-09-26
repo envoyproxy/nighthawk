@@ -1,7 +1,7 @@
 #pragma once
 
-#include "external/envoy/source/common/common/logger.h"
-#include "external/envoy/source/common/event/real_time_system.h"
+#include "source/common/common/logger.h"
+#include "source/common/event/real_time_system.h"
 
 namespace Nighthawk {
 namespace Client {

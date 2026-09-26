@@ -16,7 +16,6 @@ envoy_cc_library(
     hdrs = [
         "adaptive_load_controller_impl.h",
     ],
-    repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         ":metrics_plugin_impl",
@@ -41,7 +40,6 @@ envoy_cc_library(
     hdrs = [
         "adaptive_load_client_main.h",
     ],
-    repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         ":adaptive_load_controller_impl",
@@ -70,7 +68,6 @@ envoy_cc_library(
     hdrs = [
         "config_validator_impl.h",
     ],
-    repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         "//include/nighthawk/adaptive_load:config_validator",
@@ -87,7 +84,6 @@ envoy_cc_library(
     hdrs = [
         "input_variable_setter_impl.h",
     ],
-    repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         "//include/nighthawk/adaptive_load:input_variable_setter",
@@ -104,7 +100,6 @@ envoy_cc_library(
     hdrs = [
         "metrics_evaluator_impl.h",
     ],
-    repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         ":metrics_plugin_impl",
@@ -125,7 +120,6 @@ envoy_cc_library(
     hdrs = [
         "metrics_plugin_impl.h",
     ],
-    repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         "//include/nighthawk/adaptive_load:metrics_plugin",
@@ -144,7 +138,6 @@ envoy_cc_library(
     hdrs = [
         "plugin_loader.h",
     ],
-    repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         "//include/nighthawk/adaptive_load:input_variable_setter",
@@ -164,7 +157,6 @@ envoy_cc_library(
     hdrs = [
         "scoring_function_impl.h",
     ],
-    repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         "//include/nighthawk/adaptive_load:scoring_function",
@@ -181,7 +173,6 @@ envoy_cc_library(
     hdrs = [
         "session_spec_proto_helper_impl.h",
     ],
-    repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         ":metrics_plugin_impl",
@@ -203,7 +194,6 @@ envoy_cc_library(
     hdrs = [
         "step_controller_impl.h",
     ],
-    repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         ":input_variable_setter_impl",

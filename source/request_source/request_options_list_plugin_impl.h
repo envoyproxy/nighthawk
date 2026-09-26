@@ -6,8 +6,8 @@
 
 #include "nighthawk/request_source/request_source_plugin_config_factory.h"
 
-#include "external/envoy/source/common/common/lock_guard.h"
-#include "external/envoy/source/common/common/thread.h"
+#include "source/common/common/lock_guard.h"
+#include "source/common/common/thread.h"
 
 #include "api/client/options.pb.h"
 #include "api/request_source/request_source_plugin.pb.h"

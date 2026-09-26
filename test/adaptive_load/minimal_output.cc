@@ -1,6 +1,6 @@
 #include "test/adaptive_load/minimal_output.h"
 
-#include "external/envoy/source/common/protobuf/protobuf.h"
+#include "source/common/protobuf/protobuf.h"
 
 #include "absl/strings/string_view.h"
 

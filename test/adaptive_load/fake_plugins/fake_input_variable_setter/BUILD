@@ -30,7 +30,6 @@ envoy_cc_test_library(
     hdrs = [
         "fake_input_variable_setter.h",
     ],
-    repository = "@envoy",
     deps = [
         ":fake_input_variable_setter_proto_cc_proto",
         "//api/client:grpc_service_lib",
@@ -45,7 +44,6 @@ envoy_cc_test_library(
 envoy_cc_test(
     name = "fake_input_variable_setter_test",
     srcs = ["fake_input_variable_setter_test.cc"],
-    repository = "@envoy",
     deps = [
         ":fake_input_variable_setter",
         "//source/adaptive_load:plugin_loader",

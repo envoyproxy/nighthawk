@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "external/envoy/source/common/protobuf/protobuf.h"
+#include "source/common/protobuf/protobuf.h"
 
 #include "absl/strings/str_cat.h"
 #include "gmock/gmock.h"

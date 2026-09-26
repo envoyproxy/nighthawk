@@ -1,1 +1,6 @@
+#!/usr/bin/env bash
 # TODO(oschaaf): this is a stub. symlinking to envoy's copy fails here.
+# Copied from Envoy's bazel/get_workspace_status: @envoy_toolshed//certs requires
+# STABLE_CERT_EPOCH_YEAR to stamp generated test certificates in Envoy's integration tests.
+# Certificates are valid from Jan 1 of this year so they do not age out of validity and fail tests.
+echo "STABLE_CERT_EPOCH_YEAR $(date -u +%Y)"

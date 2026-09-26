@@ -11,7 +11,6 @@ envoy_package()
 envoy_cc_test(
     name = "benchmark_http_client_test",
     srcs = ["benchmark_http_client_test.cc"],
-    repository = "@envoy",
     deps = [
         "//source/client:nighthawk_client_lib",
         "//source/common:request_impl_lib",
@@ -36,7 +35,6 @@ envoy_cc_test(
 envoy_cc_test(
     name = "client_test",
     srcs = ["client_test.cc"],
-    repository = "@envoy",
     deps = [
         "//source/client:nighthawk_client_lib",
         "//test/client:utility_lib",
@@ -47,7 +45,6 @@ envoy_cc_test(
 envoy_cc_test(
     name = "client_worker_test",
     srcs = ["client_worker_test.cc"],
-    repository = "@envoy",
     deps = [
         "//source/client:nighthawk_client_lib",
         "//test/mocks/client:mock_benchmark_client",
@@ -70,7 +67,6 @@ envoy_cc_test(
 envoy_cc_test(
     name = "flush_worker_test",
     srcs = ["flush_worker_test.cc"],
-    repository = "@envoy",
     deps = [
         "//source/client:nighthawk_client_lib",
         "@envoy//source/common/api:api_lib",
@@ -87,7 +83,6 @@ envoy_cc_test(
 envoy_cc_test(
     name = "factories_test",
     srcs = ["factories_test.cc"],
-    repository = "@envoy",
     deps = [
         "//source/client:nighthawk_client_lib",
         "//test/mocks/client:mock_benchmark_client",
@@ -103,14 +98,12 @@ envoy_cc_test(
 envoy_cc_test(
     name = "frequency_test",
     srcs = ["frequency_test.cc"],
-    repository = "@envoy",
     deps = ["//source/common:nighthawk_common_lib"],
 )
 
 envoy_cc_test(
     name = "options_test",
     srcs = ["options_test.cc"],
-    repository = "@envoy",
     deps = [
         "//source/client:nighthawk_client_lib",
         "//test/client:utility_lib",
@@ -136,7 +129,6 @@ envoy_cc_test(
         "test_data/percentile-column-overflow.json",
         "test_data/percentile-column-overflow.txt.gold",
     ],
-    repository = "@envoy",
     deps = [
         "//source/client:output_collector_impl_lib",
         "//source/client:output_formatter_impl_lib",
@@ -151,7 +143,6 @@ envoy_cc_test(
 envoy_cc_test(
     name = "output_collector_test",
     srcs = ["output_collector_test.cc"],
-    repository = "@envoy",
     deps = [
         "//source/client:nighthawk_client_lib",
         "//test/client:utility_lib",
@@ -165,14 +156,12 @@ envoy_cc_test(
 envoy_cc_test(
     name = "platform_util_test",
     srcs = ["platform_util_test.cc"],
-    repository = "@envoy",
     deps = ["//source/common:nighthawk_common_lib"],
 )
 
 envoy_cc_test(
     name = "process_test",
     srcs = ["process_test.cc"],
-    repository = "@envoy",
     deps = [
         "//api/user_defined_output:log_response_headers_proto_cc_proto",
         "//source/client:nighthawk_client_lib",
@@ -193,7 +182,6 @@ envoy_cc_test(
 envoy_cc_test(
     name = "rate_limiter_test",
     srcs = ["rate_limiter_test.cc"],
-    repository = "@envoy",
     deps = [
         "//source/common:nighthawk_common_lib",
         "//test/mocks/common:mock_rate_limiter",
@@ -204,7 +192,6 @@ envoy_cc_test(
 envoy_cc_test(
     name = "rate_limiter_plugin_test",
     srcs = ["rate_limiter_plugin_test.cc"],
-    repository = "@envoy",
     deps = [
         "//api/rate_limiter:rate_limiter_plugin_cc_proto",
         "//source/common:nighthawk_common_lib",
@@ -224,7 +211,6 @@ envoy_cc_test(
         "test_data/output_formatter.txt.gold",
         "test_data/output_formatter.yaml.gold",
     ],
-    repository = "@envoy",
     deps = [
         "//source/common:nighthawk_common_lib",
         "//test/mocks/common:mock_platform_util",
@@ -240,7 +226,6 @@ envoy_cc_test(
 envoy_cc_test(
     name = "service_main_test",
     srcs = ["service_main_test.cc"],
-    repository = "@envoy",
     deps = [
         "//source/client:nighthawk_service_lib",
         "//test/test_common:environment_lib",
@@ -250,7 +235,6 @@ envoy_cc_test(
 envoy_cc_test(
     name = "service_test",
     srcs = ["service_test.cc"],
-    repository = "@envoy",
     deps = [
         "//source/client:nighthawk_service_lib",
         "//test/test_common:environment_lib",
@@ -265,7 +249,6 @@ envoy_cc_test(
         "test_data/circllhist_proto_json.gold",
         "test_data/hdr_proto_json.gold",
     ],
-    repository = "@envoy",
     deps = [
         "//source/common:nighthawk_common_lib",
         "//test/test_common:environment_lib",
@@ -278,7 +261,6 @@ envoy_cc_test(
 envoy_cc_test(
     name = "stream_decoder_test",
     srcs = ["stream_decoder_test.cc"],
-    repository = "@envoy",
     deps = [
         "//source/client:nighthawk_client_lib",
         "@envoy//source/common/event:dispatcher_includes_with_external_headers",
@@ -293,7 +275,6 @@ envoy_cc_test(
 envoy_cc_test(
     name = "utility_test",
     srcs = ["utility_test.cc"],
-    repository = "@envoy",
     deps = [
         "//source/common:nighthawk_common_lib",
         "//test/test_common:environment_lib",
@@ -305,7 +286,6 @@ envoy_cc_test(
 envoy_cc_test(
     name = "worker_test",
     srcs = ["worker_test.cc"],
-    repository = "@envoy",
     deps = [
         "//source/common:nighthawk_common_lib",
         "@envoy//source/common/common:random_generator_lib_with_external_headers",
@@ -319,7 +299,6 @@ envoy_cc_test(
 envoy_cc_test(
     name = "request_generator_test",
     srcs = ["request_generator_test.cc"],
-    repository = "@envoy",
     deps = [
         "//source/client:nighthawk_client_lib",
         "//test/client:utility_lib",
@@ -340,7 +319,6 @@ envoy_cc_test(
         },
         "//conditions:default": {},
     }),
-    repository = "@envoy",
     deps = [
         "//source/client:nighthawk_client_lib",
         "//source/client:nighthawk_service_lib",
@@ -355,7 +333,6 @@ envoy_cc_test(
 envoy_cc_test(
     name = "output_transform_main_test",
     srcs = ["output_transform_main_test.cc"],
-    repository = "@envoy",
     deps = [
         "//source/client:output_transform_main_lib",
         "//test/test_common:environment_lib",
@@ -366,7 +343,6 @@ envoy_cc_test(
 envoy_cc_test(
     name = "termination_predicate_test",
     srcs = ["termination_predicate_test.cc"],
-    repository = "@envoy",
     deps = [
         "//source/common:nighthawk_common_lib",
         "@envoy//test/mocks/event:event_mocks",
@@ -377,7 +353,6 @@ envoy_cc_test(
 envoy_cc_test(
     name = "request_stream_grpc_client_test",
     srcs = ["request_stream_grpc_client_test.cc"],
-    repository = "@envoy",
     deps = [
         "//api/request_source:grpc_request_source_service_lib",
         "//source/common:request_stream_grpc_client_lib",
@@ -390,7 +365,6 @@ envoy_cc_test(
 envoy_cc_test(
     name = "sni_utility_test",
     srcs = ["sni_utility_test.cc"],
-    repository = "@envoy",
     deps = [
         "//source/client:sni_utility",
         "@envoy//test/test_common:utility_lib",
@@ -400,7 +374,6 @@ envoy_cc_test(
 envoy_cc_test(
     name = "process_bootstrap_test",
     srcs = ["process_bootstrap_test.cc"],
-    repository = "@envoy",
     deps = [
         "//source/client:options_impl_lib",
         "//source/client:process_bootstrap",
@@ -422,7 +395,6 @@ envoy_cc_test(
 envoy_cc_test(
     name = "stopwatch_test",
     srcs = ["stopwatch_test.cc"],
-    repository = "@envoy",
     deps = [
         "//source/common:thread_safe_monotonic_time_stopwatch_lib",
         "//test/common:fake_time_source",

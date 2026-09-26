@@ -6,15 +6,15 @@
 
 #include "envoy/api/api.h"
 #include "envoy/common/exception.h"
-#include "external/envoy/source/common/common/macros.h"
-#include "external/envoy/source/common/protobuf/protobuf.h"
 #include "nighthawk/client/options.h"
 #include "nighthawk/common/exception.h"
+#include "source/common/common/macros.h"
+#include "source/common/protobuf/protobuf.h"
 
 #include "envoy/registry/registry.h"
-#include "external/envoy/source/common/common/assert.h"
-#include "external/envoy/source/common/protobuf/utility.h"
 #include "nighthawk/common/rate_limiter_plugin_config_factory.h"
+#include "source/common/common/assert.h"
+#include "source/common/protobuf/utility.h"
 
 namespace Nighthawk {
 

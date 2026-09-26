@@ -1,5 +1,5 @@
-#include "external/envoy/source/common/protobuf/protobuf.h"
-#include "external/envoy/test/mocks/common.h"
+#include "source/common/protobuf/protobuf.h"
+#include "test/mocks/common.h"
 
 #include "api/adaptive_load/benchmark_result.pb.h"
 #include "api/adaptive_load/metric_spec.pb.h"

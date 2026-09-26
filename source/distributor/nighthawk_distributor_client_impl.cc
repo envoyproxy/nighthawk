@@ -1,6 +1,6 @@
 #include "source/distributor/nighthawk_distributor_client_impl.h"
 
-#include "external/envoy/source/common/common/assert.h"
+#include "source/common/common/assert.h"
 
 #include "absl/strings/str_cat.h"
 
