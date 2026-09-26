@@ -444,7 +444,7 @@ TYPED_TEST(SinkableStatisticTest, EmptySinkableStatistic) {
   EXPECT_TRUE(std::isnan(stat.pstdev()));
   EXPECT_EQ(stat.min(), UINT64_MAX);
   EXPECT_EQ(stat.max(), 0);
-  EXPECT_EQ(Envoy::Stats::Histogram::Unit::Unspecified, stat.unit());
+  EXPECT_EQ(Envoy::Stats::Histogram::Unit::Microseconds, stat.unit());
   EXPECT_FALSE(stat.used());
   EXPECT_EQ("", stat.name());
   EXPECT_EQ("", stat.tagExtractedName());
@@ -455,21 +455,27 @@ TYPED_TEST(SinkableStatisticTest, SimpleSinkableStatistic) {
   Envoy::Stats::MockIsolatedStatsStore mock_store;
   const int worker_id = 0;
   TypeParam stat(*mock_store.rootScope(), worker_id);
-  const uint64_t sample_value = 123;
+  // A nanosecond sample, as Nighthawk records them, chosen to convert exactly: the store
+  // histogram declares Microseconds and is fed converted samples. See SinkableStatistic::unit().
+  const uint64_t sample_value = 123000;
+  const uint64_t sample_value_micros = 123;
   const std::string stat_name = "stat_name";
 
-  EXPECT_CALL(mock_store, deliverHistogramToSinks(_, sample_value)).Times(2);
+  EXPECT_CALL(mock_store, deliverHistogramToSinks(_, sample_value_micros)).Times(2);
   stat.recordValue(sample_value);
   stat.addValue(sample_value);
   stat.setId(stat_name);
 
   EXPECT_EQ(2, stat.count());
-  Helper::expectNear(123.0, stat.mean(), stat.significantDigits());
+  // Nighthawk's own view keeps the nanoseconds it was given; only the mirror is converted.
+  Helper::expectNear(123000.0, stat.mean(), stat.significantDigits());
   EXPECT_DOUBLE_EQ(0, stat.pvariance());
   EXPECT_DOUBLE_EQ(0, stat.pstdev());
-  EXPECT_EQ(123, stat.min());
-  EXPECT_EQ(123, stat.max());
-  EXPECT_EQ(Envoy::Stats::Histogram::Unit::Unspecified, stat.unit());
+  // Near, not equal: HdrHistogram stores to a significant-digit precision, so it returns 123003
+  // for this sample. That is the statistic's own quantisation and unrelated to the mirror.
+  Helper::expectNear(123000.0, stat.min(), stat.significantDigits());
+  Helper::expectNear(123000.0, stat.max(), stat.significantDigits());
+  EXPECT_EQ(Envoy::Stats::Histogram::Unit::Microseconds, stat.unit());
   EXPECT_TRUE(stat.used());
   EXPECT_EQ(stat_name, stat.name());
   EXPECT_EQ("0.stat_name", stat.tagExtractedName());
@@ -501,6 +507,43 @@ TYPED_TEST(SinkableStatisticTest, IsVisibleInTheStoreSnapshot) {
   // data, not from the mirror.
   EXPECT_EQ(1, stat.count());
   EXPECT_EQ(1500, stat.max());
+}
+
+TYPED_TEST(SinkableStatisticTest, MirrorsSamplesAsMicroseconds) {
+  // The mirror declares Microseconds and is fed converted samples, so a sink can scale it by unit
+  // instead of knowing that Nighthawk records nanoseconds. Envoy's statsd sinks label every
+  // histogram "|ms" and scale only by unit, so an Unspecified nanosecond histogram is exported a
+  // factor of 10^6 out; this is what stops that.
+  Envoy::Stats::SymbolTableImpl symbol_table;
+  Envoy::Stats::AllocatorImpl allocator(symbol_table);
+  Envoy::Stats::ThreadLocalStoreImpl store(allocator);
+
+  // Capture what reaches a sink, which is the thing being asserted -- the store's own merged
+  // statistics would additionally be rounded by libcircllhist's bucketing.
+  auto sink = std::make_unique<NiceMock<Envoy::Stats::MockSink>>();
+  std::vector<std::pair<std::string, uint64_t>> delivered;
+  std::vector<Envoy::Stats::Histogram::Unit> units;
+  ON_CALL(*sink, onHistogramComplete(_, _))
+      .WillByDefault(
+          [&delivered, &units](const Envoy::Stats::Histogram& histogram, uint64_t value) {
+            delivered.emplace_back(histogram.name(), value);
+            units.push_back(histogram.unit());
+          });
+  store.addSink(*sink);
+
+  Envoy::Stats::ScopeSharedPtr worker_scope = store.createScope("cluster.0.");
+  TypeParam stat(*worker_scope, /*worker_id=*/0);
+  stat.setId("benchmark_http_client.latency_2xx");
+  // 1.5 ms expressed the way Nighthawk records it.
+  stat.recordValue(1500000);
+
+  EXPECT_THAT(delivered, Contains(std::make_pair(
+                             std::string("cluster.0.benchmark_http_client.latency_2xx"), 1500UL)));
+  EXPECT_THAT(units, Contains(Envoy::Stats::Histogram::Unit::Microseconds));
+  // Nighthawk still reports nanoseconds; only the mirror is coarser. Near rather than equal
+  // because HdrStatistic quantises to its significant digits, which is its own behaviour and not
+  // the conversion under test -- the conversion is asserted on the delivered sample above.
+  Helper::expectNear(1500000.0, stat.max(), stat.significantDigits());
 }
 
 } // namespace Nighthawk

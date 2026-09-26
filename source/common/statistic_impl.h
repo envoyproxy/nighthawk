@@ -200,9 +200,29 @@ public:
   SinkableStatistic(Envoy::Stats::Scope& scope, std::optional<int> worker_id);
   ~SinkableStatistic() override;
 
-  // Currently Envoy Histogram Unit supports {Unspecified, Bytes, Microseconds, Milliseconds}. By
-  // default, Nighthawk::Statistic uses nanosecond as the unit of latency histograms, so Unspecified
-  // is returned here to isolate Nighthawk Statistic from Envoy Histogram Unit.
+  // Envoy::Stats::Histogram::Unit is {Unspecified, Bytes, Microseconds, Milliseconds, Percent};
+  // there is no nanosecond unit, which is what Nighthawk::Statistic records. Microseconds is
+  // returned, and samples are divided on the way into the store histogram, so the mirror is
+  // self-describing: a sink can scale it by unit instead of knowing Nighthawk's convention.
+  // Unspecified would be honest about the resolution and useless to every sink -- Envoy's statsd
+  // sinks label histograms "|ms" and scale only by unit, so an unspecified nanosecond histogram is
+  // exported as milliseconds a factor of 10^6 out.
+  //
+  // The cost is bounded and smaller than it looks: Envoy stores histogram samples in libcircllhist,
+  // whose buckets are val x 10^exp with val in [10, 99] -- two significant decimal digits, 90 bins
+  // per decade. Above about 10 us, integer microseconds are finer than the bucketing that follows,
+  // so nothing survives the histogram that the conversion removed. Below that the quantisation is
+  // real: single-digit microseconds mean steps of 10 to 25 percent, and a sample under half a
+  // microsecond reaches the mirror as zero. Sub-10 us latencies are the case to revisit if a
+  // nanosecond unit ever exists upstream. None of this affects what Nighthawk reports: its output
+  // is rendered from the HdrHistogram or Circllhist data, which keeps nanoseconds.
+  //
+  // This is a property of the class, and it is only correct because every SinkableStatistic is a
+  // latency. The response size statistics are byte counts, not durations, and are deliberately
+  // not sinkable -- BenchmarkClientStatistic is handed StreamingStatistic for those two. If they
+  // or anything else non-temporal ever become sinkable, this has to become per statistic:
+  // declaring a byte count as Microseconds and dividing it by a thousand turns a 10 byte body
+  // into 0 and reports it as a duration, and nothing here would fail to make that visible.
   Envoy::Stats::Histogram::Unit unit() const override;
   Envoy::Stats::SymbolTable& symbolTable() override;
   // Return the id of the worker where this statistic is defined. Per worker
@@ -222,8 +242,8 @@ protected:
    * histogram is named "cluster.<n>.<id>" and stats sinks can recover the worker from the name.
    *
    * Nighthawk's own output is unaffected: it is rendered from this statistic's HdrHistogram or
-   * Circllhist data, not from the mirror, so the mirror is free to carry a coarser representation
-   * than the nanoseconds recorded here.
+   * Circllhist data, not from the mirror, which is why the mirror can carry the coarser
+   * representation that unit() describes rather than the nanoseconds recorded here.
    */
   Envoy::Stats::Histogram& storeHistogram();
 
@@ -233,6 +253,15 @@ protected:
    * sample was recorded before that.
    */
   void bindStoreHistogram();
+
+  /**
+   * Converts a sample from the nanoseconds Nighthawk records to the microseconds the store
+   * histogram declares. See unit() for why the mirror is not recorded in nanoseconds.
+   *
+   * @param nanoseconds the sample as recorded by Nighthawk.
+   * @return uint64_t the same sample in whole microseconds.
+   */
+  static uint64_t toStoreHistogramUnit(uint64_t nanoseconds);
 
   // This is used in child class for delivering the histogram data to sinks.
   Envoy::Stats::Scope& scope_;
