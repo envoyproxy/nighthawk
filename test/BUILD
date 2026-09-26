@@ -247,12 +247,11 @@ envoy_cc_test(
     srcs = ["envoy_stats_sink_threading_test.cc"],
     deps = [
         "//source/common:nighthawk_common_lib",
-        "@envoy//source/common/network:utility_lib_with_external_headers",
+        "@envoy//envoy/stats:stats_interface",
+        "@envoy//envoy/thread_local:thread_local_interface",
         "@envoy//source/common/stats:allocator_lib_with_external_headers",
         "@envoy//source/common/stats:thread_local_store_lib_with_external_headers",
         "@envoy//source/common/thread_local:thread_local_lib_with_external_headers",
-        "@envoy//source/extensions/stat_sinks/common/statsd:statsd_lib_with_external_headers",
-        "@envoy//test/mocks/event:event_mocks",
         "@envoy//test/test_common:environment_lib",
     ],
 )

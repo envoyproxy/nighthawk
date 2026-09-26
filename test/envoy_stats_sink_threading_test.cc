@@ -9,26 +9,60 @@
 // SlotImpl::getWorker(). Nighthawk's worker threads register in WorkerImpl's constructor and the
 // main thread registers in ProcessImpl, so the runtime satisfies it; a unit test constructing such
 // a sink without registering threads would not.
+//
+// The sink here is a local fake rather than Envoy's UdpStatsdSink. What is under test is the
+// thread local resolution every such sink performs, not any one sink's behaviour, and the fake
+// performs exactly that resolution -- getTyped() on a slot, on whichever thread calls it, which is
+// the call that trips the assert. Depending on a real one would also mean depending on an Envoy
+// extension library, and those are visible only inside Envoy: envoy_cc_extension publishes its
+// :config target publicly, while an envoy_cc_library in an envoy_extension_package() keeps the
+// package default. Nighthawk widened that through extensions_build_config.bzl when WORKSPACE wired
+// it in; under bzlmod nothing consumes that file.
 #include <thread>
 
 #include "absl/synchronization/notification.h"
 
+#include "envoy/stats/sink.h"
+#include "envoy/thread_local/thread_local.h"
+
 #include "source/common/event/dispatcher_impl.h"
-#include "source/common/network/utility.h"
 #include "source/common/stats/allocator_impl.h"
 #include "source/common/stats/thread_local_store.h"
 #include "source/common/thread_local/thread_local_impl.h"
-#include "source/extensions/stat_sinks/common/statsd/statsd.h"
-#include "test/mocks/event/mocks.h"
 #include "test/test_common/utility.h"
 
 #include "gtest/gtest.h"
 
 namespace Nighthawk {
+namespace {
 
 using namespace testing;
 
-TEST(EnvoyStatsSinkThreading, UdpStatsdSinkUnderAWorkerThread) {
+// Stands in for an Envoy stats sink that keeps per thread state: it resolves a thread local slot
+// on every use, which is what UdpStatsdSink does for its writer and what makes an unregistered
+// thread fatal. Counting the resolutions is incidental; reaching them at all is the test.
+class ThreadLocalResolvingSink : public Envoy::Stats::Sink {
+public:
+  explicit ThreadLocalResolvingSink(Envoy::ThreadLocal::SlotAllocator& tls)
+      : slot_(tls.allocateSlot()) {
+    slot_->set([](Envoy::Event::Dispatcher&) -> Envoy::ThreadLocal::ThreadLocalObjectSharedPtr {
+      return std::make_shared<Writer>();
+    });
+  }
+
+  void flush(Envoy::Stats::MetricSnapshot&) override { ++slot_->getTyped<Writer>().uses_; }
+  void onHistogramComplete(const Envoy::Stats::Histogram&, uint64_t) override {
+    ++slot_->getTyped<Writer>().uses_;
+  }
+
+private:
+  struct Writer : public Envoy::ThreadLocal::ThreadLocalObject {
+    uint64_t uses_{0};
+  };
+  Envoy::ThreadLocal::SlotSharedPtr slot_;
+};
+
+TEST(EnvoyStatsSinkThreading, SinkUsedFromAWorkerThread) {
   Envoy::Api::ApiPtr api = Envoy::Api::createApiForTest();
   Envoy::ThreadLocal::InstanceImpl tls;
   Envoy::Event::DispatcherPtr main_dispatcher = api->allocateDispatcher("main_thread");
@@ -44,11 +78,7 @@ TEST(EnvoyStatsSinkThreading, UdpStatsdSinkUnderAWorkerThread) {
   store.initializeThreading(*main_dispatcher, tls);
 
   // Sink creation happens on the main thread, after both registrations, as in setupStatsSinks().
-  Envoy::Network::Address::InstanceConstSharedPtr address =
-      Envoy::Network::Utility::parseInternetAddressNoThrow("127.0.0.1", 8125);
-  ASSERT_NE(nullptr, address);
-  auto sink = std::make_unique<Envoy::Extensions::StatSinks::Common::Statsd::UdpStatsdSink>(
-      tls, address, /*use_tag=*/true, "nighthawk");
+  auto sink = std::make_unique<ThreadLocalResolvingSink>(tls);
   store.addSink(*sink);
 
   // The worker thread runs its dispatcher once (WorkerImpl::start does RunType::NonBlock) and then
@@ -59,8 +89,8 @@ TEST(EnvoyStatsSinkThreading, UdpStatsdSinkUnderAWorkerThread) {
     Envoy::Stats::Histogram& histogram = store.rootScope()->histogramFromString(
         "test_histogram", Envoy::Stats::Histogram::Unit::Unspecified);
     histogram.recordValue(1500);
-    // recordValue() reaches the sink through deliverHistogramToSinks(), which is where
-    // UdpStatsdSink resolves its thread local writer - the same resolution flush() performs.
+    // recordValue() reaches the sink through deliverHistogramToSinks(), which is where the sink
+    // resolves its thread local writer - the same resolution flush() performs.
   });
   worker.join();
 
@@ -88,11 +118,7 @@ TEST(EnvoyStatsSinkThreading, SinkUsedAfterGlobalThreadingShutdown) {
   Envoy::Stats::ThreadLocalStoreImpl store(allocator);
   store.initializeThreading(*main_dispatcher, tls);
 
-  Envoy::Network::Address::InstanceConstSharedPtr address =
-      Envoy::Network::Utility::parseInternetAddressNoThrow("127.0.0.1", 8125);
-  ASSERT_NE(nullptr, address);
-  auto sink = std::make_unique<Envoy::Extensions::StatSinks::Common::Statsd::UdpStatsdSink>(
-      tls, address, /*use_tag=*/true, "nighthawk");
+  auto sink = std::make_unique<ThreadLocalResolvingSink>(tls);
   store.addSink(*sink);
 
   Envoy::Stats::Histogram& histogram = store.rootScope()->histogramFromString(
@@ -125,4 +151,5 @@ TEST(EnvoyStatsSinkThreading, SinkUsedAfterGlobalThreadingShutdown) {
   tls.shutdownThread();
 }
 
+} // namespace
 } // namespace Nighthawk
