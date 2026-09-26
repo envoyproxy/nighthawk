@@ -208,14 +208,31 @@ public:
   // sinks label histograms "|ms" and scale only by unit, so an unspecified nanosecond histogram is
   // exported as milliseconds a factor of 10^6 out.
   //
-  // The cost is bounded and smaller than it looks: Envoy stores histogram samples in libcircllhist,
-  // whose buckets are val x 10^exp with val in [10, 99] -- two significant decimal digits, 90 bins
-  // per decade. Above about 10 us, integer microseconds are finer than the bucketing that follows,
-  // so nothing survives the histogram that the conversion removed. Below that the quantisation is
-  // real: single-digit microseconds mean steps of 10 to 25 percent, and a sample under half a
-  // microsecond reaches the mirror as zero. Sub-10 us latencies are the case to revisit if a
-  // nanosecond unit ever exists upstream. None of this affects what Nighthawk reports: its output
-  // is rendered from the HdrHistogram or Circllhist data, which keeps nanoseconds.
+  // What the conversion costs depends on which kind of sink is reading, and the two differ:
+  //
+  //   - Sinks that read the merged histogram statistics -- Prometheus, the admin endpoint,
+  //     OpenTelemetry, the gRPC metrics service -- see values already binned by libcircllhist,
+  //     whose buckets are val x 10^exp with val in [10, 99]: two significant decimal digits, 90
+  //     bins per decade. Above about 10 us those bins are coarser than a microsecond, so the
+  //     conversion removes nothing that would have survived anyway.
+  //   - Sinks implementing onHistogramComplete(), which is how the statsd sinks consume
+  //     histograms, see every sample exactly as recorded. ParentHistogramImpl::recordValue()
+  //     records into the thread local circllhist and then calls deliverHistogramToSinks() with
+  //     the raw value, and UdpStatsdSink::flush() never reads snapshot.histograms(). Nothing
+  //     bins the value between here and the wire, so on that path microseconds is the real
+  //     precision floor: a 40.7 us sample leaves as 41 us and the remainder is gone.
+  //
+  // That is the path this change exists to serve, so the loss is not hypothetical: roughly 1
+  // percent at 40 us and proportionally worse below, against about 0.02 percent for the
+  // millisecond scale request latencies Nighthawk actually measures. Rounding rather than
+  // truncating halves it. A sample under half a microsecond reaches the mirror as zero.
+  //
+  // A nanosecond unit upstream would remove the loss on that path; there is no such unit today.
+  // This is the floor of what Envoy can currently express, not a considered limit, and should
+  // not be written down as one.
+  //
+  // None of this affects what Nighthawk reports: its output is rendered from the HdrHistogram or
+  // Circllhist data, which keeps nanoseconds.
   //
   // This is a property of the class, and it is only correct because every SinkableStatistic is a
   // latency. The response size statistics are byte counts, not durations, and are deliberately
