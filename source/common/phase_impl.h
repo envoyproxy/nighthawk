@@ -6,7 +6,7 @@
 
 #include "nighthawk/common/phase.h"
 
-#include "external/envoy/source/common/common/logger.h"
+#include "source/common/common/logger.h"
 
 namespace Nighthawk {
 

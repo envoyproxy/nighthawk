@@ -13,7 +13,6 @@ envoy_cc_test_library(
     name = "minimal_output",
     srcs = ["minimal_output.cc"],
     hdrs = ["minimal_output.h"],
-    repository = "@envoy",
     deps = [
         "//source/client:nighthawk_client_lib",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
@@ -29,7 +28,6 @@ envoy_cc_test(
         "test_data/invalid_session_spec.textproto",
         "test_data/valid_session_spec.textproto",
     ],
-    repository = "@envoy",
     deps = [
         ":minimal_output",
         "//include/nighthawk/adaptive_load:adaptive_load_controller",
@@ -45,7 +43,6 @@ envoy_cc_test(
 envoy_cc_test(
     name = "adaptive_load_controller_test",
     srcs = ["adaptive_load_controller_test.cc"],
-    repository = "@envoy",
     deps = [
         ":minimal_output",
         "//api/client:grpc_service_lib",
@@ -70,7 +67,6 @@ envoy_cc_test(
 envoy_cc_test(
     name = "input_variable_setter_test",
     srcs = ["input_variable_setter_test.cc"],
-    repository = "@envoy",
     deps = [
         "//source/adaptive_load:input_variable_setter_impl",
         "//test/test_common:proto_matchers",
@@ -80,7 +76,6 @@ envoy_cc_test(
 envoy_cc_test(
     name = "metrics_evaluator_test",
     srcs = ["metrics_evaluator_test.cc"],
-    repository = "@envoy",
     deps = [
         ":minimal_output",
         "//source/adaptive_load:metrics_evaluator_impl",
@@ -93,7 +88,6 @@ envoy_cc_test(
 envoy_cc_test(
     name = "metrics_plugin_test",
     srcs = ["metrics_plugin_test.cc"],
-    repository = "@envoy",
     deps = [
         ":minimal_output",
         "//source/adaptive_load:metrics_plugin_impl",
@@ -103,7 +97,6 @@ envoy_cc_test(
 envoy_cc_test(
     name = "plugin_loader_test",
     srcs = ["plugin_loader_test.cc"],
-    repository = "@envoy",
     deps = [
         "//source/adaptive_load:plugin_loader",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
@@ -114,7 +107,6 @@ envoy_cc_test(
 envoy_cc_test(
     name = "session_spec_proto_helper_test",
     srcs = ["session_spec_proto_helper_test.cc"],
-    repository = "@envoy",
     deps = [
         "//source/adaptive_load:session_spec_proto_helper_impl",
         "//test/adaptive_load/fake_plugins/fake_metrics_plugin",
@@ -125,7 +117,6 @@ envoy_cc_test(
 envoy_cc_test(
     name = "scoring_function_test",
     srcs = ["scoring_function_test.cc"],
-    repository = "@envoy",
     deps = [
         "//source/adaptive_load:scoring_function_impl",
         "//test/test_common:proto_matchers",
@@ -135,7 +126,6 @@ envoy_cc_test(
 envoy_cc_test(
     name = "step_controller_test",
     srcs = ["step_controller_test.cc"],
-    repository = "@envoy",
     deps = [
         "//source/adaptive_load:step_controller_impl",
         "//test/adaptive_load/fake_plugins/fake_input_variable_setter",

@@ -3,7 +3,7 @@
 #include "nighthawk/common/exception.h"
 #include "nighthawk/common/platform_util.h"
 
-#include "external/envoy/source/common/common/assert.h"
+#include "source/common/common/assert.h"
 
 using namespace std::chrono_literals;
 

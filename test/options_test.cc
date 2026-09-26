@@ -1,4 +1,4 @@
-#include "external/envoy/test/test_common/utility.h"
+#include "test/test_common/utility.h"
 #include <memory>
 
 #include "fmt/format.h"

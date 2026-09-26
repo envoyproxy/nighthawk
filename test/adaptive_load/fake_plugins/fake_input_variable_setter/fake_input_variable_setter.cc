@@ -1,6 +1,6 @@
 #include "test/adaptive_load/fake_plugins/fake_input_variable_setter/fake_input_variable_setter.h"
 
-#include "external/envoy/source/common/protobuf/protobuf.h"
+#include "source/common/protobuf/protobuf.h"
 
 namespace Nighthawk {
 

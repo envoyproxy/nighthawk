@@ -1,7 +1,7 @@
 #include "source/client/flush_worker_impl.h"
 
-#include "external/envoy/source/common/stats/symbol_table.h"
-#include "external/envoy/source/server/server.h"
+#include "source/common/stats/symbol_table.h"
+#include "source/server/server.h"
 
 #include "source/common/utility.h"
 

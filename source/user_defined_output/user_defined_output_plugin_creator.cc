@@ -2,8 +2,8 @@
 
 #include "envoy/config/typed_config.h"
 
-#include "external/envoy/source/common/common/statusor.h"
-#include "external/envoy/source/common/config/utility.h"
+#include "source/common/common/statusor.h"
+#include "source/common/config/utility.h"
 
 namespace Nighthawk {
 

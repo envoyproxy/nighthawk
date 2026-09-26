@@ -18,6 +18,9 @@ export SRCDIR=${SRCDIR:="${PWD}"}
 export CLANG_FORMAT=clang-format
 export NIGHTHAWK_BUILD_ARCH=$(uname -m)
 export BAZEL_REMOTE_CACHE=${BAZEL_REMOTE_CACHE:=""}
+if [ -d "${HOME}/.local/lib" ]; then
+    export LD_LIBRARY_PATH="${HOME}/.local/lib:${LD_LIBRARY_PATH:-}"
+fi
 # The directory to copy built binaries to.
 export BUILD_DIR=""
 
@@ -344,7 +347,11 @@ case "$1" in
     ;;
     test_gcc)
         setup_gcc_toolchain
-        do_test
+        BAZEL_BUILD_OPTIONS="$BAZEL_BUILD_OPTIONS --copt=-g0 --strip=always"
+        # Stage 1: Build client and output transform first (compiles and caches common dependencies)
+        bazel build -c fastbuild $BAZEL_BUILD_OPTIONS //:nighthawk_client //:nighthawk_output_transform
+        # Stage 2: Build service and adaptive load client
+        bazel build -c fastbuild $BAZEL_BUILD_OPTIONS //:nighthawk_service //:nighthawk_adaptive_load_client
         exit 0
     ;;
     clang_tidy)

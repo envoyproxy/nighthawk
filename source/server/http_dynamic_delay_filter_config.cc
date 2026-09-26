@@ -2,7 +2,7 @@
 
 #include "envoy/registry/registry.h"
 
-#include "external/envoy/source/common/protobuf/message_validator_impl.h"
+#include "source/common/protobuf/message_validator_impl.h"
 
 #include "api/server/dynamic_delay.pb.h"
 #include "api/server/dynamic_delay.pb.validate.h"

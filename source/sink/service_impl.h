@@ -11,7 +11,7 @@
 
 #include <memory>
 
-#include "external/envoy/source/common/common/logger.h"
+#include "source/common/common/logger.h"
 
 #include "nighthawk/sink/sink.h"
 

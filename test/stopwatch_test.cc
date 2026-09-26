@@ -3,8 +3,8 @@
 #include <thread>
 #include <vector>
 
-#include "external/envoy/test/test_common/simulated_time_system.h"
-#include "external/envoy/test/test_common/utility.h"
+#include "test/test_common/simulated_time_system.h"
+#include "test/test_common/utility.h"
 
 #include "source/common/thread_safe_monotonic_time_stopwatch.h"
 

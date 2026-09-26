@@ -17,7 +17,7 @@
 
 #include "nighthawk/common/termination_predicate.h"
 
-#include "external/envoy/source/common/protobuf/protobuf.h"
+#include "source/common/protobuf/protobuf.h"
 
 #include "api/client/options.pb.h"
 

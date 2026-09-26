@@ -15,11 +15,11 @@
 #include "nighthawk/common/statistic.h"
 #include "nighthawk/user_defined_output/user_defined_output_plugin.h"
 
-#include "external/envoy/source/common/common/logger.h"
-#include "external/envoy/source/common/common/random_generator.h"
-#include "external/envoy/source/common/http/http1/conn_pool.h"
-#include "external/envoy/source/common/http/http2/conn_pool.h"
-#include "external/envoy/source/common/runtime/runtime_impl.h"
+#include "source/common/common/logger.h"
+#include "source/common/common/random_generator.h"
+#include "source/common/http/http1/conn_pool.h"
+#include "source/common/http/http2/conn_pool.h"
+#include "source/common/runtime/runtime_impl.h"
 
 #include "api/client/options.pb.h"
 

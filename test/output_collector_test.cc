@@ -1,4 +1,4 @@
-#include "external/envoy/test/test_common/simulated_time_system.h"
+#include "test/test_common/simulated_time_system.h"
 
 #include "source/client/options_impl.h"
 #include "source/client/output_collector_impl.h"

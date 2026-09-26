@@ -5,9 +5,9 @@
 #include <fstream>
 #include <sstream>
 
-#include "external/dep_hdrhistogram_c/include/hdr/hdr_histogram_log.h"
-#include "external/envoy/source/common/common/assert.h"
-#include "external/envoy/source/common/protobuf/utility.h"
+#include "hdr/hdr_histogram_log.h"
+#include "source/common/common/assert.h"
+#include "source/common/protobuf/utility.h"
 
 #include "absl/strings/str_cat.h"
 #include "internal_proto/statistic/statistic.pb.h"
@@ -413,7 +413,7 @@ SinkableStatistic::~SinkableStatistic() {
 }
 
 Envoy::Stats::Histogram::Unit SinkableStatistic::unit() const {
-  return Envoy::Stats::Histogram::Unit::Unspecified;
+  return Envoy::Stats::Histogram::Unit::Microseconds;
 }
 
 Envoy::Stats::SymbolTable& SinkableStatistic::symbolTable() { return scope_.symbolTable(); }
@@ -431,6 +431,14 @@ void SinkableStatistic::bindStoreHistogram() {
   store_histogram_ = &scope_.histogramFromString(name(), unit());
 }
 
+uint64_t SinkableStatistic::toStoreHistogramUnit(uint64_t nanoseconds) {
+  // Nighthawk records nanoseconds; the store histogram declares Microseconds. See unit().
+  // Rounded rather than truncated: truncation biases every sample low by up to a microsecond,
+  // which is a systematic error rather than a wash. Samples below half a microsecond still land
+  // in the mirror as zero -- see unit() for why that boundary is acceptable here.
+  return (nanoseconds + 500) / 1000;
+}
+
 SinkableHdrStatistic::SinkableHdrStatistic(Envoy::Stats::Scope& scope, std::optional<int> worker_id)
     : SinkableStatistic(scope, worker_id) {}
 
@@ -440,7 +448,7 @@ void SinkableHdrStatistic::recordValue(uint64_t value) {
   // onHistogramComplete() and, unlike a direct deliverHistogramToSinks() call, also makes the
   // statistic visible to sinks that only read MetricSnapshot::histograms() on flush, such as the
   // OpenTelemetry and metrics service sinks. See SinkableStatistic::storeHistogram().
-  storeHistogram().recordValue(value);
+  storeHistogram().recordValue(toStoreHistogramUnit(value));
 }
 
 void SinkableHdrStatistic::setId(absl::string_view id) {
@@ -463,7 +471,7 @@ SinkableCircllhistStatistic::SinkableCircllhistStatistic(Envoy::Stats::Scope& sc
 void SinkableCircllhistStatistic::recordValue(uint64_t value) {
   CircllhistStatistic::addValue(value);
   // See the comment in SinkableHdrStatistic::recordValue().
-  storeHistogram().recordValue(value);
+  storeHistogram().recordValue(toStoreHistogramUnit(value));
 }
 
 void SinkableCircllhistStatistic::setId(absl::string_view id) {
