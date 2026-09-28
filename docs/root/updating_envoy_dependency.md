@@ -104,11 +104,58 @@ Update the `ENVOY_COMMIT` variable with the target Envoy commit hash:
 sed -i -e "s/ENVOY_COMMIT =.*/ENVOY_COMMIT = \"${envoy_commit}\"/" MODULE.bazel
 ```
 
-> **Note:** `MODULE.bazel.lock` will be re-generated in Step 6 after updating `.bazelrc` with Envoy's pinned registry SHA.
+> **Note:** `MODULE.bazel.lock` will be re-generated in Step 10 after updating `.bazelrc` with Envoy's pinned registry SHA.
 
 ### Step 5
 
-Set up a Bash function `merge_from_envoy` that will be used repeatedly in the example commands in steps 6-10.
+Sync (copy) [.bazelversion](/.bazelversion) from
+[Envoy's version](https://github.com/envoyproxy/envoy/blob/main/.bazelversion)
+to ensure we are using the same build system version.
+
+#### Example commands
+
+```bash
+cp -v "$envoy_dir/.bazelversion" ".bazelversion"
+```
+
+### Step 6
+
+Sync (copy) [.github/config.yml](/.github/config.yml) from
+[Envoy's version](https://github.com/envoyproxy/envoy/blob/main/.github/config.yml)
+to ensure build image SHAs and CI configurations are in sync with Envoy.
+
+#### Example commands
+
+```bash
+cp -v "$envoy_dir/.github/config.yml" ".github/config.yml"
+```
+
+### Step 7
+
+Sync (copy) [ci/envoy_build_sha.sh](/ci/envoy_build_sha.sh) from
+[Envoy's version](https://github.com/envoyproxy/envoy/blob/main/ci/envoy_build_sha.sh)
+to ensure the build container resolution logic matches Envoy.
+
+#### Example commands
+
+```bash
+cp -v "$envoy_dir/ci/envoy_build_sha.sh" "ci/envoy_build_sha.sh"
+```
+
+### Step 8
+
+Sync (copy) [ci/run_envoy_docker.sh](/ci/run_envoy_docker.sh) from
+[Envoy's version](https://github.com/envoyproxy/envoy/blob/main/ci/run_envoy_docker.sh).
+
+#### Example commands
+
+```bash
+cp -v "$envoy_dir/ci/run_envoy_docker.sh" "ci/run_envoy_docker.sh"
+```
+
+### Step 9
+
+Set up a Bash function `merge_from_envoy` that will be used repeatedly in the example commands in steps 10-12.
 
 Paste the following into the shell:
 
@@ -145,7 +192,7 @@ Updates in the Envoy file should be selectively pasted into the Nighthawk file u
 
 Once you have done some partial work, save the file and repeat the `merge_from_envoy` command in the original terminal to check the diff again. This can be done iteratively.
 
-### Step 6
+### Step 10
 
 Sync (copy) [.bazelrc](/.bazelrc) from
 [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/.bazelrc) to
@@ -172,32 +219,7 @@ After updating `.bazelrc`, re-generate `MODULE.bazel.lock` to resolve dependenci
 bazel mod deps --lockfile_mode=update
 ```
 
-### Step 7
-
-Sync (copy) [.bazelversion](/.bazelversion) from
-[Envoy's version](https://github.com/envoyproxy/envoy/blob/main/.bazelversion)
-to ensure we are using the same build system version.
-
-#### Example commands
-
-```bash
-cp -v "$envoy_dir/.bazelversion" ".bazelversion"
-```
-
-### Step 8
-
-Sync (copy) [ci/run_envoy_docker.sh](/ci/run_envoy_docker.sh) from
-[Envoy's version](https://github.com/envoyproxy/envoy/blob/main/ci/run_envoy_docker.sh).
-Be sure to retain our local modifications, all lines that are unique to
-Nighthawk are marked with comment `# unique`.
-
-#### Example commands
-
-```bash
-merge_from_envoy "ci/run_envoy_docker.sh"
-```
-
-### Step 9
+### Step 11
 
 Sync (copy) [tools/gen_compilation_database.py](/tools/gen_compilation_database.py) from
 [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/tools/gen_compilation_database.py) to
@@ -210,7 +232,7 @@ all lines that are unique to Nighthawk are marked with comment `# unique`.
 merge_from_envoy "tools/gen_compilation_database.py"
 ```
 
-### Step 10
+### Step 12
 
 Sync (copy) [tools/code_format/config.yaml](/tools/code_format/config.yaml) from
 [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/tools/code_format/config.yaml) to
@@ -223,7 +245,7 @@ all lines that are unique to Nighthawk are marked with comment `# unique`.
 merge_from_envoy "tools/code_format/config.yaml"
 ```
 
-### Step 11
+### Step 13
 
 The Python dependencies need to be updated regularly. The list of packages
 the Nighthawk codebase uses is listed in
@@ -244,7 +266,7 @@ This will use the configuration from
 [tools/base/requirements.in](/tools/base/requirements.in) and update the lock
 file [tools/base/requirements.txt](/tools/base/requirements.txt).
 
-### Step 12
+### Step 14
 
 Run:
 
@@ -270,13 +292,13 @@ See [Troubleshooting](#troubleshooting) for tips.
 
 If you removed any pins or updated Python dependencies in the previous step, you
 may see new failures due to these updates. Re-introduce dependency pins as necessary and execute the update
-command Step 11 again. Repeat this until the tests pass and document the need for any
+command Step 13 again. Repeat this until the tests pass and document the need for any
 pins in [tools/base/requirements.in](/tools/base/requirements.in).
 
 If you updated the Python dependencies, update the date at the top of the
 [tools/base/requirements.in](/tools/base/requirements.in) file.
 
-### Step 13
+### Step 15
 
 If the PR ends up modifying any C++ files, execute:
 
@@ -294,7 +316,7 @@ rm -rf tools/pyformat/
 
 and retrying the format command.
 
-### Step 14
+### Step 16
 
 If Nighthawk command line flags have been changed, execute:
 
@@ -306,7 +328,7 @@ to regenerate the
 portion of our documentation that captures the CLI help output. This will
 prevent a CI failure in case any flags changed in the PR or upstream.
 
-### Step 15
+### Step 17
 
 Create a PR with a title like `Update Envoy to 9753819 (Jan 24th 2021)`,
 describe all performed changes in the PR's description ([example PR
