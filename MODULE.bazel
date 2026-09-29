@@ -118,4 +118,8 @@ use_repo(llvm, "llvm_toolchain")
 llvm_toolchain_alias_ext = use_extension("@envoy_toolshed//compile:extensions.bzl", "llvm_toolchain_alias_extension")
 use_repo(llvm_toolchain_alias_ext, "llvm_toolchain_llvm")
 
+# Provides @clang_platform, referenced by `common:clang --host_platform=@clang_platform` in .bazelrc.
+envoy_toolchains_ext = use_extension("@envoy//bazel:extensions.bzl", "envoy_toolchains_extension")
+use_repo(envoy_toolchains_ext, "clang_platform")
+
 
