@@ -411,6 +411,7 @@ re:
   maintainers: .*github.com.(.*)\)\)
   # TODO(914): Stop overriding this when we are using the correct MOCK_METHOD  # unique
   old_mock_method: dontmatchanything                                           # unique
+  optional_reference_wrapper: \bstd::optional<\s*(std::)?reference_wrapper\b
   owner: "@\\S+"
   runtime_guard_flag: RUNTIME_GUARD\((.*)\);
   test_name_starting_lc: TEST(_.\(.*,\s|\()[a-z].*\)\s\{
