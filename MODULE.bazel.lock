@@ -1228,7 +1228,7 @@
     "@@envoy+//bazel:extensions.bzl%envoy_toolchains_extension": {
       "general": {
         "bzlTransitiveDigest": "uzRoe/51pnfLsBWXGrYIlYDaxKpHgTNnf4SOK+4LXfo=",
-        "usagesDigest": "WY4QAn4jcr1k1UynWUX8idOJIvH/64ZyE0GQQvqAI+8=",
+        "usagesDigest": "vyy8iKPFlNaW68iiz7GmoYqykkr8Hu17trvjYcHpC0g=",
         "recordedInputs": [
           "REPO_MAPPING:envoy+,bazel_skylib bazel_skylib+",
           "REPO_MAPPING:envoy+,bazel_tools bazel_tools",
@@ -4312,10 +4312,10 @@
             "https://files.pythonhosted.org/packages/bd/a1/b7b1711d9bf43c3795366431633ab6ba6942744243aad809272ebfa59b39/feedgenerator-2.1.0-py3-none-any.whl": "sha256:93b7ce1c5a86195cafd6a8e9baf6a2a863ebd6d9905e840ce5778f73efd9a8d5"
           },
           "flake8": {
-            "https://files.pythonhosted.org/packages/76/87/e33a9552a9c1b2b1e57929d07ddd7618671efa3cfc6e888b726d9e27f1b4/flake8-7.4.0-py2.py3-none-any.whl": "sha256:7c8d371b6d1a2d0c1f9cdf9f865c91f16f880e6cf7b1da0fcfaba31006532f38",
             "https://files.pythonhosted.org/packages/9b/af/fbfe3c4b5a657d79e5c47a2827a362f9e1b763336a52f926126aa6dc7123/flake8-7.3.0.tar.gz": "sha256:fe044858146b9fc69b551a4b490d69cf960fcb78ad1edcb84e7fbb1b4a8e3872",
             "https://files.pythonhosted.org/packages/9f/56/13ab06b4f93ca7cac71078fbe37fcea175d3216f31f85c3168a6bbd0bb9a/flake8-7.3.0-py2.py3-none-any.whl": "sha256:b9696257b9ce8beb888cdbe31cf885c90d31928fe202be0889a7cdafad32f01e",
-            "https://files.pythonhosted.org/packages/d9/71/d9a14f80e00bd0fc2871d85ff7b7a64d84c32f58665ac060de6705a6a78f/flake8-7.4.0.tar.gz": "sha256:d3e0beb3d152209b4dc50fa5e3132844bf4ee4ff994cec87d6913d06b8eb5afc"
+            "https://files.pythonhosted.org/packages/b5/d4/8e58a7221419bf8cb194f362ab26abf504c983135975e4c785fac0852886/flake8-7.4.1-py2.py3-none-any.whl": "sha256:78480274a6d7289d9cb8eafeda241fac57d4ea687d26e32dfdca37b72cdeddad",
+            "https://files.pythonhosted.org/packages/c2/94/85870fc02dfe4ab0885c440e7e41f6a986b10e43eca6717e90f8ce1215cc/flake8-7.4.1.tar.gz": "sha256:84ea5afcaf344487b0ea5baaebb8100f4cfaebc01f755998f75876664029f587"
           },
           "flake8-docstrings": {
             "https://files.pythonhosted.org/packages/3f/7d/76a278fa43250441ed9300c344f889c7fb1817080c8fb8996b840bf421c2/flake8_docstrings-1.7.0-py2.py3-none-any.whl": "sha256:51f2344026da083fc084166a9353f5082b01f72901df422f74b4d953ae88ac75",
@@ -5087,9 +5087,9 @@
           },
           "platformdirs": {
             "https://files.pythonhosted.org/packages/13/fc/128cc9cb8f03208bdbf93d3aa862e16d376844a14f9a0ce5cf4507372de4/platformdirs-4.3.6.tar.gz": "sha256:357fb2acbc885b0419afd3ce3ed34564c13c9b95c89360cd9563f73aa5e2b907",
+            "https://files.pythonhosted.org/packages/17/c8/721b3855fe457da514fe249247d404b9b39c5d16532278f70ebaa6acf18b/platformdirs-4.12.2.tar.gz": "sha256:eab5f70271a490ef74618bb314fbb86e3c7e82fa3b9c922c2ea0e0a1a155d329",
             "https://files.pythonhosted.org/packages/3c/a6/bc1012356d8ece4d66dd75c4b9fc6c1f6650ddd5991e421177d9f8f671be/platformdirs-4.3.6-py3-none-any.whl": "sha256:73e575e1408ab8103900836b97580d5307456908a03e92031bab39e4554cc3fb",
-            "https://files.pythonhosted.org/packages/ea/dd/65804b0c2925a1c821a05502ea57517b69a073ff400d25ab9faa3a2cf012/platformdirs-4.11.12.tar.gz": "sha256:e8dc1cb58f1153fd7f61db1374317770baababec2480b37b8f01c6cc25b45267",
-            "https://files.pythonhosted.org/packages/ec/2b/69de6317fbf48865bb12aa56c9cfcfff46b3add0cd45250725d96146dce0/platformdirs-4.11.12-py3-none-any.whl": "sha256:b1ba966ac76153d9985a0787ffab951e7c18416189873d4e4ddb2c8a04a0a254"
+            "https://files.pythonhosted.org/packages/d0/89/446044f33aba0348d35e433f56d12206d010a5281a1df54054d4cfb82388/platformdirs-4.12.2-py3-none-any.whl": "sha256:29dbf06d96c500bc6bdbce75fb0a14d63279c93b1842f97e72a135b33e856983"
           },
           "pluggy": {
             "https://files.pythonhosted.org/packages/54/20/4d324d65cc6d9205fabedc306948156824eb9f0ee1633355a8f7ec5c66bf/pluggy-1.6.0-py3-none-any.whl": "sha256:e920276dd6813095e9377c0bc5566d94c932c33b27a3e3945d8389c374dd4746",
