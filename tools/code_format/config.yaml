@@ -2,7 +2,6 @@ suffixes:
   # Suffixes to include in checking
   included:
   - BUILD
-  - WORKSPACE
   - .bzl
   - .cc
   - .h
@@ -29,9 +28,6 @@ suffixes:
   proto:
   - .proto
 
-  repositories_bzl:
-  - bazel/repositories.bzl
-
 paths:
   # Path prefixes to exclude from checking
   # TODO(alyssawilk) unexclude mobile
@@ -42,8 +38,8 @@ paths:
   - bazel/external/cargo/remote/
   - bazel/external/http_parser/
   - bazel/rbe/toolchains/configs/
+  - bazel/tests/external/
   - bazel-
-  - include/quiche_platform_impl/
   - compat/openssl/
   - build
   - contrib/contrib_build_config.bzl
@@ -155,6 +151,9 @@ paths:
     - source/extensions/common/matcher
     - source/extensions/common/tap
     - source/extensions/common/wasm
+    # Config validator interfaces reject updates by throwing per interface documentation.
+    - source/extensions/config/validators/dynamic_modules/config.cc
+    - source/extensions/config/validators/dynamic_modules/config_validator.cc
     - source/extensions/config/validators/minimum_clusters/minimum_clusters_validator.cc
     - source/extensions/config_subscription
     - source/extensions/content_parsers/json/config.cc
@@ -177,6 +176,7 @@ paths:
     - source/extensions/filters/udp
     - source/extensions/filters/listener
     - source/extensions/formatter
+    - source/extensions/geoip_providers/maxmind/config.cc
     - source/extensions/geoip_providers/maxmind/geoip_provider.cc
     - source/extensions/grpc_credentials
     - source/extensions/health_check/event_sinks/file/file_sink_impl.h
@@ -185,6 +185,7 @@ paths:
     - source/extensions/http/custom_response
     - source/extensions/http/early_header_mutation
     - source/extensions/http/ext_proc/processing_request_modifiers/mapped_attribute_builder/mapped_attribute_builder_factory.cc
+    - source/extensions/http/header_formatters/dynamic_modules
     - source/extensions/http/injected_credentials
     - source/extensions/http/stateful_session
     - source/extensions/io_socket/user_space
@@ -194,6 +195,7 @@ paths:
     - source/extensions/load_balancing_policies/subset
     - source/extensions/matching
     - source/extensions/network/dns_resolver/cares/
+    - source/extensions/network/socket_interface/sockmap/socket_interface.cc
     - source/extensions/queue_policy/common/
     - source/extensions/queue_policy/fifo/
     - source/extensions/quic/server_preferred_address
@@ -360,12 +362,19 @@ paths:
     - test/extensions/bootstrap/wasm/wasm_speed_test.cc
     - test/extensions/bootstrap/wasm/wasm_test.cc
     - test/extensions/common/wasm/wasm_test.cc
+    - test/extensions/dynamic_modules/test_data/cpp/early_header_mutation_integration_test.cc
+    - test/extensions/dynamic_modules/test_data/cpp/header_formatter_integration_test.cc
     - test/extensions/dynamic_modules/test_data/cpp/http_integration_test.cc
     - test/extensions/dynamic_modules/test_data/cpp/http.cc
     - test/extensions/dynamic_modules/test_data/cpp/listener_integration_test.cc
     - test/extensions/dynamic_modules/test_data/cpp/network_integration_test.cc
     - test/extensions/stats_sinks/wasm/wasm_stat_sink_test.cc
     - test/test_common/wasm_base.h
+
+  # Files that can use std::optional<std::reference_wrapper<T>> instead of OptRef<T>
+  optional_reference_wrapper:
+    include:
+    - test/common/common/optref_test.cc
 
 dir_order:                                                                     # unique
   - envoy                                                                      # unique
@@ -402,6 +411,7 @@ re:
   maintainers: .*github.com.(.*)\)\)
   # TODO(914): Stop overriding this when we are using the correct MOCK_METHOD  # unique
   old_mock_method: dontmatchanything                                           # unique
+  optional_reference_wrapper: \bstd::optional<\s*(std::)?reference_wrapper\b
   owner: "@\\S+"
   runtime_guard_flag: RUNTIME_GUARD\((.*)\);
   test_name_starting_lc: TEST(_.\(.*,\s|\()[a-z].*\)\s\{
@@ -478,6 +488,5 @@ visibility_excludes:
 - source/extensions/load_balancing_policies/random/
 - source/extensions/load_balancing_policies/cluster_provided/
 - source/extensions/filters/http/match_delegate/
-- source/extensions/transport_sockets/tls/
 - source/extensions/stat_sinks/metrics_service/BUILD
 - source/extensions/transport_sockets/tls/

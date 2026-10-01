@@ -104,7 +104,7 @@ Update the `ENVOY_COMMIT` variable with the target Envoy commit hash:
 sed -i -e "s/ENVOY_COMMIT =.*/ENVOY_COMMIT = \"${envoy_commit}\"/" MODULE.bazel
 ```
 
-> **Note:** `MODULE.bazel.lock` will be re-generated in Step 10 after updating `.bazelrc` with Envoy's pinned registry SHA.
+> **Note:** `MODULE.bazel.lock` will be re-generated in Step 11 after updating `.bazelrc` with Envoy's pinned registry SHA and syncing the `bazel_dep` pins.
 
 ### Step 5
 
@@ -155,7 +155,7 @@ cp -v "$envoy_dir/ci/run_envoy_docker.sh" "ci/run_envoy_docker.sh"
 
 ### Step 9
 
-Set up a Bash function `merge_from_envoy` that will be used repeatedly in the example commands in steps 10-12.
+Set up a Bash function `merge_from_envoy` that will be used repeatedly in the example commands in steps 10-13.
 
 Paste the following into the shell:
 
@@ -214,12 +214,47 @@ registry_sha=$(sed -n 's|.*raw.githubusercontent.com/envoyproxy/bazel-registry/\
 sed -i "s|raw.githubusercontent.com/envoyproxy/bazel-registry/[0-9a-fA-F]\{40\}|raw.githubusercontent.com/envoyproxy/bazel-registry/$registry_sha|g" .bazelrc
 ```
 
-After updating `.bazelrc`, re-generate `MODULE.bazel.lock` to resolve dependencies against the new registry commit:
-```bash
-bazel mod deps --lockfile_mode=update
-```
+`MODULE.bazel.lock` will be re-generated in Step 11, after the `bazel_dep` pins are synced.
 
 ### Step 11
+
+Sync the `bazel_dep` versions in [MODULE.bazel](/MODULE.bazel) with
+[Envoy's version](https://github.com/envoyproxy/envoy/blob/main/MODULE.bazel) to
+keep our dependency pins consistent with Envoy. Modules that are only used by
+Nighthawk should be left unchanged.
+
+Step 4 only updates `ENVOY_COMMIT`, and nothing else updates our `bazel_dep`
+versions automatically. If they fall behind Envoy's, the build will fail either
+because the pinned version is no longer available in the registry (e.g.
+`module librdkafka@2.6.0.envoy not found in registries`), or because Envoy
+requires a newer version (e.g. `the root module requires module version
+rules_python@2.2.0, but got rules_python@2.3.3`).
+
+#### Example commands
+
+```bash
+grep -oP '^bazel_dep\(name = "\K[^"]+' MODULE.bazel | while read -r dep; do
+  nighthawk_version=$(grep -oP "^bazel_dep\(name = \"$dep\", version = \"\K[^\"]+" MODULE.bazel)
+  envoy_version=$(grep -oP "^bazel_dep\(name = \"$dep\", version = \"\K[^\"]+" "$envoy_dir/MODULE.bazel")
+  if [[ -n "$envoy_version" && "$nighthawk_version" != "$envoy_version" ]]; then
+    echo "$dep: $nighthawk_version -> $envoy_version"
+    sed -i "s|^bazel_dep(name = \"$dep\", version = \"[^\"]*\"|bazel_dep(name = \"$dep\", version = \"$envoy_version\"|" MODULE.bazel
+  fi
+done
+git diff MODULE.bazel
+```
+
+After updating `MODULE.bazel`, re-generate `MODULE.bazel.lock` to resolve dependencies against the new registry commit and pins:
+
+```bash
+bazel mod deps --lockfile_mode=refresh
+```
+
+`refresh` is used instead of `update` because the lockfile caches modules that
+were previously not found in a registry, and only `refresh` checks the
+registries again.
+
+### Step 12
 
 Sync (copy) [tools/gen_compilation_database.py](/tools/gen_compilation_database.py) from
 [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/tools/gen_compilation_database.py) to
@@ -232,7 +267,7 @@ all lines that are unique to Nighthawk are marked with comment `# unique`.
 merge_from_envoy "tools/gen_compilation_database.py"
 ```
 
-### Step 12
+### Step 13
 
 Sync (copy) [tools/code_format/config.yaml](/tools/code_format/config.yaml) from
 [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/tools/code_format/config.yaml) to
@@ -245,7 +280,7 @@ all lines that are unique to Nighthawk are marked with comment `# unique`.
 merge_from_envoy "tools/code_format/config.yaml"
 ```
 
-### Step 13
+### Step 14
 
 The Python dependencies need to be updated regularly. The list of packages
 the Nighthawk codebase uses is listed in
@@ -266,7 +301,7 @@ This will use the configuration from
 [tools/base/requirements.in](/tools/base/requirements.in) and update the lock
 file [tools/base/requirements.txt](/tools/base/requirements.txt).
 
-### Step 14
+### Step 15
 
 Run:
 
@@ -292,13 +327,13 @@ See [Troubleshooting](#troubleshooting) for tips.
 
 If you removed any pins or updated Python dependencies in the previous step, you
 may see new failures due to these updates. Re-introduce dependency pins as necessary and execute the update
-command Step 13 again. Repeat this until the tests pass and document the need for any
+command Step 14 again. Repeat this until the tests pass and document the need for any
 pins in [tools/base/requirements.in](/tools/base/requirements.in).
 
 If you updated the Python dependencies, update the date at the top of the
 [tools/base/requirements.in](/tools/base/requirements.in) file.
 
-### Step 15
+### Step 16
 
 If the PR ends up modifying any C++ files, execute:
 
@@ -316,7 +351,7 @@ rm -rf tools/pyformat/
 
 and retrying the format command.
 
-### Step 16
+### Step 17
 
 If Nighthawk command line flags have been changed, execute:
 
@@ -328,7 +363,7 @@ to regenerate the
 portion of our documentation that captures the CLI help output. This will
 prevent a CI failure in case any flags changed in the PR or upstream.
 
-### Step 17
+### Step 18
 
 Create a PR with a title like `Update Envoy to 9753819 (Jan 24th 2021)`,
 describe all performed changes in the PR's description ([example PR
