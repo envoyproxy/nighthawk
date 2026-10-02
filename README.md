@@ -105,14 +105,13 @@ sudo wget -O /usr/local/bin/bazel https://github.com/bazelbuild/bazelisk/release
 sudo chmod +x /usr/local/bin/bazel
 ```
 
-#### Clone Nighthawk and setup Clang as the compiler
+#### Clone Nighthawk
 
-Run the following to clone the Nighthawk repository and instruct Bazel to use
-Clang.
+Run the following to clone the Nighthawk repository. Clang with libc++ is the
+default toolchain, so no compiler configuration flag is needed.
 ```
 git clone https://github.com/envoyproxy/nighthawk
 cd nighthawk/
-echo "build --config=clang" >> user.bazelrc
 ```
 
 #### Install Python libraries

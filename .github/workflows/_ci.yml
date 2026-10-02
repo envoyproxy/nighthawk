@@ -43,7 +43,6 @@ jobs:
           echo "build:gcc --copt=-g0" >> repo.bazelrc
           echo "build --linkopt=-Wl,--no-threads" >> repo.bazelrc
         else
-          echo "common --config=clang" >> repo.bazelrc
           echo "build --copt=-g1" >> repo.bazelrc
           echo "build --linkopt=-Wl,--threads=1" >> repo.bazelrc
         fi

@@ -205,6 +205,17 @@ all lines that are unique to Nighthawk are marked with comment `# unique`.
 merge_from_envoy ".bazelrc"
 ```
 
+#### Syncing ci.bazelrc
+
+Envoy's `.bazelrc` imports [ci.bazelrc](/ci.bazelrc), which holds the CI and
+remote execution configs that Nighthawk's CI uses (`--config=rbe`,
+`--config=remote-ci`, `--config=bes`). Copy it verbatim from
+[Envoy's version](https://github.com/envoyproxy/envoy/blob/main/ci.bazelrc):
+
+```bash
+cp -v "$envoy_dir/ci.bazelrc" "ci.bazelrc"
+```
+
 #### Updating the Bazel Registry SHA
 
 Envoy pins `bazel-registry` in `.bazelrc` to a specific commit SHA. Update Nighthawk's `.bazelrc` with the pinned registry SHA from Envoy:

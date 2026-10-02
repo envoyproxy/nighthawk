@@ -31,6 +31,7 @@ MAX_AGENT_ATTEMPTS = 3
 COPIED_FILES: list[str] = [
     ".bazelversion",
     ".github/config.yml",
+    "ci.bazelrc",
     "ci/envoy_build_sha.sh",
     "ci/run_envoy_docker.sh",
 ]

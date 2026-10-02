@@ -137,9 +137,7 @@ function do_test() {
 }
 
 function do_clang_tidy() {
-    # clang-tidy will warn on standard library issues with libc++
-    BAZEL_BUILD_OPTIONS=("--config=clang" "${BAZEL_BUILD_OPTIONS[@]}")
-    BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS[*]}" ci/run_clang_tidy.sh
+    ci/run_clang_tidy.sh
 }
 
 function do_unit_test_coverage() {
@@ -186,8 +184,7 @@ function setup_clang_toolchain() {
     export CXX=clang++
     export ASAN_SYMBOLIZER_PATH=/opt/llvm/bin/llvm-symbolizer
     export BAZEL_COMPILER=clang
-    BAZEL_BUILD_OPTIONS="$BAZEL_BUILD_OPTIONS --config=clang"
-    BAZEL_TEST_OPTIONS="$BAZEL_TEST_OPTIONS --config=clang"
+    # Clang with libc++ is Envoy's default toolchain and needs no --config.
     echo "$CC/$CXX toolchain configured"
 }
 

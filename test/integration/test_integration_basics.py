@@ -406,7 +406,8 @@ def test_https_h2(https_test_server_fixture):
   asserts.assertCounterEqual(counters, "ssl.sigalgs.rsa_pss_rsae_sha256", 1)
   asserts.assertCounterEqual(counters, "ssl.versions.TLSv1.2", 1)
   asserts.assertCounterEqual(counters, "default.total_match_count", 1)
-  asserts.assertEqual(len(counters), 17)
+  asserts.assertCounterEqual(counters, "http2.nghttp2_upstream_connections", 1)
+  asserts.assertEqual(len(counters), 18)
 
 
 @pytest.mark.parametrize('server_config',
