@@ -76,6 +76,9 @@ _TEST_SERVER_WARN_ERROR_IGNORE_LIST = frozenset([
             # For now this is by design.
             "Double registration for type: 'nighthawk.server.ResponseOptions'",
 
+            # Logged when invalid/mismatched HTTP/1 requests are sent (e.g. SNI testing).
+            "http/1.1 protocol error: NO_REQUEST_LINE_IN_REQUEST",
+
             # Logged for normal termination, not really a warning.
             "caught ENVOY_SIGTERM",
         ),
