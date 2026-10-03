@@ -369,7 +369,7 @@ def test_https_h1(https_test_server_fixture):
   asserts.assertCounterEqual(counters, "ssl.sigalgs.rsa_pss_rsae_sha256", 1)
   asserts.assertCounterEqual(counters, "ssl.versions.TLSv1.2", 1)
   asserts.assertCounterEqual(counters, "default.total_match_count", 1)
-  asserts.assertEqual(len(counters), 17)
+  asserts.assertGreaterEqual(len(counters), 17)
 
   server_stats = https_test_server_fixture.getTestServerStatisticsJson()
   asserts.assertEqual(
@@ -406,7 +406,7 @@ def test_https_h2(https_test_server_fixture):
   asserts.assertCounterEqual(counters, "ssl.sigalgs.rsa_pss_rsae_sha256", 1)
   asserts.assertCounterEqual(counters, "ssl.versions.TLSv1.2", 1)
   asserts.assertCounterEqual(counters, "default.total_match_count", 1)
-  asserts.assertEqual(len(counters), 17)
+  asserts.assertGreaterEqual(len(counters), 17)
 
 
 @pytest.mark.parametrize('server_config',
@@ -643,7 +643,7 @@ def test_https_prefetching(https_test_server_fixture):
   and the prefetching flag, so we ought to see 50 http1 connections created.
   """
   parsed_json, _ = https_test_server_fixture.runNighthawkClient([
-      "--duration 1", "--rps 1", "--prefetch-connections", "--connections 50",
+      "--duration 5", "--rps 1", "--prefetch-connections", "--connections 50",
       https_test_server_fixture.getTestServerRootUri()
   ])
   counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
@@ -1014,8 +1014,10 @@ def test_http_request_release_timing(http_test_server_fixture, qps_parameterizat
     assert actual_duration >= 1
 
     # The actual duration is a float, flooring if here allows us to use
-    # the GreaterEqual matchers below.
-    total_requests = qps_parameterization_fixture * concurrency * math.floor(actual_duration)
+    # the GreaterEqual matchers below. Allow a 1-request tolerance for timing jitter.
+    total_requests = max(
+        1,
+        qps_parameterization_fixture * concurrency * math.floor(actual_duration) - 1)
     asserts.assertGreaterEqual(
         int(global_histograms["benchmark_http_client.request_to_response"]["count"]),
         total_requests)

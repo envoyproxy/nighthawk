@@ -150,7 +150,7 @@ TEST_P(HttpTestServerIntegrationTest,
   setRequestLevelConfiguration(
       R"({v3_response_headers: [ { header: { key: "foo", value: "bar2"}, append: true } ]})");
 
-  ASSERT_DEATH(ASSERT_TRUE(getResponse(ResponseOrigin::EXTENSION)->waitForEndStream()),
+  ASSERT_DEATH(static_cast<void>(getResponse(ResponseOrigin::EXTENSION)->waitForEndStream()),
                HasSubstr("cannot specify both response_headers and v3_response_headers"));
 }
 

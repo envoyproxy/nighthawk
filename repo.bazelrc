@@ -1,0 +1,4 @@
+common --jobs=2
+common --local_ram_resources=5120
+test --local_test_jobs=2
+build --config=bes
