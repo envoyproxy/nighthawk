@@ -1015,7 +1015,9 @@ def test_http_request_release_timing(http_test_server_fixture, qps_parameterizat
 
     # The actual duration is a float, flooring if here allows us to use
     # the GreaterEqual matchers below. Allow a 1-request tolerance for timing jitter.
-    total_requests = max(1, qps_parameterization_fixture * concurrency * math.floor(actual_duration) - 1)
+    total_requests = max(
+        1,
+        qps_parameterization_fixture * concurrency * math.floor(actual_duration) - 1)
     asserts.assertGreaterEqual(
         int(global_histograms["benchmark_http_client.request_to_response"]["count"]),
         total_requests)
