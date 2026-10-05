@@ -369,7 +369,7 @@ def test_https_h1(https_test_server_fixture):
   asserts.assertCounterEqual(counters, "ssl.sigalgs.rsa_pss_rsae_sha256", 1)
   asserts.assertCounterEqual(counters, "ssl.versions.TLSv1.2", 1)
   asserts.assertCounterEqual(counters, "default.total_match_count", 1)
-  asserts.assertGreaterEqual(len(counters), 17)
+  asserts.assertEqual(len(counters), 17)
 
   server_stats = https_test_server_fixture.getTestServerStatisticsJson()
   asserts.assertEqual(
@@ -406,7 +406,7 @@ def test_https_h2(https_test_server_fixture):
   asserts.assertCounterEqual(counters, "ssl.sigalgs.rsa_pss_rsae_sha256", 1)
   asserts.assertCounterEqual(counters, "ssl.versions.TLSv1.2", 1)
   asserts.assertCounterEqual(counters, "default.total_match_count", 1)
-  asserts.assertGreaterEqual(len(counters), 17)
+  asserts.assertEqual(len(counters), 18)
 
 
 @pytest.mark.parametrize('server_config',
