@@ -95,6 +95,7 @@ filter will interpret only the parts that are relevant to it.
   `true`, then the header is appended.
 - `echo_request_headers` - if set to `true`, then append the dump of request headers to the response
   body.
+- Requests that end with HTTP trailers are supported.
 
 The response options above could be used to test and debug proxy or server configuration, for example, to verify request headers that are added by intermediate proxy:
 
