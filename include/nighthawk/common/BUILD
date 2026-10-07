@@ -30,6 +30,7 @@ envoy_basic_cc_library(
     deps = [
         ":request_lib",
         "//api/client:base_cc_proto",
+        "@envoy//envoy/server:factory_context_interface",
         "@envoy//envoy/upstream:cluster_manager_interface_with_external_headers",
         "@envoy//source/common/common:minimal_logger_lib",
         "@envoy//source/common/common:non_copyable_with_external_headers",

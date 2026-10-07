@@ -111,6 +111,12 @@ py_library(
 )
 
 py_library(
+    name = "test_stats_sinks_lib",
+    srcs = ["test_stats_sinks.py"],
+    deps = [":integration_test_base"],
+)
+
+py_library(
     name = "test_connection_management_lib",
     srcs = ["test_connection_management.py"],
     deps = [":integration_test_base"],
@@ -193,6 +199,7 @@ py_binary(
         ":test_remote_execution_lib",
         ":test_request_body_file_lib",
         ":test_request_source_plugin_lib",
+        ":test_stats_sinks_lib",
         ":test_user_defined_output_plugins_lib",
     ],
 )
