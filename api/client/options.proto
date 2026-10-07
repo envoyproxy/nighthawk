@@ -70,6 +70,14 @@ message Verbosity {
   VerbosityOptions value = 1;
 }
 
+message GrpcMode {
+  enum GrpcModeOptions {
+    NONE = 0;
+    UNARY = 1;
+  }
+  GrpcModeOptions value = 1;
+}
+
 message OutputFormat {
   enum OutputFormatOptions {
     DEFAULT = 0;
@@ -185,6 +193,15 @@ message CommandLineOptions {
   }
 
   TunnelOptions tunnel_options = 114;
+
+  // gRPC load generation mode (--grpc-mode). NONE (default): plain HTTP requests. UNARY: gRPC
+  // unary calls; implies protocol HTTP/2 (prior knowledge when the URI scheme is http) and request
+  // method POST, adds "content-type: application/grpc" and "te: trailers", wraps the request body
+  // from request_options.request_body in a gRPC length-prefixed message frame, and scores responses
+  // by the grpc-status trailer (or header for trailers-only responses) instead of the HTTP status
+  // alone. See the benchmark.grpc_error and benchmark.grpc_status.<code> counters and the
+  // benchmark_http_client.latency_grpc_ok statistic.
+  GrpcMode grpc_mode = 121;
 
   // Allows user to set specific HTTP3 protocol options.
   // Only valid when protocol is set to HTTP3.
