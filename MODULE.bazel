@@ -1,5 +1,5 @@
 # Envoy commit to use
-ENVOY_COMMIT = "c6618277e3bd87a5ed74227a4e2622608e126df1"
+ENVOY_COMMIT = "1921391cbdecfc02f35f142ad74452ad9e7ec280"
 
 module(
     name = "nighthawk",
@@ -19,9 +19,9 @@ bazel_dep(name = "googleurl", version = "0.0.0-221103-dd4080f.envoy")
 bazel_dep(name = "rules_rust", version = "0.74.0.envoy")
 bazel_dep(name = "grpc", version = "1.83.0.envoy")
 bazel_dep(name = "librdkafka", version = "2.15.0")
-bazel_dep(name = "quiche", version = "0.0.0-260922-7f07dc4.envoy")
+bazel_dep(name = "quiche", version = "0.0.0-261006-9e60ac2.envoy")
 bazel_dep(name = "toolchains_llvm", version = "1.9.1.envoy")
-bazel_dep(name = "envoy_toolshed", version = "0.5.2.envoy")
+bazel_dep(name = "envoy_toolshed", version = "0.5.3.envoy")
 bazel_dep(name = "zlib-ng", version = "2.3.3.bcr.2")
 bazel_dep(name = "googletest", version = "1.18.0.bcr.1")
 bazel_dep(name = "googleapis", version = "0.0.0-20251003-2193a2bf")
