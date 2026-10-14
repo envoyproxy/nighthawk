@@ -282,6 +282,18 @@ merge_from_envoy "tools/code_format/config.yaml"
 
 ### Step 14
 
+Sync (copy) [ci/docker-compose.yml](/ci/docker-compose.yml) from
+[Envoy's version](https://github.com/envoyproxy/envoy/blob/main/ci/docker-compose.yml) to
+update our format checker configuration. Be sure to retain our local modifications,
+all lines that are unique to Nighthawk are marked with comment `# unique`.
+
+#### Example commands
+
+```bash
+merge_from_envoy "ci/docker-compose.yml"
+
+### Step 15
+
 The Python dependencies need to be updated regularly. The list of packages
 the Nighthawk codebase uses is listed in
 [tools/base/requirements.in](/tools/base/requirements.in). This file specifies
@@ -301,7 +313,7 @@ This will use the configuration from
 [tools/base/requirements.in](/tools/base/requirements.in) and update the lock
 file [tools/base/requirements.txt](/tools/base/requirements.txt).
 
-### Step 15
+### Step 16
 
 Run:
 
@@ -333,7 +345,7 @@ pins in [tools/base/requirements.in](/tools/base/requirements.in).
 If you updated the Python dependencies, update the date at the top of the
 [tools/base/requirements.in](/tools/base/requirements.in) file.
 
-### Step 16
+### Step 17
 
 If the PR ends up modifying any C++ files, execute:
 
@@ -351,7 +363,7 @@ rm -rf tools/pyformat/
 
 and retrying the format command.
 
-### Step 17
+### Step 18
 
 If Nighthawk command line flags have been changed, execute:
 
@@ -363,7 +375,7 @@ to regenerate the
 portion of our documentation that captures the CLI help output. This will
 prevent a CI failure in case any flags changed in the PR or upstream.
 
-### Step 18
+### Step 19
 
 Create a PR with a title like `Update Envoy to 9753819 (Jan 24th 2021)`,
 describe all performed changes in the PR's description ([example PR
