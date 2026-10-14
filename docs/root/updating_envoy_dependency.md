@@ -80,7 +80,7 @@ pushd $envoy_clone_dir
 git clone https://github.com/envoyproxy/envoy.git
 popd
 
-export envoy_dir="$envoy_clone_dir/envoy"
+envoy_dir="$envoy_clone_dir/envoy"
 
 pushd $envoy_dir
 envoy_commit=$(git log --pretty=%H | head -1)
@@ -162,28 +162,13 @@ Paste the following into the shell:
 ```bash
 merge_from_envoy() {
   # $1 = relative path to Nighthawk file derived from a version in the Envoy repo
-  local relpath="${1#./}"
+  relpath=$1
 
-  if [[ -z "${envoy_dir:-}" ]] || [[ ! -d "$envoy_dir" ]]; then
-    echo "Error: \$envoy_dir is not set or not a directory. Please set envoy_dir (see Step 3)." >&2
-    return 1
-  fi
+  pushd $envoy_dir
+  git log $relpath | head
+  popd
 
-  if [[ ! -f "$relpath" ]]; then
-    echo "Error: File '$relpath' does not exist in the current directory." >&2
-    return 1
-  fi
-
-  if [[ ! -f "$envoy_dir/$relpath" ]]; then
-    echo "Error: File '$relpath' does not exist in Envoy repository ($envoy_dir)." >&2
-    return 1
-  fi
-
-  pushd "$envoy_dir" > /dev/null || return 1
-  git log "$relpath" | head
-  popd > /dev/null
-
-  diff "$envoy_dir/$relpath" "$relpath" || true
+  diff $envoy_dir/$relpath $relpath || true
 
   echo "Determine if $relpath needs to be manually merged:"
   echo "  Any differences not marked with '# unique'?"
@@ -306,7 +291,6 @@ all lines that are unique to Nighthawk are marked with comment `# unique`.
 
 ```bash
 merge_from_envoy "ci/docker-compose.yml"
-```
 
 ### Step 15
 
