@@ -291,6 +291,7 @@ all lines that are unique to Nighthawk are marked with comment `# unique`.
 
 ```bash
 merge_from_envoy "ci/docker-compose.yml"
+```
 
 ### Step 15
 
