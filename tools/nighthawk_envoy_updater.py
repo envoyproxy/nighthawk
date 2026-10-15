@@ -21,6 +21,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import textwrap
 import traceback
 from typing import Any, Generic, TypeVar
 
@@ -42,6 +43,8 @@ SHARED_FILES: list[str] = [
     "ci/docker-compose.yml",
 ]
 
+_BAZEL_REGISTRY_URL_PATTERN = re.compile(
+    r"(raw\.githubusercontent\.com/envoyproxy/bazel-registry/)([0-9a-fA-F]{40})")
 _BAZEL_DEP_PATTERN = re.compile(
     r'^bazel_dep\(\s*name\s*=\s*"([^"]+)",\s*version\s*=\s*"([^"]+)"',
     re.MULTILINE,
@@ -472,6 +475,24 @@ class EnvoyCommitIntegration(StepHandler[EnvoyCommitIntegrationStep]):
     self.current_envoy_commit = current_envoy_commit
     self.target_envoy_commit = target_envoy_commit
 
+  def _sync_bazelrc_registry_sha(self, envoy_bazelrc_content: str) -> None:
+    """Update the pinned bazel-registry SHA in Nighthawk's .bazelrc.
+
+    Args:
+      envoy_bazelrc_content: Content of Envoy's .bazelrc at the target commit.
+    """
+    nighthawk_bazelrc = self.nighthawk_git_repo_dir / ".bazelrc"
+    if not nighthawk_bazelrc.exists():
+      return
+    match = _BAZEL_REGISTRY_URL_PATTERN.search(envoy_bazelrc_content)
+    if not match:
+      return
+    registry_sha = match.group(2)
+    nighthawk_content = nighthawk_bazelrc.read_text(encoding="utf-8")
+    updated_content = _BAZEL_REGISTRY_URL_PATTERN.sub(rf"\g<1>{registry_sha}", nighthawk_content)
+    if updated_content != nighthawk_content:
+      nighthawk_bazelrc.write_text(updated_content, encoding="utf-8")
+
   def _sync_module_bazel_deps(self) -> None:
     """Sync bazel_dep versions in Nighthawk's MODULE.bazel with Envoy's."""
     nighthawk_module_file = self.nighthawk_git_repo_dir / "MODULE.bazel"
@@ -524,7 +545,8 @@ class EnvoyCommitIntegration(StepHandler[EnvoyCommitIntegrationStep]):
     Returns:
       A string containing detailed instructions for the user.
     """
-    return f"""New merge conflicts from integrating changes in shared files.
+    return textwrap.dedent(f"""\
+        New merge conflicts from integrating changes in shared files.
 
         Nighthawk maintains separate copies of a subset of files from the Envoy
         repository: {", ".join(SHARED_FILES)}
@@ -539,7 +561,7 @@ class EnvoyCommitIntegration(StepHandler[EnvoyCommitIntegrationStep]):
 
         For merge conflicts, inspect Nighthawk's copy and combine the Envoy changes
         with the old Nighthawk version into an updated Nighthawk-specific "# unique" line.
-        """
+        """)
 
   def _run_step(self, step: EnvoyCommitIntegrationStep) -> None:
     """Run the logic for a single Envoy commit integration step."""
@@ -562,10 +584,16 @@ class EnvoyCommitIntegration(StepHandler[EnvoyCommitIntegrationStep]):
               f"{self.nighthawk_git_repo_dir}/{copied_file}",
           ])
       case EnvoyCommitIntegrationStep.PATCH_SHARED_FILES:
+        conflicted_files: list[str] = []
         for shared_file in SHARED_FILES:
           nighthawk_file = self.nighthawk_git_repo_dir / shared_file
           if not nighthawk_file.exists():
             continue
+
+          target_content = _run_command(
+              ["git", "show", f"{self.target_envoy_commit}:{shared_file}"],
+              cwd=self.envoy_git_repo_dir,
+          )
 
           # Check if there are diffs for this shared file in Envoy.
           diff_output = _run_command(
@@ -578,44 +606,48 @@ class EnvoyCommitIntegration(StepHandler[EnvoyCommitIntegrationStep]):
               ],
               cwd=self.envoy_git_repo_dir,
           )
-          if not diff_output:
-            continue
+          if diff_output:
+            with tempfile.NamedTemporaryFile() as base_file, tempfile.NamedTemporaryFile(
+            ) as target_file:
+              base_content = _run_command(
+                  ["git", "show", f"{self.current_envoy_commit}:{shared_file}"],
+                  cwd=self.envoy_git_repo_dir,
+              )
+              if shared_file == ".bazelrc":
+                self._sync_bazelrc_registry_sha(base_content)
+              base_file.write((base_content + "\n").encode("utf-8"))
+              base_file.flush()
 
-          with tempfile.NamedTemporaryFile() as base_file, tempfile.NamedTemporaryFile(
-          ) as target_file:
-            base_content = _run_command(
-                ["git", "show", f"{self.current_envoy_commit}:{shared_file}"],
-                cwd=self.envoy_git_repo_dir,
-            )
-            base_file.write(base_content.encode("utf-8"))
-            base_file.flush()
+              target_file.write((target_content + "\n").encode("utf-8"))
+              target_file.flush()
 
-            target_content = _run_command(
-                ["git", "show", f"{self.target_envoy_commit}:{shared_file}"],
-                cwd=self.envoy_git_repo_dir,
-            )
-            target_file.write(target_content.encode("utf-8"))
-            target_file.flush()
+              # Run 3-way merge on the file using git merge-file
+              merge_result = subprocess.run(
+                  [
+                      "git",
+                      "merge-file",
+                      str(nighthawk_file),
+                      base_file.name,
+                      target_file.name,
+                  ],
+                  cwd=self.nighthawk_git_repo_dir,
+                  capture_output=True,
+                  text=True,
+                  check=False,
+              )
+              if merge_result.returncode < 0 or merge_result.returncode > 127:
+                raise RuntimeError(f"git merge-file failed for {nighthawk_file} "
+                                   f"(exit code {merge_result.returncode}): {merge_result.stderr}")
+              if merge_result.returncode > 0:
+                conflicted_files.append(str(nighthawk_file))
 
-            # Run 3-way merge on the file using git merge-file
-            res = subprocess.run(
-                [
-                    "git",
-                    "merge-file",
-                    str(nighthawk_file),
-                    base_file.name,
-                    target_file.name,
-                ],
-                cwd=self.nighthawk_git_repo_dir,
-                capture_output=True,
-                text=True,
-            )
-            if res.returncode != 0:
-              content = nighthawk_file.read_text(encoding="utf-8")
-              if "<<<<<<<" in content or "=======" in content or ">>>>>>>" in content:
-                raise RuntimeError(
-                    f"Merge conflict detected in shared file '{shared_file}'.\n"
-                    f"Conflict markers (<<<<<<<, =======, >>>>>>>) placed in {nighthawk_file}.")
+          if shared_file == ".bazelrc":
+            self._sync_bazelrc_registry_sha(target_content)
+
+        if conflicted_files:
+          raise RuntimeError(f"{self._patch_merge_conflict_instructions()}\n"
+                             f"Conflict markers (<<<<<<<, =======, >>>>>>>) placed in: "
+                             f"{', '.join(conflicted_files)}.")
       case EnvoyCommitIntegrationStep.SYNC_BAZEL_DEPS:
         self._sync_module_bazel_deps()
       case EnvoyCommitIntegrationStep.REFRESH_BAZEL_LOCKFILE:
