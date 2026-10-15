@@ -155,7 +155,7 @@ cp -v "$envoy_dir/ci/run_envoy_docker.sh" "ci/run_envoy_docker.sh"
 
 ### Step 9
 
-Set up a Bash function `merge_from_envoy` that will be used repeatedly in the example commands in steps 10-13.
+Set up a Bash function `merge_from_envoy` that will be used repeatedly in the example commands in steps 10-14.
 
 Paste the following into the shell:
 
@@ -284,7 +284,7 @@ merge_from_envoy "tools/code_format/config.yaml"
 
 Sync (copy) [ci/docker-compose.yml](/ci/docker-compose.yml) from
 [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/ci/docker-compose.yml) to
-update our format checker configuration. Be sure to retain our local modifications,
+update our Docker build container configuration. Be sure to retain our local modifications,
 all lines that are unique to Nighthawk are marked with comment `# unique`.
 
 #### Example commands
@@ -340,7 +340,7 @@ See [Troubleshooting](#troubleshooting) for tips.
 
 If you removed any pins or updated Python dependencies in the previous step, you
 may see new failures due to these updates. Re-introduce dependency pins as necessary and execute the update
-command Step 14 again. Repeat this until the tests pass and document the need for any
+command Step 15 again. Repeat this until the tests pass and document the need for any
 pins in [tools/base/requirements.in](/tools/base/requirements.in).
 
 If you updated the Python dependencies, update the date at the top of the

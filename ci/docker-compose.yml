@@ -133,4 +133,6 @@ services:
     - ${ENVOY_DOCKER_BUILD_DIR:-/tmp/envoy-docker-build}:/build
     - ${SOURCE_DIR:-..}:/source
     - /var/run/docker.sock:/var/run/docker.sock
-    - ${SHARED_TMP_DIR:-/tmp/bazel-shared}:${SHARED_TMP_DIR:-/tmp/bazel-shared}    - ${ENVOY_ENTRYPOINT_EXTRA:-./docker-entrypoint-extra.sh}:/entrypoint-extra.sh
+    - ${SHARED_TMP_DIR:-/tmp/bazel-shared}:${SHARED_TMP_DIR:-/tmp/bazel-shared}
+    # Nighthawk inlines docker.sock GID setup above and does not have docker-entrypoint-extra.sh # unique
+    # - ${ENVOY_ENTRYPOINT_EXTRA:-./docker-entrypoint-extra.sh}:/entrypoint-extra.sh # unique
