@@ -39,20 +39,20 @@ jobs:
     - name: Set gcc
       run: |
         if [[ "${{ inputs.task }}" == *"gcc"* ]]; then
-          echo "build --config=gcc" >> repo.bazelrc
-          echo "build:gcc --copt=-g0" >> repo.bazelrc
-          echo "build --linkopt=-Wl,--no-threads" >> repo.bazelrc
+          echo "build --config=gcc" >> user.bazelrc
+          echo "build:gcc --copt=-g0" >> user.bazelrc
+          echo "build --linkopt=-Wl,--no-threads" >> user.bazelrc
         else
-          echo "common --config=clang" >> repo.bazelrc
-          echo "build --copt=-g1" >> repo.bazelrc
-          echo "build --linkopt=-Wl,--threads=1" >> repo.bazelrc
+          echo "common --config=clang" >> user.bazelrc
+          echo "build --copt=-g1" >> user.bazelrc
+          echo "build --linkopt=-Wl,--threads=1" >> user.bazelrc
         fi
-        echo "common --jobs=2" >> repo.bazelrc
-        echo "common --local_resources=memory=3000" >> repo.bazelrc
-        echo "test --local_test_jobs=1" >> repo.bazelrc
-        echo "build --strip=always" >> repo.bazelrc
-        echo "build --config=bes" >> repo.bazelrc
-        echo "build --experimental_reuse_sandbox_directories=true" >> repo.bazelrc
+        echo "common --jobs=2" >> user.bazelrc
+        echo "common --local_resources=memory=3000" >> user.bazelrc
+        echo "test --local_test_jobs=1" >> user.bazelrc
+        echo "build --strip=always" >> user.bazelrc
+        echo "build --config=bes" >> user.bazelrc
+        echo "build --experimental_reuse_sandbox_directories=true" >> user.bazelrc
     - name: Bind mount spare disk for build artifacts
       uses: envoyproxy/toolshed/actions/bind-mounts@actions-v0.4.29
       with:
