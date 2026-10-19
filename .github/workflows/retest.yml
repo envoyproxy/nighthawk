@@ -1,0 +1,236 @@
+name: Retest CI
+
+permissions:
+  contents: read
+
+on:
+  issue_comment:
+    types:
+      - created
+
+jobs:
+  retest:
+    name: Retest CI
+    if: >-
+      ${{
+         github.event.issue.pull_request
+         && startsWith(github.event.comment.body, '/retest')
+         && !contains(github.event.comment.user.login, '[bot]')
+      }}
+    runs-on: ubuntu-22.04
+    permissions:
+      actions: write
+      pull-requests: write
+      issues: write
+      contents: read
+
+    steps:
+      - name: Retest CI Check
+        # Pinned to full Git commit SHA for OpenSSF Scorecard supply-chain security compliance.
+        # Dependabot automatically keeps this SHA and the version tag comment up to date via .github/dependabot.yml.
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea  # v7.0.1
+        with:
+          script: |
+            const commenter = context.payload.comment.user.login;
+            const prAuthor = context.payload.issue.user.login;
+            const commentBody = context.payload.comment.body.trim();
+
+            // Acknowledge receipt of the command with eyes reaction
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'eyes',
+            });
+
+            // Check permissions: only allow the PR author to trigger re-runs
+            if (commenter !== prAuthor) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.issue.number,
+                body: `@${commenter}: You do not have permission to trigger CI re-runs on this PR. Only the PR author (@${prAuthor}) can re-run workflows via \`/retest\`.`,
+              });
+              await github.rest.reactions.createForIssueComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: context.payload.comment.id,
+                content: '-1',
+              });
+              return;
+            }
+
+            // Fetch the PR to verify state and get head commit SHA
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.issue.number,
+            });
+
+            if (pr.state === 'closed') {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.issue.number,
+                body: `@${commenter}: Cannot re-run CI on a closed pull request.`,
+              });
+              await github.rest.reactions.createForIssueComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: context.payload.comment.id,
+                content: 'confused',
+              });
+              return;
+            }
+
+            // Parse optional argument from the command line only
+            const lines = commentBody.split('\n').map(l => l.trim());
+            const commandLine = lines.find(l => l.startsWith('/retest')) || '';
+            const tokens = commandLine.split(/\s+/);
+            const targetFilter = tokens.length > 1 ? tokens.slice(1).join(' ').toLowerCase() : null;
+
+            const headSha = pr.head.sha;
+
+            // Fetch workflow runs for this repository matching the PR's head SHA
+            const { data: runsData } = await github.rest.actions.listWorkflowRunsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head_sha: headSha,
+            });
+
+            let rerunJobsCount = 0;
+            let rerunWorkflowsCount = 0;
+            const inProgressRuns = [];
+            const errors = [];
+
+            for (const run of runsData.workflow_runs) {
+              // If "/retest all": re-run the entire workflow from scratch (including passed tests)
+              if (targetFilter === 'all') {
+                if (run.status !== 'completed') {
+                  inProgressRuns.push(run.name);
+                  continue;
+                }
+                try {
+                  console.log(`Re-running all jobs for workflow ${run.name} (run id: ${run.id})`);
+                  try {
+                    await github.rest.actions.reRunWorkflow({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      run_id: run.id,
+                    });
+                  } catch (e) {
+                    await github.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun', {
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      run_id: run.id,
+                    });
+                  }
+                  rerunWorkflowsCount++;
+                } catch (err) {
+                  console.error(`Error re-running workflow ${run.id}:`, err);
+                  errors.push(err.message);
+                }
+              } else if (targetFilter) {
+                // If a specific job target filter was provided:
+                // Re-run matching completed jobs (supports re-running both passed and failed tests)
+                try {
+                  const { data: jobsData } = await github.rest.actions.listJobsForWorkflowRun({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    run_id: run.id,
+                  });
+
+                  for (const job of jobsData.jobs) {
+                    if (job.name.toLowerCase().includes(targetFilter)) {
+                      if (job.status !== 'completed') {
+                        inProgressRuns.push(`${job.name} (in ${run.name})`);
+                        continue;
+                      }
+                      console.log(`Re-running job ${job.name} (id: ${job.id}, conclusion: ${job.conclusion}) in workflow ${run.name} (run id: ${run.id})`);
+                      await github.rest.actions.reRunJobForWorkflowRun({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        job_id: job.id,
+                      });
+                      rerunJobsCount++;
+                    }
+                  }
+                } catch (err) {
+                  console.error(`Error re-running matching job in run ${run.id}:`, err);
+                  errors.push(err.message);
+                }
+              } else {
+                // No target filter provided: re-run ONLY failed/cancelled/timed_out jobs
+                if (run.status !== 'completed') {
+                  inProgressRuns.push(run.name);
+                  continue;
+                }
+                if (['failure', 'cancelled', 'timed_out'].includes(run.conclusion)) {
+                  try {
+                    console.log(`Re-running failed jobs for workflow ${run.name} (run id: ${run.id})`);
+                    await github.rest.actions.reRunWorkflowFailedJobs({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      run_id: run.id,
+                    });
+                    rerunWorkflowsCount++;
+                  } catch (err) {
+                    console.error(`Error re-running failed jobs for run ${run.id}:`, err);
+                    errors.push(err.message);
+                  }
+                }
+              }
+            }
+
+            if (rerunJobsCount > 0 || rerunWorkflowsCount > 0) {
+              await github.rest.reactions.createForIssueComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: context.payload.comment.id,
+                content: 'rocket',
+              });
+            } else if (errors.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.issue.number,
+                body: `@${commenter}: Encountered error(s) while attempting to re-run CI for commit \`${headSha.substring(0, 7)}\`:\n- ${errors.join('\n- ')}`,
+              });
+              await github.rest.reactions.createForIssueComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: context.payload.comment.id,
+                content: 'confused',
+              });
+            } else if (inProgressRuns.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.issue.number,
+                body: `@${commenter}: Workflow(s) \`${inProgressRuns.join(', ')}\` are currently in progress for commit \`${headSha.substring(0, 7)}\`. Please wait for them to finish before retrying.`,
+              });
+              await github.rest.reactions.createForIssueComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: context.payload.comment.id,
+                content: 'eyes',
+              });
+            } else {
+              const msg = (targetFilter === 'all')
+                ? `No completed CI workflow runs found to re-run for commit \`${headSha.substring(0, 7)}\`.`
+                : targetFilter
+                ? `No completed jobs matching \`${targetFilter}\` found to re-run for commit \`${headSha.substring(0, 7)}\`.`
+                : `No failed or cancelled CI workflow runs found to re-run for commit \`${headSha.substring(0, 7)}\`.`;
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.issue.number,
+                body: `@${commenter}: ${msg}`,
+              });
+              await github.rest.reactions.createForIssueComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: context.payload.comment.id,
+                content: 'confused',
+              });
+            }

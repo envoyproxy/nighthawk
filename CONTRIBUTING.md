@@ -34,4 +34,10 @@ Commits need to be signed off. See [here](https://github.com/envoyproxy/envoy/bl
 
 ## Triggering CI re-run without making changes
 
-See [here](https://github.com/envoyproxy/envoy/blob/main/CONTRIBUTING.md#triggering-ci-re-run-without-making-changes).
+PR authors can trigger a re-run of CI jobs by commenting on their Pull Request:
+
+* Comment `/retest` to re-run only failed jobs for the latest commit.
+* Comment `/retest all` to re-run all jobs from scratch (including passed ones).
+* Comment `/retest <job-name>` (e.g. `/retest tsan`, `/retest test_gcc`) to re-run a specific completed job.
+
+See also [Envoy's policy](https://github.com/envoyproxy/envoy/blob/main/CONTRIBUTING.md#triggering-ci-re-run-without-making-changes).
