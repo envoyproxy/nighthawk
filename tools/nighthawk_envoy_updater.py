@@ -14,9 +14,8 @@ from dataclasses import dataclass
 import datetime
 import enum
 import logging
-import os
 import pathlib
-import pprint
+import re
 import shlex
 import shutil
 import subprocess
@@ -38,10 +37,27 @@ COPIED_FILES: list[str] = [
 # Files Nighthawk re-uses (almost) verbatim from its Envoy dependency.
 SHARED_FILES: list[str] = [
     ".bazelrc",
-    "ci/docker-compose.yml",
-    "tools/code_format/config.yaml",
     "tools/gen_compilation_database.py",
+    "tools/code_format/config.yaml",
+    "ci/docker-compose.yml",
 ]
+
+_BAZEL_DEP_PATTERN = re.compile(
+    r'^bazel_dep\(\s*name\s*=\s*"([^"]+)",\s*version\s*=\s*"([^"]+)"',
+    re.MULTILINE,
+)
+_ENVOY_MODULE_VERSION_PATTERN = re.compile(
+    r'module\(\s*name\s*=\s*"envoy",\s*version\s*=\s*"([^"]+)"',
+    re.DOTALL,
+)
+_ENVOY_COMMIT_PATTERN = re.compile(
+    r'^ENVOY_COMMIT = "([0-9a-fA-F]{40})"$',
+    re.MULTILINE,
+)
+_LAST_UPDATED_PATTERN = re.compile(
+    r"^# Last updated .*$",
+    re.MULTILINE,
+)
 
 
 def _run_command(
@@ -414,15 +430,16 @@ class EnvoyCommitIntegrationStep(enum.Enum):
   """Steps to integrate a specific Envoy commit into Nighthawk."""
 
   RESET_UNTRACKED_CHANGES = enum.auto()
-  GET_ENVOY_SHA = enum.auto()
   SET_NIGHTHAWK_BAZEL_DEP = enum.auto()
   COPY_EXACT_FILES = enum.auto()
   PATCH_SHARED_FILES = enum.auto()
+  SYNC_BAZEL_DEPS = enum.auto()
+  REFRESH_BAZEL_LOCKFILE = enum.auto()
   BAZEL_UPDATE_REQUIREMENTS = enum.auto()
   BUILD_NIGHTHAWK = enum.auto()
   TEST_NIGHTHAWK = enum.auto()
-  UPDATE_CLI_README = enum.auto()
   FIX_FORMAT = enum.auto()
+  UPDATE_CLI_README = enum.auto()
   GIT_ADD_INTEGRATION = enum.auto()
 
 
@@ -454,7 +471,52 @@ class EnvoyCommitIntegration(StepHandler[EnvoyCommitIntegrationStep]):
     self.envoy_git_repo_dir = envoy_git_repo_dir
     self.current_envoy_commit = current_envoy_commit
     self.target_envoy_commit = target_envoy_commit
-    self.envoy_sha = None
+
+  def _sync_module_bazel_deps(self) -> None:
+    """Sync bazel_dep versions in Nighthawk's MODULE.bazel with Envoy's."""
+    nighthawk_module_file = self.nighthawk_git_repo_dir / "MODULE.bazel"
+    envoy_module_content = _run_command(
+        ["git", "show", f"{self.target_envoy_commit}:MODULE.bazel"],
+        cwd=self.envoy_git_repo_dir,
+    )
+    envoy_deps = {
+        match.group(1): match.group(2) for match in _BAZEL_DEP_PATTERN.finditer(envoy_module_content)
+    }
+    envoy_module_match = _ENVOY_MODULE_VERSION_PATTERN.search(envoy_module_content)
+    if envoy_module_match:
+      envoy_deps["envoy"] = envoy_module_match.group(1)
+    nighthawk_content = nighthawk_module_file.read_text(encoding="utf-8")
+
+    def _replace_dep(match: re.Match[str]) -> str:
+      """Replace a bazel_dep version when Envoy specifies a different version."""
+      dep_name, nighthawk_version = match.group(1), match.group(2)
+      envoy_version = envoy_deps.get(dep_name)
+      if envoy_version and nighthawk_version != envoy_version:
+        logging.info("%s: %s -> %s", dep_name, nighthawk_version, envoy_version)
+        return f'bazel_dep(name = "{dep_name}", version = "{envoy_version}"'
+      return match.group(0)
+
+    updated_content = _BAZEL_DEP_PATTERN.sub(_replace_dep, nighthawk_content)
+    if updated_content != nighthawk_content:
+      nighthawk_module_file.write_text(updated_content, encoding="utf-8")
+
+  def _update_requirements_in_date(self) -> None:
+    """Update the '# Last updated' header in tools/base/requirements.in if requirements.txt changed."""
+    diff_result = subprocess.run(
+        ["git", "diff", "--quiet", "--", "tools/base/requirements.txt"],
+        cwd=self.nighthawk_git_repo_dir,
+        check=False,
+    )
+    if diff_result.returncode == 0:
+      return
+    requirements_in = self.nighthawk_git_repo_dir / "tools/base/requirements.in"
+    if not requirements_in.exists():
+      return
+    today = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
+    content = requirements_in.read_text(encoding="utf-8")
+    updated = _LAST_UPDATED_PATTERN.sub(f"# Last updated {today}", content, count=1)
+    if updated != content:
+      requirements_in.write_text(updated, encoding="utf-8")
 
   def _patch_merge_conflict_instructions(self) -> str:
     """Generate instructions for resolving merge conflicts in shared files.
@@ -485,12 +547,6 @@ class EnvoyCommitIntegration(StepHandler[EnvoyCommitIntegrationStep]):
       case EnvoyCommitIntegrationStep.RESET_UNTRACKED_CHANGES:
         _run_command(["git", "checkout", "."], cwd=self.nighthawk_git_repo_dir)
         _run_command(["git", "clean", "-fd"], cwd=self.nighthawk_git_repo_dir)
-      case EnvoyCommitIntegrationStep.GET_ENVOY_SHA:
-        tarball_url = f"https://github.com/envoyproxy/envoy/archive/{self.target_envoy_commit}.tar.gz"
-        self.envoy_sha = _run_command(
-            [f"curl -sL {tarball_url} | sha256sum | cut -d ' ' -f 1"],
-            shell=True,
-        )
       case EnvoyCommitIntegrationStep.SET_NIGHTHAWK_BAZEL_DEP:
         module_file = self.nighthawk_git_repo_dir / "MODULE.bazel"
         _run_sed_replace(
@@ -560,16 +616,24 @@ class EnvoyCommitIntegration(StepHandler[EnvoyCommitIntegrationStep]):
                 raise RuntimeError(
                     f"Merge conflict detected in shared file '{shared_file}'.\n"
                     f"Conflict markers (<<<<<<<, =======, >>>>>>>) placed in {nighthawk_file}.")
+      case EnvoyCommitIntegrationStep.SYNC_BAZEL_DEPS:
+        self._sync_module_bazel_deps()
+      case EnvoyCommitIntegrationStep.REFRESH_BAZEL_LOCKFILE:
+        _run_command(
+            ["bazel", "mod", "deps", "--lockfile_mode=refresh"],
+            cwd=self.nighthawk_git_repo_dir,
+        )
       case EnvoyCommitIntegrationStep.BAZEL_UPDATE_REQUIREMENTS:
         _run_command(["./ci/do_ci.sh", "fix_requirements"], cwd=self.nighthawk_git_repo_dir)
+        self._update_requirements_in_date()
       case EnvoyCommitIntegrationStep.BUILD_NIGHTHAWK:
         _run_command(["./ci/do_ci.sh", "build"], cwd=self.nighthawk_git_repo_dir)
       case EnvoyCommitIntegrationStep.TEST_NIGHTHAWK:
         _run_command(["./ci/do_ci.sh", "test"], cwd=self.nighthawk_git_repo_dir)
-      case EnvoyCommitIntegrationStep.UPDATE_CLI_README:
-        _run_command(["./ci/do_ci.sh", "fix_docs"], cwd=self.nighthawk_git_repo_dir)
       case EnvoyCommitIntegrationStep.FIX_FORMAT:
         _run_command(["./ci/do_ci.sh", "fix_format"], cwd=self.nighthawk_git_repo_dir)
+      case EnvoyCommitIntegrationStep.UPDATE_CLI_README:
+        _run_command(["./ci/do_ci.sh", "fix_docs"], cwd=self.nighthawk_git_repo_dir)
       case EnvoyCommitIntegrationStep.GIT_ADD_INTEGRATION:
         _run_command(["git", "add", "."], cwd=self.nighthawk_git_repo_dir)
       case _:
@@ -789,11 +853,9 @@ class NighthawkEnvoyUpdate(StepHandler[NighthawkEnvoyUpdateStep]):
           _run_command(["git", "rebase", "origin/main"], cwd=self.nighthawk_git_repo_dir)
       case NighthawkEnvoyUpdateStep.GET_ORIGINAL_ENVOY_COMMIT:
         module_file = self.nighthawk_git_repo_dir / "MODULE.bazel"
-        self.current_envoy_commit = _run_command(
-            [r"""sed -nE 's/^ENVOY_COMMIT = "(.*)"$/\1/p' """ + str(module_file)],
-            shell=True,
-        )
-        if (not self.current_envoy_commit or len(self.current_envoy_commit) != 40):
+        match = _ENVOY_COMMIT_PATTERN.search(module_file.read_text(encoding="utf-8"))
+        self.current_envoy_commit = match.group(1) if match else None
+        if not self.current_envoy_commit:
           raise RuntimeError(f"Failed to extract current Envoy commit from {module_file}")
       case NighthawkEnvoyUpdateStep.CLONE_ENVOY:
         _run_command([
