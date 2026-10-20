@@ -67,6 +67,7 @@ public:
   std::vector<std::string> requestHeaders() const override { return request_headers_; };
   uint32_t requestBodySize() const override { return request_body_size_; };
   const std::string& requestBody() const override { return request_body_; };
+  nighthawk::client::GrpcMode::GrpcModeOptions grpcMode() const override { return grpc_mode_; };
   const envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext&
   tlsContext() const override {
     return tls_context_;
@@ -172,6 +173,8 @@ private:
   std::vector<std::string> request_headers_;
   uint32_t request_body_size_{0};
   std::string request_body_;
+  nighthawk::client::GrpcMode::GrpcModeOptions grpc_mode_{nighthawk::client::GrpcMode::NONE};
+  bool grpcEnabled() const { return grpc_mode_ != nighthawk::client::GrpcMode::NONE; }
 
   /**
    * Reads the whole file at path into a string (binary safe).

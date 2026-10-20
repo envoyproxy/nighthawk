@@ -73,7 +73,7 @@ public:
                    std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
                    std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
                    std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
-                   std::make_unique<StreamingStatistic>()) {
+                   std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>()) {
     auto header_map_param = std::initializer_list<std::pair<std::string, std::string>>{
         {":scheme", "http"}, {":method", "GET"}, {":path", "/"}, {":host", "localhost"}};
     default_header_map_ =
@@ -292,8 +292,8 @@ TEST_F(BenchmarkClientHttpTest, ExportSuccessLatency) {
   RequestGenerator default_request_generator = getDefaultRequestGenerator();
   setupBenchmarkClient(default_request_generator);
   uint64_t latency_ns = 10;
-  client_->exportLatency(/*response_code=*/200, latency_ns);
-  client_->exportLatency(/*response_code=*/200, latency_ns);
+  client_->exportLatency(/*response_code=*/200, latency_ns, std::nullopt);
+  client_->exportLatency(/*response_code=*/200, latency_ns, std::nullopt);
   EXPECT_EQ(2, client_->statistics()["benchmark_http_client.latency_2xx"]->count());
   EXPECT_DOUBLE_EQ(latency_ns, client_->statistics()["benchmark_http_client.latency_2xx"]->mean());
 }
@@ -301,11 +301,11 @@ TEST_F(BenchmarkClientHttpTest, ExportSuccessLatency) {
 TEST_F(BenchmarkClientHttpTest, ExportErrorLatency) {
   RequestGenerator default_request_generator = getDefaultRequestGenerator();
   setupBenchmarkClient(default_request_generator);
-  client_->exportLatency(/*response_code=*/100, /*latency_ns=*/1);
-  client_->exportLatency(/*response_code=*/300, /*latency_ns=*/3);
-  client_->exportLatency(/*response_code=*/400, /*latency_ns=*/4);
-  client_->exportLatency(/*response_code=*/500, /*latency_ns=*/5);
-  client_->exportLatency(/*response_code=*/600, /*latency_ns=*/6);
+  client_->exportLatency(/*response_code=*/100, /*latency_ns=*/1, std::nullopt);
+  client_->exportLatency(/*response_code=*/300, /*latency_ns=*/3, std::nullopt);
+  client_->exportLatency(/*response_code=*/400, /*latency_ns=*/4, std::nullopt);
+  client_->exportLatency(/*response_code=*/500, /*latency_ns=*/5, std::nullopt);
+  client_->exportLatency(/*response_code=*/600, /*latency_ns=*/6, std::nullopt);
   EXPECT_EQ(1, client_->statistics()["benchmark_http_client.latency_1xx"]->count());
   EXPECT_DOUBLE_EQ(1, client_->statistics()["benchmark_http_client.latency_1xx"]->mean());
   EXPECT_EQ(1, client_->statistics()["benchmark_http_client.latency_xxx"]->count());
@@ -324,22 +324,22 @@ TEST_F(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
   Envoy::Http::ResponseHeaderMapPtr header = Envoy::Http::ResponseHeaderMapImpl::create();
 
   header->setStatus(1);
-  client_->onComplete(true, *header);
+  client_->onComplete(true, *header, std::nullopt);
   header->setStatus(100);
-  client_->onComplete(true, *header);
+  client_->onComplete(true, *header, std::nullopt);
   header->setStatus(200);
-  client_->onComplete(true, *header);
+  client_->onComplete(true, *header, std::nullopt);
   header->setStatus(300);
-  client_->onComplete(true, *header);
+  client_->onComplete(true, *header, std::nullopt);
   header->setStatus(400);
-  client_->onComplete(true, *header);
+  client_->onComplete(true, *header, std::nullopt);
   header->setStatus(500);
-  client_->onComplete(true, *header);
+  client_->onComplete(true, *header, std::nullopt);
   header->setStatus(600);
-  client_->onComplete(true, *header);
+  client_->onComplete(true, *header, std::nullopt);
   header->setStatus(200);
   // Shouldn't be counted by status, should add to stream reset.
-  client_->onComplete(false, *header);
+  client_->onComplete(false, *header, std::nullopt);
 
   EXPECT_EQ(1, getCounter("http_2xx"));
   EXPECT_EQ(1, getCounter("http_3xx"));
@@ -347,7 +347,78 @@ TEST_F(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
   EXPECT_EQ(1, getCounter("http_5xx"));
   EXPECT_EQ(2, getCounter("http_xxx"));
   EXPECT_EQ(1, getCounter("stream_resets"));
+  // Without gRPC mode nothing is scored on grpc-status.
+  EXPECT_EQ(0, getCounter("grpc_error"));
 
+  client_.reset();
+}
+
+TEST_F(BenchmarkClientHttpTest, GrpcStatusTrackingInOnComplete) {
+  RequestGenerator default_request_generator = getDefaultRequestGenerator();
+  setupBenchmarkClient(default_request_generator);
+  client_->setGrpc(true);
+  Envoy::Http::ResponseHeaderMapPtr header = Envoy::Http::ResponseHeaderMapImpl::create();
+
+  // HTTP 200 + grpc-status 0: the only shape that is a success.
+  header->setStatus(200);
+  client_->onComplete(true, *header, 0);
+  EXPECT_EQ(1, getCounter("http_2xx"));
+  EXPECT_EQ(1, getCounter("grpc_status.0"));
+  EXPECT_EQ(0, getCounter("grpc_error"));
+
+  // HTTP 200 + grpc-status 13 (INTERNAL): a failed RPC, not a 2xx success.
+  client_->onComplete(true, *header, 13);
+  EXPECT_EQ(1, getCounter("http_2xx"));
+  EXPECT_EQ(1, getCounter("grpc_status.13"));
+  EXPECT_EQ(1, getCounter("grpc_error"));
+
+  // HTTP 200 without any grpc-status: not a gRPC success either.
+  client_->onComplete(true, *header, std::nullopt);
+  EXPECT_EQ(1, getCounter("http_2xx"));
+  EXPECT_EQ(1, getCounter("grpc_status.missing"));
+  EXPECT_EQ(2, getCounter("grpc_error"));
+
+  // A non-2xx (e.g. from a proxy) lands in its HTTP bucket and is a failed RPC.
+  header->setStatus(503);
+  client_->onComplete(true, *header, std::nullopt);
+  EXPECT_EQ(1, getCounter("http_5xx"));
+  EXPECT_EQ(2, getCounter("grpc_status.missing"));
+  EXPECT_EQ(3, getCounter("grpc_error"));
+
+  // A stream reset is a failed RPC as well.
+  header->setStatus(200);
+  client_->onComplete(false, *header, std::nullopt);
+  EXPECT_EQ(1, getCounter("stream_resets"));
+  EXPECT_EQ(4, getCounter("grpc_error"));
+  EXPECT_EQ(1, getCounter("http_2xx"));
+
+  client_.reset();
+}
+
+TEST_F(BenchmarkClientHttpTest, ExportGrpcOkLatency) {
+  RequestGenerator default_request_generator = getDefaultRequestGenerator();
+  setupBenchmarkClient(default_request_generator);
+  client_->setGrpc(true);
+  client_->exportLatency(/*response_code=*/200, /*latency_ns=*/10, 0);
+  client_->exportLatency(/*response_code=*/200, /*latency_ns=*/30, 0);
+  client_->exportLatency(/*response_code=*/200, /*latency_ns=*/1000, 13);
+  client_->exportLatency(/*response_code=*/200, /*latency_ns=*/1000, std::nullopt);
+  // latency_2xx keeps its HTTP meaning; latency_grpc_ok only sees successful calls.
+  EXPECT_EQ(4, client_->statistics()["benchmark_http_client.latency_2xx"]->count());
+  EXPECT_EQ(2, client_->statistics()["benchmark_http_client.latency_grpc_ok"]->count());
+  EXPECT_DOUBLE_EQ(20, client_->statistics()["benchmark_http_client.latency_grpc_ok"]->mean());
+}
+
+TEST_F(BenchmarkClientHttpTest, GrpcStatusIgnoredWhenGrpcModeIsOff) {
+  RequestGenerator default_request_generator = getDefaultRequestGenerator();
+  setupBenchmarkClient(default_request_generator);
+  client_->exportLatency(/*response_code=*/200, /*latency_ns=*/10, 0);
+  EXPECT_EQ(0, client_->statistics()["benchmark_http_client.latency_grpc_ok"]->count());
+  Envoy::Http::ResponseHeaderMapPtr header = Envoy::Http::ResponseHeaderMapImpl::create();
+  header->setStatus(200);
+  client_->onComplete(true, *header, 13);
+  EXPECT_EQ(1, getCounter("http_2xx"));
+  EXPECT_EQ(0, getCounter("grpc_error"));
   client_.reset();
 }
 
@@ -610,8 +681,8 @@ TEST_F(BenchmarkClientHttpTest, CallsUserDefinedPluginHandleHeaders) {
   user_defined_output_plugins_.push_back(std::move(pair));
   setupBenchmarkClient(default_request_generator);
 
-  client_->onComplete(true, headers);
-  client_->onComplete(true, headers);
+  client_->onComplete(true, headers, std::nullopt);
+  client_->onComplete(true, headers, std::nullopt);
   absl::StatusOr<Envoy::Protobuf::Any> output_any = plugin_ptr->getPerWorkerOutput();
   ASSERT_TRUE(output_any.ok());
   nighthawk::FakeUserDefinedOutput output;
@@ -641,8 +712,8 @@ TEST_F(BenchmarkClientHttpTest, IncrementsCounterWhenUserDefinedPluginHandleHead
   user_defined_output_plugins_.push_back(std::move(pair));
   setupBenchmarkClient(default_request_generator);
 
-  client_->onComplete(true, headers);
-  client_->onComplete(true, headers);
+  client_->onComplete(true, headers, std::nullopt);
+  client_->onComplete(true, headers, std::nullopt);
   absl::StatusOr<Envoy::Protobuf::Any> output_any = plugin_ptr->getPerWorkerOutput();
   ASSERT_TRUE(output_any.ok());
   nighthawk::FakeUserDefinedOutput output;
@@ -728,7 +799,7 @@ TEST_F(BenchmarkClientHttpTest, GetUserDefinedOutputResultsReturnsResults) {
   user_defined_output_plugins_.push_back(std::move(pair));
   setupBenchmarkClient(default_request_generator);
 
-  client_->onComplete(true, headers);
+  client_->onComplete(true, headers, std::nullopt);
   client_->handleResponseData(buffer);
   absl::StatusOr<Envoy::Protobuf::Any> expected_any = plugin_ptr->getPerWorkerOutput();
   ASSERT_TRUE(expected_any.ok());
