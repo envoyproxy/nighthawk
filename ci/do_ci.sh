@@ -24,6 +24,10 @@ fi
 # The directory to copy built binaries to.
 export BUILD_DIR=""
 
+if [[ -e repo.bazelrc ]]; then
+    cp -a repo.bazelrc user.bazelrc
+fi
+
 # We build in steps to avoid running out of memory in CI.
 # This list doesn't have to be complete, execution of bazel test will build any
 # remaining targets.
