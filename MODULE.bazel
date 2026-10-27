@@ -1,5 +1,5 @@
 # Envoy commit to use
-ENVOY_COMMIT = "fc9cbc5f8cf8ea60289b6110850b2a2649fb3627"
+ENVOY_COMMIT = "28491e9130608390deeb5470dacdb7043ccd9559"
 
 module(
     name = "nighthawk",
@@ -10,18 +10,19 @@ module(
 # deps: Module
 ####################################################################################
 
-bazel_dep(name = "envoy", version = "1.40.0-dev")
+bazel_dep(name = "envoy", version = "1.41.0-dev")
 bazel_dep(name = "envoy_api", version = "1.41.0-dev")
-bazel_dep(name = "rules_python", version = "2.3.3")
+bazel_dep(name = "rules_cc", version = "0.2.27")
+bazel_dep(name = "rules_python", version = "2.4.5")
 bazel_dep(name = "protobuf", version = "35.1.bcr.envoy")
 bazel_dep(name = "proxy-wasm-cpp-host", version = "0.0.0-260704-f2db56a.envoy.1")
-bazel_dep(name = "googleurl", version = "0.0.0-221103-dd4080f.envoy")
+bazel_dep(name = "googleurl", version = "0.0.0-221103-dd4080f.envoy.1")
 bazel_dep(name = "rules_rust", version = "0.74.0.envoy")
 bazel_dep(name = "grpc", version = "1.83.0.envoy")
-bazel_dep(name = "librdkafka", version = "2.15.0")
-bazel_dep(name = "quiche", version = "0.0.0-261013-132bfd9.envoy")
+bazel_dep(name = "librdkafka", version = "2.15.0.bcr.1")
+bazel_dep(name = "quiche", version = "0.0.0-261019-67bce2e.envoy")
 bazel_dep(name = "toolchains_llvm", version = "1.9.1.envoy")
-bazel_dep(name = "envoy_toolshed", version = "0.5.4.envoy")
+bazel_dep(name = "envoy_toolshed", version = "0.5.6.envoy")
 bazel_dep(name = "zlib-ng", version = "2.3.3.bcr.2")
 bazel_dep(name = "googletest", version = "1.18.0.bcr.1")
 bazel_dep(name = "googleapis", version = "0.0.0-20251003-2193a2bf")
@@ -37,6 +38,8 @@ http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "ht
 http_archive(
     name = "dep_hdrhistogram_c",
     build_file_content = """
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
 cc_library(
     name = "hdrhistogram_c",
     srcs = [

@@ -132,9 +132,14 @@ public:
 
   uint32_t evictOnFlush() const override { return 0; }
 
+  const std::string& evictionIntervalRuntimeKey() const override {
+    return eviction_interval_runtime_key_;
+  }
+
 private:
   std::list<Envoy::Stats::SinkPtr> sinks_;
   const std::chrono::milliseconds flush_interval_;
+  const std::string eviction_interval_runtime_key_;
 };
 
 // A fake ServerLifecycleNotifier. Because it does nothing, it's safe to just create
