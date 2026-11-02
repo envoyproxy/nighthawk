@@ -33,7 +33,6 @@ py_library(
 envoy_cc_binary(
     name = "envoy-static-testonly",
     linkopts = [
-        "-l:libatomic.a",
         "-lrt",
     ],
     deps = [

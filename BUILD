@@ -24,7 +24,6 @@ filegroup(
 envoy_cc_binary(
     name = "nighthawk_adaptive_load_client",
     linkopts = [
-        "-l:libatomic.a",
         "-lrt",
     ],
     deps = [
@@ -35,7 +34,6 @@ envoy_cc_binary(
 envoy_cc_binary(
     name = "nighthawk_client",
     linkopts = [
-        "-l:libatomic.a",
         "-lrt",
     ],
     deps = [
@@ -48,7 +46,6 @@ envoy_cc_binary(
 envoy_cc_binary(
     name = "nighthawk_client_testonly",
     linkopts = [
-        "-l:libatomic.a",
         "-lrt",
     ],
     deps = [
@@ -61,7 +58,6 @@ envoy_cc_binary(
 envoy_cc_binary(
     name = "nighthawk_test_server",
     linkopts = [
-        "-l:libatomic.a",
         "-lrt",
     ],
     deps = [
@@ -75,7 +71,6 @@ envoy_cc_binary(
 envoy_cc_binary(
     name = "nighthawk_service",
     linkopts = [
-        "-l:libatomic.a",
         "-lrt",
     ],
     deps = [
@@ -86,7 +81,6 @@ envoy_cc_binary(
 envoy_cc_binary(
     name = "nighthawk_output_transform",
     linkopts = [
-        "-l:libatomic.a",
         "-lrt",
     ],
     deps = [
