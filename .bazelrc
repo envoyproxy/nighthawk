@@ -43,7 +43,7 @@ common --noincompatible_disallow_ctx_resolve_tools
 common --legacy_external_runfiles
 
 common --registry=https://bcr.bazel.build/
-common --registry=https://raw.githubusercontent.com/envoyproxy/bazel-registry/08cc76ecf713a30e199aa3b9b13e26c7565dc675
+common --registry=https://raw.githubusercontent.com/envoyproxy/bazel-registry/033f3cc9b33fa9388322ca58f20c296ef9ae3e4d
 # common --registry=file:///bazel-registry
 # this can be useful for dev
 # common --lockfile_mode=off
@@ -74,8 +74,9 @@ common --repo_env=ANDROID_HOME=
 build --incompatible_config_setting_private_default_visibility
 build --incompatible_enforce_config_setting_visibility
 
+# dont suppress logs by default
+common --experimental_ui_max_stdouterr_bytes=-1
 test --test_verbose_timeout_warnings
-test --experimental_ui_max_stdouterr_bytes=11712829 #default 1048576
 
 # Allow tags to influence execution requirements
 common --incompatible_allow_tags_propagation
@@ -97,6 +98,8 @@ common --@envoy//bazel:deprecated_repo_arg_allowed=false
 build --per_file_copt=external/antlr4-cpp-runtime.*@-Wno-deprecated-declarations
 build --per_file_copt=external/c-ares.*@-Wno-unused-function
 build --per_file_copt=external/google_benchmark.*@-Wno-thread-safety-analysis
+build --per_file_copt=external/highway.*@-Wno-ignored-attributes
+build --host_per_file_copt=external/highway.*@-Wno-ignored-attributes
 build --per_file_copt=external/libprotobuf-mutator.*@-Wno-unused-result
 build --per_file_copt=external/librdkafka.*@-Wno-unused-variable,-Wno-unused-but-set-variable,-Wno-sometimes-uninitialized,-Wno-uninitialized,-Wno-implicit-enum-enum-cast
 build --per_file_copt=external/re2.*@-Wno-deprecated-declarations
@@ -116,12 +119,14 @@ build --incompatible_default_to_explicit_init_py
 # Specifies the rustfmt.toml for all rustfmt_test targets.
 build --@rules_rust//rust/settings:rustfmt.toml=@envoy//:rustfmt.toml
 common --@rules_rust//rust/settings:skip_fission_for_rust=true
+# rustc links with -nodefaultlibs; cc_toolchain unwinder/rtlib flags are inert for Rust
+build --@rules_rust//rust/settings:extra_rustc_flag=-Alinker_messages
+build --@rules_rust//rust/settings:extra_exec_rustc_flag=-Alinker_messages
 
 # kafka
 build --@librdkafka//:with_ssl=false
 build --@librdkafka//:with_zlib=false
 build --per_file_copt=contrib/kafka/.*\.cc@-Wno-old-style-cast
-
 common --incompatible_enable_proto_toolchain_resolution
 
 # these are here to detect if the toolchain attempts to compile protoc
@@ -314,14 +319,13 @@ test:sanitizer --build_tests_only
 
 # ASAN config with clang runtime
 build:asan --config=asan-common
-build:asan --linkopt --rtlib=compiler-rt
-build:asan --linkopt --unwindlib=libgcc
+build:asan --@envoy//bazel:shared_unwind=true
+# Clang adds the hermetic resource directory's per-target runtime library search path.
 build:asan --linkopt=-l:libclang_rt.ubsan_standalone.a
 build:asan --linkopt=-l:libclang_rt.ubsan_standalone_cxx.a
 build:asan --action_env=ENVOY_UBSAN_VPTR=1
 build:asan --copt=-fsanitize=vptr,function
 build:asan --linkopt=-fsanitize=vptr,function
-build:asan --linkopt='-L/opt/llvm/lib/clang/22/lib/x86_64-unknown-linux-gnu'
 
 # Basic ASAN/UBSAN that works for gcc or llvm
 build:asan-common --config=sanitizer

@@ -363,11 +363,11 @@ def test_https_h1(https_test_server_fixture):
   asserts.assertCounterGreaterEqual(counters, "upstream_cx_tx_bytes_total", 500)
   asserts.assertCounterGreaterEqual(counters, "upstream_rq_pending_total", 1)
   asserts.assertCounterEqual(counters, "upstream_rq_total", 25)
-  asserts.assertCounterEqual(counters, "ssl.ciphers.ECDHE-RSA-AES128-GCM-SHA256", 1)
-  asserts.assertCounterEqual(counters, "ssl.curves.X25519", 1)
+  asserts.assertCounterEqual(counters, "ssl.ciphers.TLS_AES_128_GCM_SHA256", 1)
+  asserts.assertCounterEqual(counters, "ssl.curves.X25519MLKEM768", 1)
   asserts.assertCounterEqual(counters, "ssl.handshake", 1)
   asserts.assertCounterEqual(counters, "ssl.sigalgs.rsa_pss_rsae_sha256", 1)
-  asserts.assertCounterEqual(counters, "ssl.versions.TLSv1.2", 1)
+  asserts.assertCounterEqual(counters, "ssl.versions.TLSv1.3", 1)
   asserts.assertCounterEqual(counters, "default.total_match_count", 1)
   asserts.assertEqual(len(counters), 17)
 
@@ -400,11 +400,11 @@ def test_https_h2(https_test_server_fixture):
   asserts.assertCounterGreaterEqual(counters, "upstream_cx_tx_bytes_total", 403)
   asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   asserts.assertCounterEqual(counters, "upstream_rq_total", 25)
-  asserts.assertCounterEqual(counters, "ssl.ciphers.ECDHE-RSA-AES128-GCM-SHA256", 1)
-  asserts.assertCounterEqual(counters, "ssl.curves.X25519", 1)
+  asserts.assertCounterEqual(counters, "ssl.ciphers.TLS_AES_128_GCM_SHA256", 1)
+  asserts.assertCounterEqual(counters, "ssl.curves.X25519MLKEM768", 1)
   asserts.assertCounterEqual(counters, "ssl.handshake", 1)
   asserts.assertCounterEqual(counters, "ssl.sigalgs.rsa_pss_rsae_sha256", 1)
-  asserts.assertCounterEqual(counters, "ssl.versions.TLSv1.2", 1)
+  asserts.assertCounterEqual(counters, "ssl.versions.TLSv1.3", 1)
   asserts.assertCounterEqual(counters, "default.total_match_count", 1)
   asserts.assertEqual(len(counters), 18)
 
@@ -512,13 +512,16 @@ def _do_tls_configuration_test(https_test_server_fixture, cli_parameter, use_h2,
   """
   validation_context = ", validation_context:{}" if use_validation_context else ""
   if cli_parameter == "--tls-context":
-    json_template = "{common_tls_context:{tls_params:{cipher_suites:[\"-ALL:%s\"]}" + "%s}}" % validation_context
+    json_template = ("{common_tls_context:{tls_params:"
+                     "{tls_maximum_protocol_version:\"TLSv1_2\",cipher_suites:[\"-ALL:%s\"]}"
+                     f"{validation_context}}}}}")
   else:
-    json_template = "%s%s%s" % (
-        "{name:\"envoy.transport_sockets.tls\",typed_config:{",
-        "\"@type\":\"type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext\",",
-        "common_tls_context:{tls_params:{cipher_suites:[\"-ALL:%s\"]}" +
-        "%s}}}" % validation_context)
+    json_template = (
+        "{name:\"envoy.transport_sockets.tls\",typed_config:{"
+        "\"@type\":\"type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext\","
+        "common_tls_context:{tls_params:"
+        "{tls_maximum_protocol_version:\"TLSv1_2\",cipher_suites:[\"-ALL:%s\"]}"
+        f"{validation_context}}}}}}}")
 
   for cipher in ciphers:
     parsed_json, _ = https_test_server_fixture.runNighthawkClient(
