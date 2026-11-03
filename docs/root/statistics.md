@@ -126,6 +126,41 @@ multiple per worker level metrics can be converted into a single metric with a
 `worker_id` label in the stat Sink if the corresponding backend metric supports
 key-value map.	
 
+### Exporting through an Envoy stats sink
+
+Nighthawk's own stats sinks are plugins implementing `NighthawkStatsSinkFactory`.
+The `nighthawk.envoy_stats_sink_adapter` plugin is one such sink that forwards
+to a stats sink implemented as an Envoy extension, so the sinks that ship with
+Envoy (for example `envoy.stat_sinks.statsd` and `envoy.stat_sinks.dog_statsd`)
+can be used without a Nighthawk specific implementation. The Envoy sink is
+configured as it would be in an Envoy bootstrap, nested in the adapter's
+configuration:
+
+```
+--stats-sinks '{name: "nighthawk.envoy_stats_sink_adapter", typed_config: {
+  "@type": "type.googleapis.com/nighthawk.EnvoyStatsSinkAdapterConfig",
+  sink: {name: "envoy.stat_sinks.statsd", typed_config: {
+    "@type": "type.googleapis.com/envoy.config.metrics.v3.StatsdSink",
+    address: {socket_address: {address: "127.0.0.1", port_value: 8125}},
+    prefix: "nighthawk",
+    scale_histogram_units_to_milliseconds: true}}}}'
+```
+
+The adapter forwards flushes unchanged. Samples of Nighthawk's latency
+statistics, which Nighthawk records in nanoseconds, are forwarded as
+microseconds and declared as such, so that a sink which scales histograms by
+their unit reports them correctly. Envoy's statsd sinks do so when
+`scale_histogram_units_to_milliseconds` is set; without it they label the
+microsecond value as milliseconds. Each latency statistic is named
+`cluster.<worker_id>.<statistic>`, like the other per worker metrics, and tag
+aware sinks receive the worker as the `envoy.cluster_name` tag.
+
+Nighthawk's latency statistics reach sinks one sample at a time, through
+`onHistogramComplete()`. They are not part of the snapshot passed to `flush()`,
+so Envoy sinks that only read histograms from the snapshot, such as
+`envoy.stat_sinks.open_telemetry` and `envoy.stat_sinks.metrics_service`,
+export Nighthawk's counters and gauges but not its latency statistics.
+
 ## Reference	
 - [Nighthawk: architecture and key
   concepts](https://github.com/envoyproxy/nighthawk/blob/main/docs/root/overview.md)	

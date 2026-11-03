@@ -5,7 +5,9 @@
 #include "envoy/api/api.h"
 #include "envoy/common/pure.h"
 #include "envoy/common/time.h"
+#include "envoy/config/metrics/v3/stats.pb.h"
 #include "envoy/event/dispatcher.h"
+#include "envoy/server/factory_context.h"
 #include "envoy/upstream/cluster_manager.h"
 
 #include "nighthawk/common/platform_util.h"
@@ -68,6 +70,21 @@ public:
    */
   virtual std::unique_ptr<Envoy::Stats::Sink>
   createStatsSink(Envoy::Stats::SymbolTable& symbol_table) PURE;
+
+  /**
+   * Create a particular Envoy::Stats::Sink implementation from its configuration, with access to
+   * the server factory context. Nighthawk calls this overload. The default implementation ignores
+   * the configuration and delegates to createStatsSink(symbol_table), so factories that only
+   * implement that method behave exactly as before.
+   * @param config the stats sink configuration this factory was selected for.
+   * @param context the server factory context of the Nighthawk process.
+   */
+  virtual std::unique_ptr<Envoy::Stats::Sink>
+  createStatsSink(const envoy::config::metrics::v3::StatsSink& config,
+                  Envoy::Server::Configuration::ServerFactoryContext& context) {
+    UNREFERENCED_PARAMETER(config);
+    return createStatsSink(context.scope().symbolTable());
+  }
 
   std::string category() const override { return "nighthawk.stats_sinks"; }
 };
