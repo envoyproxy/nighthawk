@@ -26,6 +26,7 @@
 #include "source/common/common/cleanup.h"
 #include "source/common/common/regex.h"
 #include "source/common/common/statusor.h"
+#include "source/common/common/utility.h"
 #include "source/common/config/utility.h"
 #include "source/common/config/xds_manager_impl.h"
 #include "source/common/event/dispatcher_impl.h"
@@ -880,6 +881,29 @@ void ProcessImpl::setupStatsSinks(const envoy::config::bootstrap::v3::Bootstrap&
                                   std::list<std::unique_ptr<Envoy::Stats::Sink>>& stats_sinks) {
   for (const envoy::config::metrics::v3::StatsSink& stats_sink : bootstrap.stats_sinks()) {
     ENVOY_LOG(info, "loading stats sink configuration in Nighthawk");
+    // Envoy's own stats sink registry is consulted first: it holds the linked
+    // `envoy.stat_sinks.*` factories, which is the registry users configure in
+    // their sink configs (see
+    // https://github.com/envoyproxy/nighthawk/issues/1607). The lookup is by
+    // typed config type URL, which is how Envoy's own server resolves sinks.
+    Envoy::Server::Configuration::StatsSinkFactory* envoy_factory =
+        Envoy::Config::Utility::getAndCheckFactory<Envoy::Server::Configuration::StatsSinkFactory>(
+            stats_sink, /*is_optional=*/true);
+    if (envoy_factory != nullptr) {
+      Envoy::ProtobufTypes::MessagePtr message = Envoy::Config::Utility::translateToFactoryConfig(
+          stats_sink, Envoy::ProtobufMessage::getStrictValidationVisitor(), *envoy_factory);
+      absl::StatusOr<Envoy::Stats::SinkPtr> sink_or_error =
+          envoy_factory->createStatsSink(*message, server_->serverFactoryContext());
+      if (!sink_or_error.ok()) {
+        Envoy::ExceptionUtil::throwEnvoyException(
+            absl::StrCat("Failed to create stats sink '", stats_sink.name(),
+                         "': ", sink_or_error.status().message()));
+      }
+      stats_sinks.emplace_back(std::move(sink_or_error).value());
+      continue;
+    }
+    // Fall back to Nighthawk's own stats sink registry. Configs that match
+    // neither registry keep failing fast with an error naming the sink.
     auto& factory =
         Envoy::Config::Utility::getAndCheckFactory<NighthawkStatsSinkFactory>(stats_sink);
     stats_sinks.emplace_back(factory.createStatsSink(store_root_.symbolTable()));

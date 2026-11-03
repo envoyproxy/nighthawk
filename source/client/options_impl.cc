@@ -398,8 +398,8 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "metrics will be flushed. This argument is intended to "
       "be specified multiple times. Example (json): "
       "{name:\"envoy.stat_sinks.statsd\",typed_config:{\"@type\":\"type."
-      "googleapis.com/"
-      "envoy.config.metrics.v3.StatsdSink\",tcp_cluster_name:\"statsd\"}}",
+      "googleapis.com/envoy.config.metrics.v3.StatsdSink\",address:{"
+      "socket_address:{address:\"127.0.0.1\",port_value:8125}}}}",
       false, "string", cmd);
 
   TCLAP::ValueArg<uint32_t> stats_flush_interval(

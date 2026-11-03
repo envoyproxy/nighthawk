@@ -14,6 +14,7 @@ Version history
 
 ### Changelist
 
+- `--stats-sinks` now accepts any linked `envoy.stat_sinks.*` sink, in addition to Nighthawk's own `nighthawk.stats_sinks` sinks. Sink names without a matching registration fail fast with an error naming the sink (https://github.com/envoyproxy/nighthawk/issues/1607).
 - `--request-body-file` sends a file's bytes verbatim as the request body (binary safe; no Content-Type is set). The `RequestOptions.request_body` (bytes) field carries it over the gRPC service API. Mutually exclusive with `--request-body-size`.
 - `OptionsImpl::toCommandLineOptions()` now always emits `request_options.request_body_size`; it was only set when at least one `--request-header` was configured, so the size was lost on the gRPC service path otherwise.
 - The Envoy exception on the tunneling startup path is logged instead of printed to stdout, keeping stdout reserved for the formatted output.

@@ -150,6 +150,77 @@ private:
   std::thread accept_thread_;
 };
 
+// UdpDatagramListener binds a loopback UDP socket and collects the datagrams it
+// receives on a background thread, so tests can assert on statsd traffic.
+class UdpDatagramListener {
+public:
+  explicit UdpDatagramListener(Envoy::Network::Address::IpVersion ip_version) {
+    const bool is_v4 = ip_version == Envoy::Network::Address::IpVersion::v4;
+    listen_fd_ = ::socket(is_v4 ? AF_INET : AF_INET6, SOCK_DGRAM, 0);
+    RELEASE_ASSERT(listen_fd_ >= 0, "UdpDatagramListener: socket() failed");
+    sockaddr_storage addr;
+    memset(&addr, 0, sizeof(addr));
+    socklen_t addr_len;
+    if (is_v4) {
+      auto* addr4 = reinterpret_cast<sockaddr_in*>(&addr);
+      addr4->sin_family = AF_INET;
+      addr4->sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+      addr4->sin_port = 0;
+      addr_len = sizeof(sockaddr_in);
+    } else {
+      auto* addr6 = reinterpret_cast<sockaddr_in6*>(&addr);
+      addr6->sin6_family = AF_INET6;
+      addr6->sin6_addr = in6addr_loopback;
+      addr6->sin6_port = 0;
+      addr_len = sizeof(sockaddr_in6);
+    }
+    RELEASE_ASSERT(::bind(listen_fd_, reinterpret_cast<sockaddr*>(&addr), addr_len) == 0,
+                   "UdpDatagramListener: bind() failed");
+    RELEASE_ASSERT(::getsockname(listen_fd_, reinterpret_cast<sockaddr*>(&addr), &addr_len) == 0,
+                   "UdpDatagramListener: getsockname() failed");
+    port_ = ntohs(is_v4 ? reinterpret_cast<sockaddr_in*>(&addr)->sin_port
+                        : reinterpret_cast<sockaddr_in6*>(&addr)->sin6_port);
+    reader_thread_ = std::thread([this]() { readLoop(); });
+  }
+
+  ~UdpDatagramListener() {
+    stopping_ = true;
+    reader_thread_.join();
+    ::close(listen_fd_);
+  }
+
+  uint32_t port() const { return port_; }
+
+  // Returns all bytes received so far, in arrival order across datagrams.
+  std::string received() const {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return received_;
+  }
+
+private:
+  void readLoop() {
+    while (!stopping_) {
+      pollfd poll_fd{listen_fd_, POLLIN, 0};
+      const int rc = ::poll(&poll_fd, 1, /*timeout=*/50);
+      if (rc > 0 && (poll_fd.revents & POLLIN) != 0) {
+        char buf[65536];
+        const ssize_t n = ::recvfrom(listen_fd_, buf, sizeof(buf), 0, nullptr, nullptr);
+        if (n > 0) {
+          std::lock_guard<std::mutex> lock(mutex_);
+          received_.append(buf, n);
+        }
+      }
+    }
+  }
+
+  int listen_fd_{-1};
+  uint32_t port_{0};
+  std::atomic<bool> stopping_{false};
+  mutable std::mutex mutex_;
+  std::string received_;
+  std::thread reader_thread_;
+};
+
 // TODO(https://github.com/envoyproxy/nighthawk/issues/179): Mock Process in client_test, and move
 // it's tests in here. Note: these tests do not have a backend set up to talk to. That's why we
 // expect failure.
@@ -290,6 +361,55 @@ TEST_P(ProcessTest, RunProcessWithStatsSinkConfigured) {
   numFlushes = 0;
   ASSERT_TRUE(runProcess(RunExpectation::EXPECT_FAILURE).ok());
   EXPECT_GT(numFlushes, 0);
+}
+
+TEST_P(ProcessTest, EnvoyStatsSinkHonored) {
+  UdpDatagramListener listener(GetParam());
+  const std::string statsd_sink_config = fmt::format(
+      "{{name:\"envoy.stat_sinks.statsd\",typed_config:{{\"@type\":\"type."
+      "googleapis.com/envoy.config.metrics.v3.StatsdSink\",address:{{"
+      "socket_address:{{address:\"{}\",port_value:{}}}}}}}}}",
+      GetParam() == Envoy::Network::Address::IpVersion::v4 ? "127.0.0.1" : "::1", listener.port());
+  options_ = TestUtility::createOptionsImpl(
+      fmt::format("foo --duration 1 --rps 10 --stats-flush-interval 1 "
+                  "--stats-sinks {} https://{}/",
+                  statsd_sink_config, loopback_address_));
+  // The benchmark target refuses connections, but stats are flushed regardless:
+  // the statsd sink must receive datagrams carrying Nighthawk's benchmark
+  // counters (https://github.com/envoyproxy/nighthawk/issues/1607).
+  ASSERT_TRUE(runProcess(RunExpectation::EXPECT_FAILURE).ok());
+  EXPECT_THAT(listener.received(), HasSubstr("benchmark."));
+}
+
+TEST_P(ProcessTest, UnknownSinkNameFailsFast) {
+  options_ = TestUtility::createOptionsImpl(
+      fmt::format("foo --duration 1 --rps 10 --stats-sinks "
+                  "{{name:\"envoy.stat_sinks.nosuchsink\"}} https://{}/",
+                  loopback_address_));
+  // An unknown sink name must fail the run fast with an error that names the
+  // sink, never silently proceed without a sink
+  // (https://github.com/envoyproxy/nighthawk/issues/1607). The failure surfaces
+  // as an EnvoyException escaping ProcessImpl::run(), so this test manages the
+  // process lifecycle itself instead of going through runProcess(): shutdown()
+  // must still run before the ProcessImpl is destroyed.
+  TypedExtensionConfig typed_dns_resolver_config;
+  Envoy::Network::DnsResolverFactory& dns_resolver_factory =
+      Envoy::Network::createDefaultDnsResolverFactory(typed_dns_resolver_config);
+  absl::StatusOr<ProcessPtr> process_or_status = ProcessImpl::CreateProcessImpl(
+      *options_, dns_resolver_factory, std::move(typed_dns_resolver_config), time_system_);
+  ASSERT_TRUE(process_or_status.ok()) << process_or_status.status();
+  ProcessPtr process = std::move(process_or_status.value());
+  OutputCollectorImpl collector(time_system_, *options_);
+  std::string exception_text;
+  try {
+    (void)process->run(collector);
+    ADD_FAILURE() << "Expected a fatal error naming the unknown stats sink";
+  } catch (const Envoy::EnvoyException& e) {
+    exception_text = e.what();
+  }
+  process->shutdown();
+  process.reset();
+  EXPECT_THAT(exception_text, HasSubstr("nosuchsink"));
 }
 
 TEST_P(ProcessTest, NoFlushWhenCancelExecutionBeforeLoadTestBegin) {

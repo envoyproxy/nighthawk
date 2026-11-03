@@ -13,6 +13,7 @@ EXTENSIONS = {
     "envoy.network.dns_resolver.cares": "//source/extensions/network/dns_resolver/cares:config",
     "envoy.config_subscription.filesystem": "//source/extensions/config_subscription/filesystem:filesystem_subscription_lib",
     "envoy.config_subscription.filesystem_collection": "//source/extensions/config_subscription/filesystem:filesystem_subscription_lib",
+    "envoy.stat_sinks.statsd": "//source/extensions/stat_sinks/statsd:config",
 }
 
 DISABLED_BY_DEFAULT_EXTENSIONS = {

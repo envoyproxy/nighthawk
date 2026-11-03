@@ -243,7 +243,8 @@ Stats sinks (in json) where Nighthawk metrics will be flushed. This
 argument is intended to be specified multiple times. Example (json):
 {name:"envoy.stat_sinks.statsd"
 ,typed_config:{"@type":"type.googleapis.com/envoy.config.metrics.v3.St
-atsdSink",tcp_cluster_name:"statsd"}}
+atsdSink",address:{socket_address:{address:"127.0.0.1"
+,port_value:8125}}}}
 
 --no-duration
 Request infinite execution. Note that the default failure predicates
