@@ -68,6 +68,11 @@ public:
    * @return const std::string& raw request body bytes (empty when not configured).
    */
   virtual const std::string& requestBody() const PURE;
+  /**
+   * @return nighthawk::client::GrpcMode::GrpcModeOptions the gRPC load generation mode; NONE for
+   * plain HTTP.
+   */
+  virtual nighthawk::client::GrpcMode::GrpcModeOptions grpcMode() const PURE;
   virtual const envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext&
   tlsContext() const PURE;
   virtual const std::optional<envoy::config::core::v3::BindConfig>& upstreamBindConfig() const PURE;
