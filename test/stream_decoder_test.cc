@@ -35,12 +35,14 @@ public:
         test_trailer_(std::make_unique<Envoy::Http::TestResponseTrailerMapImpl>(
             std::initializer_list<std::pair<std::string, std::string>>({{}}))) {}
 
-  void onComplete(bool, const Envoy::Http::ResponseHeaderMap&) override {
+  void onComplete(bool, const Envoy::Http::ResponseHeaderMap&, GrpcStatusOpt grpc_status) override {
     stream_decoder_completion_callbacks_++;
+    completed_grpc_status_ = grpc_status;
   }
   void onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason) override { pool_failures_++; }
-  void exportLatency(const uint32_t, const uint64_t) override {
+  void exportLatency(const uint32_t, const uint64_t, GrpcStatusOpt grpc_status) override {
     stream_decoder_export_latency_callbacks_++;
+    exported_grpc_status_ = grpc_status;
   }
   void handleResponseData(const Envoy::Buffer::Instance&) override { called_data_++; }
 
@@ -59,6 +61,8 @@ public:
   uint64_t pool_failures_{0};
   uint64_t stream_decoder_export_latency_callbacks_{0};
   uint64_t called_data_{0};
+  GrpcStatusOpt completed_grpc_status_;
+  GrpcStatusOpt exported_grpc_status_;
   Envoy::Random::RandomGeneratorImpl random_generator_;
   Envoy::Tracing::TracerSharedPtr tracer_;
   Envoy::Http::ResponseHeaderMapPtr test_header_;
@@ -111,6 +115,71 @@ TEST_F(StreamDecoderTest, TrailerTest) {
   decoder->decodeTrailers(std::move(trailers));
   EXPECT_TRUE(is_complete);
   EXPECT_EQ(1, stream_decoder_completion_callbacks_);
+  EXPECT_FALSE(completed_grpc_status_.has_value());
+}
+
+TEST_F(StreamDecoderTest, GrpcStatusFromTrailers) {
+  auto decoder = new StreamDecoder(
+      *dispatcher_, time_system_, *this, [](bool, bool) {}, connect_statistic_, latency_statistic_,
+      response_header_size_statistic_, response_body_size_statistic_, origin_latency_statistic_,
+      request_headers_, request_body_, /*measure_latencies=*/true, 0, random_generator_, tracer_,
+      "");
+  Envoy::Http::ResponseHeaderMapPtr headers{new Envoy::Http::TestResponseHeaderMapImpl{
+      {":status", "200"}, {"content-type", "application/grpc"}}};
+  decoder->decodeHeaders(std::move(headers), false);
+  Envoy::Buffer::OwnedImpl buf(std::string(5, '\0'));
+  decoder->decodeData(buf, false);
+  Envoy::Http::ResponseTrailerMapPtr trailers{
+      new Envoy::Http::TestResponseTrailerMapImpl{{"grpc-status", "13"}}};
+  decoder->decodeTrailers(std::move(trailers));
+  EXPECT_EQ(1, stream_decoder_completion_callbacks_);
+  ASSERT_TRUE(completed_grpc_status_.has_value());
+  EXPECT_EQ(13, completed_grpc_status_.value());
+  ASSERT_TRUE(exported_grpc_status_.has_value());
+  EXPECT_EQ(13, exported_grpc_status_.value());
+}
+
+TEST_F(StreamDecoderTest, GrpcStatusFromTrailersOnlyResponse) {
+  auto decoder = new StreamDecoder(
+      *dispatcher_, time_system_, *this, [](bool, bool) {}, connect_statistic_, latency_statistic_,
+      response_header_size_statistic_, response_body_size_statistic_, origin_latency_statistic_,
+      request_headers_, request_body_, /*measure_latencies=*/true, 0, random_generator_, tracer_,
+      "");
+  Envoy::Http::ResponseHeaderMapPtr headers{new Envoy::Http::TestResponseHeaderMapImpl{
+      {":status", "200"}, {"content-type", "application/grpc"}, {"grpc-status", "0"}}};
+  decoder->decodeHeaders(std::move(headers), true);
+  EXPECT_EQ(1, stream_decoder_completion_callbacks_);
+  ASSERT_TRUE(completed_grpc_status_.has_value());
+  EXPECT_EQ(0, completed_grpc_status_.value());
+  ASSERT_TRUE(exported_grpc_status_.has_value());
+  EXPECT_EQ(0, exported_grpc_status_.value());
+}
+
+TEST_F(StreamDecoderTest, GrpcStatusInTrailersOverridesHeaders) {
+  auto decoder = new StreamDecoder(
+      *dispatcher_, time_system_, *this, [](bool, bool) {}, connect_statistic_, latency_statistic_,
+      response_header_size_statistic_, response_body_size_statistic_, origin_latency_statistic_,
+      request_headers_, request_body_, /*measure_latencies=*/false, 0, random_generator_, tracer_,
+      "");
+  Envoy::Http::ResponseHeaderMapPtr headers{
+      new Envoy::Http::TestResponseHeaderMapImpl{{":status", "200"}, {"grpc-status", "0"}}};
+  decoder->decodeHeaders(std::move(headers), false);
+  Envoy::Http::ResponseTrailerMapPtr trailers{
+      new Envoy::Http::TestResponseTrailerMapImpl{{"grpc-status", "14"}}};
+  decoder->decodeTrailers(std::move(trailers));
+  ASSERT_TRUE(completed_grpc_status_.has_value());
+  EXPECT_EQ(14, completed_grpc_status_.value());
+}
+
+TEST_F(StreamDecoderTest, NoGrpcStatusOnPlainHttpResponse) {
+  auto decoder = new StreamDecoder(
+      *dispatcher_, time_system_, *this, [](bool, bool) {}, connect_statistic_, latency_statistic_,
+      response_header_size_statistic_, response_body_size_statistic_, origin_latency_statistic_,
+      request_headers_, request_body_, /*measure_latencies=*/true, 0, random_generator_, tracer_,
+      "");
+  decoder->decodeHeaders(std::move(test_header_), true);
+  EXPECT_FALSE(completed_grpc_status_.has_value());
+  EXPECT_FALSE(exported_grpc_status_.has_value());
 }
 
 TEST_F(StreamDecoderTest, LatencyIsNotMeasured) {
