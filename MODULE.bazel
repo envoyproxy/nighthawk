@@ -1,5 +1,5 @@
 # Envoy commit to use
-ENVOY_COMMIT = "24a950b6477dd80837edb26ab9960aea8ed5311e"
+ENVOY_COMMIT = "4113c858a4062cfafb9dcb738f37257d1455e10b"
 
 module(
     name = "nighthawk",
@@ -22,7 +22,7 @@ bazel_dep(name = "grpc", version = "1.83.0.envoy")
 bazel_dep(name = "librdkafka", version = "2.15.0.bcr.1")
 bazel_dep(name = "quiche", version = "0.0.0-261027-f53fd81.envoy")
 bazel_dep(name = "toolchains_llvm", version = "1.9.1.envoy")
-bazel_dep(name = "envoy_toolshed", version = "0.5.16.envoy")
+bazel_dep(name = "envoy_toolshed", version = "0.5.17.envoy")
 bazel_dep(name = "zlib-ng", version = "2.3.3.bcr.2")
 bazel_dep(name = "googletest", version = "1.18.0.bcr.1")
 bazel_dep(name = "googleapis", version = "0.0.0-20251003-2193a2bf")
@@ -119,10 +119,37 @@ llvm = use_extension("@toolchains_llvm//toolchain/extensions:llvm.bzl", "llvm")
 use_repo(llvm, "llvm_toolchain")
 
 llvm_toolchain_alias_ext = use_extension("@envoy_toolshed//compile:extensions.bzl", "llvm_toolchain_alias_extension")
-use_repo(llvm_toolchain_alias_ext, "llvm_toolchain_llvm")
+use_repo(
+    llvm_toolchain_alias_ext,
+    "llvm_minimal_linux_arm64",
+    "llvm_minimal_linux_x64",
+    "llvm_minimal_macos_arm64",
+    "llvm_toolchain_llvm",
+)
+
+sysroot_ext = use_extension("@envoy_toolshed//sysroot:extensions.bzl", "sysroot_extension")
+use_repo(
+    sysroot_ext,
+    "sysroot_linux_amd64",
+    "sysroot_linux_arm64",
+)
 
 # Provides @clang_platform, referenced by `common:clang --host_platform=@clang_platform` in .bazelrc.
 envoy_toolchains_ext = use_extension("@envoy//bazel:extensions.bzl", "envoy_toolchains_extension")
 use_repo(envoy_toolchains_ext, "clang_platform")
 
+# GCC toolchains (from Envoy)
+gcc = use_extension("@envoy_toolshed//toolchains/gcc:extensions.bzl", "gcc_extension", dev_dependency = True)
+gcc.toolchain(
+    name = "gcc_linux_x86_64",
+    arch = "x86_64",
+    dwp = "@llvm_minimal_linux_x64//:bin/llvm-dwp",
+    lld = "@llvm_minimal_linux_x64//:bin/lld",
+    sysroot = "@sysroot_linux_amd64//sysroot",
+)
+use_repo(gcc, "gcc_linux_x86_64")
 
+register_toolchains(
+    "//bazel/gcc:linux_x86_64_toolchain",
+    dev_dependency = True,
+)

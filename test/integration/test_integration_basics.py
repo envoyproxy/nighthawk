@@ -677,7 +677,7 @@ def test_https_log_verbosity(https_test_server_fixture):
 def test_dotted_output_format(http_test_server_fixture):
   """Test that we get the dotted string output format when requested, and ensure we get latency percentiles."""
   output, _ = http_test_server_fixture.runNighthawkClient([
-      "--duration 1", "--rps 10", "--output-format dotted",
+      "--duration 5", "--rps 10", "--output-format dotted",
       http_test_server_fixture.getTestServerRootUri()
   ],
                                                           as_json=False)
@@ -690,7 +690,7 @@ def test_dotted_output_format(http_test_server_fixture):
 def test_cli_output_format(http_test_server_fixture):
   """Test that we observe latency percentiles with CLI output."""
   output, _ = http_test_server_fixture.runNighthawkClient(
-      ["--duration 1", "--rps 10",
+      ["--duration 5", "--rps 10",
        http_test_server_fixture.getTestServerRootUri()], as_json=False)
   asserts.assertIn("Initiation to completion", output)
   asserts.assertIn("Percentile", output)
