@@ -98,7 +98,9 @@ Click the link in the terminal to double check the date of the Envoy commit to w
 
 Edit [MODULE.bazel](/MODULE.bazel):
 
-Update the `ENVOY_COMMIT` variable with the target Envoy commit hash:
+Update `ENVOY_COMMIT` to the latest Envoy's commit from
+   [this page](https://github.com/envoyproxy/envoy/commits/main). (Clicking on the
+   short commit id opens a page that contains the fully expanded commit id).:
 
 ```bash
 sed -i -e "s/ENVOY_COMMIT =.*/ENVOY_COMMIT = \"${envoy_commit}\"/" MODULE.bazel
