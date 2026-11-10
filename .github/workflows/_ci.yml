@@ -41,7 +41,7 @@ jobs:
         if [[ "${{ inputs.task }}" == *"gcc"* ]]; then
           echo "build --config=gcc" >> user.bazelrc
           echo "build:gcc --copt=-g0" >> user.bazelrc
-          echo "build --linkopt=-Wl,--no-threads" >> user.bazelrc
+          echo "build --linkopt=-Wl,--threads=1" >> user.bazelrc
         else
           echo "common --config=clang" >> user.bazelrc
           echo "build --copt=-g1" >> user.bazelrc
@@ -82,6 +82,7 @@ jobs:
         GITHUB_TOKEN: ${{ github.token }}
         GH_BRANCH: ${{ github.ref }}
         GH_SHA1: ${{ github.sha }}
+        ENVOY_DOCKER_DEVTOOLS: '1'
         ENVOY_DOCKER_IN_DOCKER: ${{ inputs.docker-in-docker && '1' || '' }}
         DOCKERHUB_USERNAME: ${{ secrets.dockerhub-username }}
         DOCKERHUB_PASSWORD: ${{ secrets.dockerhub-password }}
