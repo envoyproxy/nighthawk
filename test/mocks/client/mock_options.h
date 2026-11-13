@@ -45,6 +45,7 @@ public:
   MOCK_METHOD(std::vector<std::string>, requestHeaders, (), (const, override));
   MOCK_METHOD(uint32_t, requestBodySize, (), (const, override));
   MOCK_METHOD(const std::string&, requestBody, (), (const, override));
+  MOCK_METHOD(nighthawk::client::GrpcMode::GrpcModeOptions, grpcMode, (), (const, override));
   MOCK_METHOD(envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext&, tlsContext, (),
               (const, override));
   MOCK_METHOD(std::optional<envoy::config::core::v3::BindConfig>&, upstreamBindConfig, (),
