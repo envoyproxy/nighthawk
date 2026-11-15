@@ -92,11 +92,11 @@ TEST_F(HttpTimeTrackingFilterConfigTest, GetElapsedNanosSinceLastRequest) {
   Envoy::Event::SimulatedTimeSystem& time_system = simTime();
   Server::HttpTimeTrackingFilterConfig config({});
   EXPECT_EQ(config.getElapsedNanosSinceLastRequest(time_system), 0);
-  time_system.setMonotonicTime(1ns);
+  time_system.advanceTimeWait(1ns);
   EXPECT_EQ(config.getElapsedNanosSinceLastRequest(time_system), 1);
-  time_system.setMonotonicTime(1s + 1ns);
+  time_system.advanceTimeWait(1s);
   EXPECT_EQ(config.getElapsedNanosSinceLastRequest(time_system), 1e9);
-  time_system.setMonotonicTime(60s + 1s + 1ns);
+  time_system.advanceTimeWait(60s);
   EXPECT_EQ(config.getElapsedNanosSinceLastRequest(time_system), 60 * 1e9);
 }
 

@@ -22,15 +22,15 @@ class SimTimeStopwatchTest : public testing::Test, public Envoy::Event::TestUsin
 TEST_F(SimTimeStopwatchTest, TestElapsedAndReset) {
   ThreadSafeMontonicTimeStopwatch stopwatch;
   Envoy::Event::SimulatedTimeSystem& time_system = simTime();
-  time_system.setMonotonicTime(1ns);
+  time_system.advanceTimeWait(1ns);
   // The first call should always return 0.
   EXPECT_EQ(stopwatch.getElapsedNsAndReset(time_system), 0);
-  time_system.setMonotonicTime(2ns);
+  time_system.advanceTimeWait(1ns);
   // Verify that moving the clock yields correct results.
   EXPECT_EQ(stopwatch.getElapsedNsAndReset(time_system), 1);
-  time_system.setMonotonicTime(3ns);
+  time_system.advanceTimeWait(1ns);
   EXPECT_EQ(stopwatch.getElapsedNsAndReset(time_system), 1);
-  time_system.setMonotonicTime(5ns);
+  time_system.advanceTimeWait(2ns);
   EXPECT_EQ(stopwatch.getElapsedNsAndReset(time_system), 2);
 }
 
