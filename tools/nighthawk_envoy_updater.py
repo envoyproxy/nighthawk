@@ -53,6 +53,22 @@ _ENVOY_MODULE_VERSION_PATTERN = re.compile(
     r'module\(\s*name\s*=\s*"envoy",\s*version\s*=\s*"([^"]+)"',
     re.DOTALL,
 )
+_SINGLE_VERSION_OVERRIDE_BLOCK_PATTERN = re.compile(
+    r"^single_version_override\(\n(?:[^\n]+\n)*?\)",
+    re.MULTILINE,
+)
+_SINGLE_VERSION_OVERRIDE_GROUP_PATTERN = re.compile(
+    r"^single_version_override\(\n(?:[^\n]+\n)*?\)"
+    r"(?:\n\nsingle_version_override\(\n(?:[^\n]+\n)*?\))*",
+    re.MULTILINE,
+)
+_USE_EXTENSION_BLOCK_PATTERN = re.compile(
+    r"^([a-zA-Z0-9_]+) = (use_extension\([^)]*\))\n"
+    r"(?:[^\n]+\n)*?"
+    r"(use_repo\(\s*\1\b[^)]*\))",
+    re.MULTILINE,
+)
+_NIGHTHAWK_CUSTOM_EXTENSIONS: frozenset[str] = frozenset({"llvm", "pip"})
 _ENVOY_COMMIT_PATTERN = re.compile(
     r'^ENVOY_COMMIT = "([0-9a-fA-F]{40})"$',
     re.MULTILINE,
@@ -494,7 +510,7 @@ class EnvoyCommitIntegration(StepHandler[EnvoyCommitIntegrationStep]):
       nighthawk_bazelrc.write_text(updated_content, encoding="utf-8")
 
   def _sync_module_bazel_deps(self) -> None:
-    """Sync bazel_dep versions in Nighthawk's MODULE.bazel with Envoy's."""
+    """Sync deps, overrides, and shared extensions in MODULE.bazel."""
     nighthawk_module_file = self.nighthawk_git_repo_dir / "MODULE.bazel"
     envoy_module_content = _run_command(
         ["git", "show", f"{self.target_envoy_commit}:MODULE.bazel"],
@@ -518,6 +534,38 @@ class EnvoyCommitIntegration(StepHandler[EnvoyCommitIntegrationStep]):
       return match.group(0)
 
     updated_content = _BAZEL_DEP_PATTERN.sub(_replace_dep, nighthawk_content)
+
+    envoy_overrides = "\n\n".join(
+        match.group(0)
+        for match in _SINGLE_VERSION_OVERRIDE_BLOCK_PATTERN.finditer(envoy_module_content))
+    if envoy_overrides and _SINGLE_VERSION_OVERRIDE_GROUP_PATTERN.search(updated_content):
+      updated_content = _SINGLE_VERSION_OVERRIDE_GROUP_PATTERN.sub(envoy_overrides,
+                                                                   updated_content,
+                                                                   count=1)
+
+    envoy_extensions: dict[str, str] = {}
+    for match in _USE_EXTENSION_BLOCK_PATTERN.finditer(envoy_module_content):
+      ext_var = match.group(1)
+      if ext_var in _NIGHTHAWK_CUSTOM_EXTENSIONS:
+        continue
+      if "dev_dependency = True" in match.group(2) or ext_var == "python":
+        envoy_extensions[ext_var] = match.group(0)
+      else:
+        # Non-dev extensions are already configured by @envoy; strip setup calls
+        # and only re-export their repos.
+        envoy_extensions[ext_var] = f"{ext_var} = {match.group(2)}\n{match.group(3)}"
+
+    def _replace_extension(match: re.Match[str]) -> str:
+      """Replace a shared use_extension/use_repo block with Envoy's version."""
+      ext_var = match.group(1)
+      envoy_block = envoy_extensions.get(ext_var)
+      if envoy_block and match.group(0) != envoy_block:
+        logging.info("Syncing MODULE.bazel extension block: %s", ext_var)
+        return envoy_block
+      return match.group(0)
+
+    updated_content = _USE_EXTENSION_BLOCK_PATTERN.sub(_replace_extension, updated_content)
+
     if updated_content != nighthawk_content:
       nighthawk_module_file.write_text(updated_content, encoding="utf-8")
 
