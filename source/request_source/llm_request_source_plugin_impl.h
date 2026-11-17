@@ -40,7 +40,7 @@ constexpr inline absl::string_view kLlmRequestSourcePluginName = "nighthawk.requ
 //     - Method: POST
 //     - Content-Type: application/json
 //     - Content-Length: The length of the request body.
-//     - :path: /v1/completions
+//     - :path: /v1/chat/completions
 class LlmRequestSourcePlugin : public Nighthawk::RequestSource,
                                public Envoy::Logger::Loggable<Envoy::Logger::Id::http> {
 public:
