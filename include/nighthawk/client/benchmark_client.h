@@ -21,6 +21,18 @@ public:
   virtual ~BenchmarkClient() = default;
 
   /**
+   * Called on the worker thread before the sequencer starts, after the request source has been
+   * initialized. Implementations may run the dispatcher to complete asynchronous setup (e.g. open
+   * long-lived streams); it must return with the dispatcher exited.
+   */
+  virtual void prepare() PURE;
+  /**
+   * Called on the worker thread right after the sequencer has stopped and before the worker's
+   * counters are snapshotted. Implementations may run the dispatcher to finish outstanding work
+   * that should still be reported (e.g. half-close streams and collect the last echoes).
+   */
+  virtual void finish() PURE;
+  /**
    * Terminate will be called on the worker thread before it ends.
    */
   virtual void terminate() PURE;

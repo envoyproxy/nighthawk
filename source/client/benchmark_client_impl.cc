@@ -1,5 +1,7 @@
 #include "source/client/benchmark_client_impl.h"
 
+#include "absl/strings/str_cat.h"
+
 #include "envoy/common/conn_pool.h"
 #include "envoy/event/dispatcher.h"
 #include "envoy/thread_local/thread_local.h"
@@ -33,7 +35,8 @@ BenchmarkClientStatistic::BenchmarkClientStatistic(BenchmarkClientStatistic&& st
       latency_4xx_statistic(std::move(statistic.latency_4xx_statistic)),
       latency_5xx_statistic(std::move(statistic.latency_5xx_statistic)),
       latency_xxx_statistic(std::move(statistic.latency_xxx_statistic)),
-      origin_latency_statistic(std::move(statistic.origin_latency_statistic)) {}
+      origin_latency_statistic(std::move(statistic.origin_latency_statistic)),
+      latency_grpc_ok_statistic(std::move(statistic.latency_grpc_ok_statistic)) {}
 
 BenchmarkClientStatistic::BenchmarkClientStatistic(
     StatisticPtr&& connect_stat, StatisticPtr&& response_stat,
@@ -41,7 +44,7 @@ BenchmarkClientStatistic::BenchmarkClientStatistic(
     StatisticPtr&& latency_1xx_stat, StatisticPtr&& latency_2xx_stat,
     StatisticPtr&& latency_3xx_stat, StatisticPtr&& latency_4xx_stat,
     StatisticPtr&& latency_5xx_stat, StatisticPtr&& latency_xxx_stat,
-    StatisticPtr&& origin_latency_stat)
+    StatisticPtr&& origin_latency_stat, StatisticPtr&& latency_grpc_ok_stat)
     : connect_statistic(std::move(connect_stat)), response_statistic(std::move(response_stat)),
       response_header_size_statistic(std::move(response_header_size_stat)),
       response_body_size_statistic(std::move(response_body_size_stat)),
@@ -51,7 +54,8 @@ BenchmarkClientStatistic::BenchmarkClientStatistic(
       latency_4xx_statistic(std::move(latency_4xx_stat)),
       latency_5xx_statistic(std::move(latency_5xx_stat)),
       latency_xxx_statistic(std::move(latency_xxx_stat)),
-      origin_latency_statistic(std::move(origin_latency_stat)) {}
+      origin_latency_statistic(std::move(origin_latency_stat)),
+      latency_grpc_ok_statistic(std::move(latency_grpc_ok_stat)) {}
 
 Envoy::Http::ConnectionPool::Cancellable*
 Http1PoolImpl::newStream(Envoy::Http::ResponseDecoder& response_decoder,
@@ -108,6 +112,7 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
   statistic_.latency_5xx_statistic->setId("benchmark_http_client.latency_5xx");
   statistic_.latency_xxx_statistic->setId("benchmark_http_client.latency_xxx");
   statistic_.origin_latency_statistic->setId("benchmark_http_client.origin_latency_statistic");
+  statistic_.latency_grpc_ok_statistic->setId("benchmark_http_client.latency_grpc_ok");
 }
 
 void BenchmarkClientHttpImpl::terminate() {
@@ -161,6 +166,8 @@ StatisticPtrMap BenchmarkClientHttpImpl::statistics() const {
   statistics[statistic_.latency_5xx_statistic->id()] = statistic_.latency_5xx_statistic.get();
   statistics[statistic_.latency_xxx_statistic->id()] = statistic_.latency_xxx_statistic.get();
   statistics[statistic_.origin_latency_statistic->id()] = statistic_.origin_latency_statistic.get();
+  statistics[statistic_.latency_grpc_ok_statistic->id()] =
+      statistic_.latency_grpc_ok_statistic.get();
   return statistics;
 };
 
@@ -214,19 +221,52 @@ bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completi
   return true;
 }
 
+Envoy::Stats::Counter& BenchmarkClientHttpImpl::grpcStatusCounter(GrpcStatusOpt grpc_status) {
+  auto it = grpc_status_counters_.find(grpc_status);
+  if (it == grpc_status_counters_.end()) {
+    const std::string name = grpc_status.has_value()
+                                 ? absl::StrCat("grpc_status.", grpc_status.value())
+                                 : std::string("grpc_status.missing");
+    it = grpc_status_counters_.emplace(grpc_status, &scope_->counterFromString(name)).first;
+  }
+  return *it->second;
+}
+
+bool BenchmarkClientHttpImpl::trackGrpcStatus(GrpcStatusOpt grpc_status) {
+  grpcStatusCounter(grpc_status).inc();
+  const bool ok = grpc_status.has_value() &&
+                  grpc_status.value() == Envoy::Grpc::Status::WellKnownGrpcStatus::Ok;
+  if (!ok) {
+    benchmark_client_counters_.grpc_error_.inc();
+  }
+  return ok;
+}
+
 void BenchmarkClientHttpImpl::onComplete(bool success,
-                                         const Envoy::Http::ResponseHeaderMap& headers) {
+                                         const Envoy::Http::ResponseHeaderMap& headers,
+                                         GrpcStatusOpt grpc_status) {
   requests_completed_++;
   if (!success) {
     benchmark_client_counters_.stream_resets_.inc();
+    if (grpc_) {
+      // A reset stream is a failed call. Record whatever status we saw, usually none.
+      trackGrpcStatus(grpc_status);
+    }
   } else {
     ASSERT(headers.Status());
     const int64_t status = Envoy::Http::Utility::getResponseStatus(headers);
 
-    if (status > 99 && status <= 199) {
+    // In gRPC mode every completed call is scored on grpc-status. An HTTP 2xx only counts as
+    // http_2xx when the call actually succeeded (grpc-status 0); a failed RPC is reported via
+    // grpc_error / grpc_status.<code> only. Non-2xx responses (e.g. a proxy error) are counted in
+    // their HTTP bucket as usual and are failed RPCs as well.
+    const bool grpc_ok = grpc_ ? trackGrpcStatus(grpc_status) : false;
+    if (status > 199 && status <= 299) {
+      if (!grpc_ || grpc_ok) {
+        benchmark_client_counters_.http_2xx_.inc();
+      }
+    } else if (status > 99 && status <= 199) {
       benchmark_client_counters_.http_1xx_.inc();
-    } else if (status > 199 && status <= 299) {
-      benchmark_client_counters_.http_2xx_.inc();
     } else if (status > 299 && status <= 399) {
       benchmark_client_counters_.http_3xx_.inc();
     } else if (status > 399 && status <= 499) {
@@ -270,8 +310,12 @@ void BenchmarkClientHttpImpl::onPoolFailure(Envoy::Http::ConnectionPool::PoolFai
   }
 }
 
-void BenchmarkClientHttpImpl::exportLatency(const uint32_t response_code,
-                                            const uint64_t latency_ns) {
+void BenchmarkClientHttpImpl::exportLatency(const uint32_t response_code, const uint64_t latency_ns,
+                                            GrpcStatusOpt grpc_status) {
+  if (grpc_ && grpc_status.has_value() &&
+      grpc_status.value() == Envoy::Grpc::Status::WellKnownGrpcStatus::Ok) {
+    statistic_.latency_grpc_ok_statistic->addValue(latency_ns);
+  }
   if (response_code > 99 && response_code <= 199) {
     statistic_.latency_1xx_statistic->addValue(latency_ns);
   } else if (response_code > 199 && response_code <= 299) {

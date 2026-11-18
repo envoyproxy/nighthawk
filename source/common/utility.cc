@@ -151,4 +151,18 @@ Utility::GetAvailablePort(bool udp,
   return port;
 }
 
+std::string grpcFrameMessage(absl::string_view message) {
+  RELEASE_ASSERT(message.size() <= UINT32_MAX, "gRPC message too large to frame");
+  const uint32_t length = static_cast<uint32_t>(message.size());
+  std::string framed;
+  framed.reserve(5 + message.size());
+  framed.push_back('\0'); // Not compressed.
+  framed.push_back(static_cast<char>((length >> 24) & 0xff));
+  framed.push_back(static_cast<char>((length >> 16) & 0xff));
+  framed.push_back(static_cast<char>((length >> 8) & 0xff));
+  framed.push_back(static_cast<char>(length & 0xff));
+  framed.append(message.data(), message.size());
+  return framed;
+}
+
 } // namespace Nighthawk

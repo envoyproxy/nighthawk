@@ -1,5 +1,6 @@
 #include "source/client/options_impl.h"
 
+#include <algorithm>
 #include <cerrno>
 #include <cstdint>
 #include <exception>
@@ -199,8 +200,53 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "", "request-body-file",
       "Path to a file whose bytes are sent verbatim as the request body on every request (binary "
       "safe). No Content-Type is set for it; pass one with --request-header if needed. Mutually "
-      "exclusive with --request-body-size.",
+      "exclusive with --request-body-size. With --grpc-mode unary the bytes are treated as a "
+      "single "
+      "serialized protobuf message and wrapped in a gRPC length-prefixed frame.",
       false, "", "string", cmd);
+  std::vector<std::string> grpc_modes = {"unary", "bidi-stream"};
+  TCLAP::ValuesConstraint<std::string> grpc_modes_allowed(grpc_modes);
+  TCLAP::ValueArg<std::string> grpc_mode(
+      "", "grpc-mode",
+      "gRPC load generation mode. Possible values: [unary, bidi-stream]. "
+      "'unary' issues gRPC unary calls instead of plain HTTP requests: implies --protocol http2 "
+      "(prior knowledge on http:// URIs) and --request-method POST, adds 'content-type: "
+      "application/grpc' and 'te: trailers', frames the --request-body-file bytes as a gRPC "
+      "message, and scores responses on the grpc-status trailer: status 0 counts as success (also "
+      "recorded in the benchmark_http_client.latency_grpc_ok statistic), any other or missing "
+      "status increments benchmark.grpc_error and benchmark.grpc_status.<code> and is not counted "
+      "as a 2xx success. The URI path (or a ':path' request header) selects the method, e.g. "
+      "http://host:8080/pkg.Service/Method. "
+      "'bidi-stream' opens --streams long-lived bidi streams to the URI path, spread evenly over "
+      "the "
+      "workers, and sends the --request-body-file message on them at an AGGREGATE rate of --rps "
+      "messages per second (round-robin over the streams, absolute schedule: late sends fire "
+      "immediately and are never rescheduled). The server must echo one message per message in "
+      "order on the same stream; message latency is measured from send to echo "
+      "(benchmark_stream.message_latency). Sends scheduled for a stream that already has "
+      "--max-inflight-per-stream unanswered messages are dropped and counted in "
+      "benchmark.stream_deferred. Requires a numeric --concurrency that divides --streams and "
+      "--rps. At the end every stream is half-closed and echoes are collected for "
+      "--stream-drain-duration; the grpc-status of each closed stream is counted in "
+      "benchmark.stream_grpc_status.<code>.",
+      false, "", &grpc_modes_allowed, cmd);
+  TCLAP::ValueArg<uint32_t> streams(
+      "", "streams",
+      "Total number of gRPC bidi streams to open in --grpc-mode bidi-stream "
+      "mode (default: 20).",
+      false, 20, "uint32_t", cmd);
+  TCLAP::ValueArg<uint32_t> max_inflight_per_stream(
+      "", "max-inflight-per-stream",
+      "Maximum unanswered messages per stream in --grpc-mode bidi-stream before scheduled sends "
+      "are "
+      "deferred (default: 256).",
+      false, 256, "uint32_t", cmd);
+  TCLAP::ValueArg<std::string> stream_drain_duration(
+      "", "stream-drain-duration",
+      "Time to wait for outstanding echoes after half-closing the streams in --grpc-mode "
+      "bidi-stream, "
+      "as a duration string (default: 0.5s).",
+      false, "0.5s", "string", cmd);
 
   TCLAP::ValueArg<std::string> tls_context(
       "", "tls-context",
@@ -477,6 +523,25 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   if (h2.isSet() && protocol.isSet()) {
     throw MalformedArgvException("--h2 and --protocol are mutually exclusive");
   }
+  if (grpc_mode.isSet()) {
+    grpc_mode_ = grpc_mode.getValue() == "unary" ? nighthawk::client::GrpcMode::UNARY
+                                                 : nighthawk::client::GrpcMode::BIDI_STREAM;
+  }
+  TCLAP_SET_IF_SPECIFIED(streams, streams_);
+  TCLAP_SET_IF_SPECIFIED(max_inflight_per_stream, max_inflight_per_stream_);
+  if (stream_drain_duration.isSet()) {
+    Envoy::Protobuf::Duration duration;
+    if (Envoy::Protobuf::util::TimeUtil::FromString(stream_drain_duration.getValue(), &duration) &&
+        duration.nanos() >= 0 && duration.seconds() >= 0) {
+      stream_drain_duration_ = std::chrono::nanoseconds(
+          Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(duration));
+    } else {
+      throw MalformedArgvException("Invalid value for --stream-drain-duration");
+    }
+  }
+  if (grpcEnabled() && !h2.isSet() && !protocol.isSet()) {
+    protocol_ = nighthawk::client::Protocol::HTTP2;
+  }
   if (h2.isSet()) {
     ENVOY_LOG(warn, "--h2 is deprecated, use --protocol http2 instead.");
   }
@@ -539,6 +604,8 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
     absl::AsciiStrToUpper(&upper_cased);
     RELEASE_ASSERT(envoy::config::core::v3::RequestMethod_Parse(upper_cased, &request_method_),
                    "Failed to parse request method");
+  } else if (grpcEnabled()) {
+    request_method_ = envoy::config::core::v3::RequestMethod::POST;
   }
   TCLAP_SET_IF_SPECIFIED(request_headers, request_headers_);
   TCLAP_SET_IF_SPECIFIED(request_body_size, request_body_size_);
@@ -546,6 +613,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
     request_body_ = readRequestBodyFile(request_body_file.getValue());
   }
   TCLAP_SET_IF_SPECIFIED(max_pending_requests, max_pending_requests_);
+  raisePendingRequestsForStreams();
   TCLAP_SET_IF_SPECIFIED(max_active_requests, max_active_requests_);
   TCLAP_SET_IF_SPECIFIED(max_requests_per_connection, max_requests_per_connection_);
   TCLAP_SET_IF_SPECIFIED(max_concurrent_streams, max_concurrent_streams_);
@@ -868,6 +936,20 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
 
   h2_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, h2, h2_);
   protocol_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, protocol, protocol_);
+  grpc_mode_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, grpc_mode, grpc_mode_);
+  if (options.has_grpc_stream()) {
+    const auto& stream_options = options.grpc_stream();
+    streams_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(stream_options, streams, streams_);
+    max_inflight_per_stream_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(
+        stream_options, max_inflight_per_stream, max_inflight_per_stream_);
+    if (stream_options.has_drain_duration()) {
+      stream_drain_duration_ = std::chrono::nanoseconds(
+          Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(stream_options.drain_duration()));
+    }
+  }
+  if (grpcEnabled() && !options.has_protocol() && !options.has_h2()) {
+    protocol_ = nighthawk::client::Protocol::HTTP2;
+  }
 
   if (options.has_http3_protocol_options()) {
     http3_protocol_options_.emplace(Http3ProtocolOptions());
@@ -904,6 +986,8 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
     if (request_options.request_method() !=
         envoy::config::core::v3::RequestMethod::METHOD_UNSPECIFIED) {
       request_method_ = request_options.request_method();
+    } else if (grpcEnabled()) {
+      request_method_ = envoy::config::core::v3::RequestMethod::POST;
     }
     request_body_size_ =
         PROTOBUF_GET_WRAPPED_OR_DEFAULT(request_options, request_body_size, request_body_size_);
@@ -915,6 +999,10 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
     request_source_plugin_config_.emplace(envoy::config::core::v3::TypedExtensionConfig());
     request_source_plugin_config_.value().MergeFrom(options.request_source_plugin_config());
   }
+  if (grpcEnabled() && !options.has_request_options()) {
+    request_method_ = envoy::config::core::v3::RequestMethod::POST;
+  }
+  raisePendingRequestsForStreams();
 
   if (options.has_rate_limiter_plugin_config()) {
     if (options.has_burst_size() && options.burst_size().value() != 0) {
@@ -1043,10 +1131,85 @@ std::string OptionsImpl::readRequestBodyFile(const std::string& path) {
   return contents;
 }
 
+void OptionsImpl::raisePendingRequestsForStreams() {
+  if (!grpcStreamEnabled()) {
+    return;
+  }
+  // All of a worker's streams are opened before the first connection is up, so they all sit in
+  // the pool's pending queue for a moment. The per-worker pending-request circuit breaker must
+  // hold them, otherwise the pool rejects all but the first with an overflow.
+  int parsed_concurrency = 1;
+  try {
+    parsed_concurrency = concurrency_ == "auto" ? 1 : std::max(1, std::stoi(concurrency_));
+  } catch (const std::exception&) {
+    parsed_concurrency = 1;
+  }
+  const uint32_t streams_per_worker = std::max<uint32_t>(1, streams_ / parsed_concurrency);
+  if (max_pending_requests_ < streams_per_worker) {
+    max_pending_requests_ = streams_per_worker;
+  }
+}
+
 void OptionsImpl::validate() const {
   if (!request_body_.empty() && request_body_size_ > 0) {
     throw MalformedArgvException(
         "--request-body-file and --request-body-size are mutually exclusive");
+  }
+  if (grpcEnabled()) {
+    if (h2_) {
+      // --h2 is the deprecated spelling of --protocol http2; both are fine.
+    } else if (protocol_ != nighthawk::client::Protocol::HTTP2) {
+      throw MalformedArgvException("--grpc-mode requires --protocol http2");
+    }
+    if (request_method_ != envoy::config::core::v3::RequestMethod::POST) {
+      throw MalformedArgvException("--grpc-mode requires --request-method POST");
+    }
+    if (!request_source_.empty()) {
+      throw MalformedArgvException("--grpc-mode is not supported together with --request-source");
+    }
+  }
+  if (grpcStreamEnabled()) {
+    int parsed_concurrency = 0;
+    try {
+      parsed_concurrency = concurrency_ == "auto" ? 0 : std::stoi(concurrency_);
+    } catch (const std::exception&) {
+      parsed_concurrency = 0;
+    }
+    if (parsed_concurrency <= 0) {
+      throw MalformedArgvException(
+          "--grpc-mode bidi-stream requires a numeric --concurrency (streams and rps are divided "
+          "over the workers)");
+    }
+    if (streams_ == 0 || streams_ % parsed_concurrency != 0) {
+      throw MalformedArgvException("--streams must be a positive multiple of --concurrency");
+    }
+    if (requests_per_second_ % parsed_concurrency != 0) {
+      throw MalformedArgvException(
+          "--rps (aggregate message rate in --grpc-mode bidi-stream) must be a multiple of "
+          "--concurrency");
+    }
+    if (max_inflight_per_stream_ == 0) {
+      throw MalformedArgvException("--max-inflight-per-stream must be greater than 0");
+    }
+    if (streams_ / parsed_concurrency > max_active_requests_) {
+      throw MalformedArgvException(
+          fmt::format("--max-active-requests ({}) must be at least the number of streams per "
+                      "worker ({})",
+                      max_active_requests_, streams_ / parsed_concurrency));
+    }
+    if (request_source_plugin_config_.has_value()) {
+      throw MalformedArgvException(
+          "--grpc-mode bidi-stream is not supported together with --request-source-plugin-config");
+    }
+    if (!user_defined_output_plugin_configs_.empty()) {
+      throw MalformedArgvException(
+          "--grpc-mode bidi-stream is not supported together with --user-defined-plugin-config");
+    }
+    if (simple_warmup_) {
+      // The warmup request would be scheduled before the streams are open.
+      throw MalformedArgvException(
+          "--grpc-mode bidi-stream is not supported together with --simple-warmup");
+    }
   }
   if (h2_use_multiple_connections_) {
     throw MalformedArgvException(
@@ -1177,6 +1340,16 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
     if (!request_body_.empty()) {
       request_options->set_request_body(request_body_);
     }
+  }
+  if (grpcEnabled()) {
+    command_line_options->mutable_grpc_mode()->set_value(grpc_mode_);
+  }
+  if (grpcStreamEnabled()) {
+    auto* stream_options = command_line_options->mutable_grpc_stream();
+    stream_options->mutable_streams()->set_value(streams_);
+    stream_options->mutable_max_inflight_per_stream()->set_value(max_inflight_per_stream_);
+    *stream_options->mutable_drain_duration() =
+        Envoy::Protobuf::util::TimeUtil::NanosecondsToDuration(stream_drain_duration_.count());
   }
 
   if (rate_limiter_plugin_config_.has_value()) {

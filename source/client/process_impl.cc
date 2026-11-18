@@ -105,12 +105,21 @@ public:
         options.noDuration() ? "No time limit"
                              : fmt::format("Time limit: {} seconds", options.duration().count());
     ENVOY_LOG(info, "Starting {} threads / event loops. {}.", concurrency, duration_as_string);
-    ENVOY_LOG(info, "Global targets: {} connections and {} calls per second.",
-              options.connections() * concurrency, options.requestsPerSecond() * concurrency);
+    if (options.grpcMode() == nighthawk::client::GrpcMode::BIDI_STREAM) {
+      ENVOY_LOG(info, "Global targets: {} gRPC bidi streams and {} messages per second.",
+                options.streams(), options.requestsPerSecond());
+      if (concurrency > 1) {
+        ENVOY_LOG(info, "   (Per-worker targets: {} streams and {} messages per second)",
+                  options.streams() / concurrency, options.requestsPerSecond() / concurrency);
+      }
+    } else {
+      ENVOY_LOG(info, "Global targets: {} connections and {} calls per second.",
+                options.connections() * concurrency, options.requestsPerSecond() * concurrency);
 
-    if (concurrency > 1) {
-      ENVOY_LOG(info, "   (Per-worker targets: {} connections and {} calls per second)",
-                options.connections(), options.requestsPerSecond());
+      if (concurrency > 1) {
+        ENVOY_LOG(info, "   (Per-worker targets: {} connections and {} calls per second)",
+                  options.connections(), options.requestsPerSecond());
+      }
     }
 
     return concurrency;
