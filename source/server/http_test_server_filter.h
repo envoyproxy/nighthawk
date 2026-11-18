@@ -45,6 +45,7 @@ public:
   void setDecoderFilterCallbacks(Envoy::Http::StreamDecoderFilterCallbacks&) override;
 
 private:
+  bool maybeSendReply();
   void sendReply(const nighthawk::server::ResponseOptions& options);
   const HttpTestServerDecoderFilterConfigSharedPtr config_;
   absl::StatusOr<std::shared_ptr<const nighthawk::server::ResponseOptions>> effective_config_;
