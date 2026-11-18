@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package nighthawk;
+
+import "envoy/config/metrics/v3/stats.proto";
+
+// Configuration for the Envoy stats sink adapter (plugin name:
+// "nighthawk.envoy_stats_sink_adapter"), a Nighthawk stats sink that forwards everything it
+// receives to a stats sink implemented as an Envoy extension.
+message EnvoyStatsSinkAdapterConfig {
+  // The Envoy stats sink to forward to, configured exactly as it would be in the stats_sinks
+  // field of an Envoy bootstrap. The extension must be linked into the Nighthawk binary.
+  envoy.config.metrics.v3.StatsSink sink = 1;
+}

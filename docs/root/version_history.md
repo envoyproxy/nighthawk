@@ -17,6 +17,7 @@ Version history
 - `--request-body-file` sends a file's bytes verbatim as the request body (binary safe; no Content-Type is set). The `RequestOptions.request_body` (bytes) field carries it over the gRPC service API. Mutually exclusive with `--request-body-size`.
 - `OptionsImpl::toCommandLineOptions()` now always emits `request_options.request_body_size`; it was only set when at least one `--request-header` was configured, so the size was lost on the gRPC service path otherwise.
 - The Envoy exception on the tunneling startup path is logged instead of printed to stdout, keeping stdout reserved for the formatted output.
+- Added the `nighthawk.envoy_stats_sink_adapter` stats sink plugin, which forwards to a stats sink implemented as an Envoy extension, such as `envoy.stat_sinks.statsd` or `envoy.stat_sinks.dog_statsd`. Samples of Nighthawk's latency statistics are forwarded in microseconds with that unit declared, and named `cluster.<worker_id>.<statistic>`. `NighthawkStatsSinkFactory` gains a `createStatsSink()` overload that receives the sink's configuration and the server factory context; its default implementation calls the existing method, so existing stats sink plugins are unaffected. See [statistics.md](statistics.md).
 - Introducing termination predicates (https://github.com/envoyproxy/nighthawk/pull/167) and https://github.com/envoyproxy/nighthawk/pull/176
 
 0.2 (July 16, 2019)
