@@ -75,4 +75,13 @@ public:
   GetAvailablePort(bool udp, nighthawk::client::AddressFamily::AddressFamilyOptions address_family);
 };
 
+/**
+ * Wraps a serialized gRPC message in the length-prefixed message framing used on the wire:
+ * 1 byte compressed flag (0), 4 byte big-endian message length, message bytes.
+ *
+ * @param message the serialized (uncompressed) protobuf message.
+ * @return std::string the framed message.
+ */
+std::string grpcFrameMessage(absl::string_view message);
+
 } // namespace Nighthawk
