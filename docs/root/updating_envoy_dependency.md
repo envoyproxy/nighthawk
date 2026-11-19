@@ -220,29 +220,86 @@ sed -i "s|raw.githubusercontent.com/envoyproxy/bazel-registry/[0-9a-fA-F]\{40\}|
 
 ### Step 11
 
-Sync the `bazel_dep` versions in [MODULE.bazel](/MODULE.bazel) with
+Sync the `bazel_dep` versions, `single_version_override` pins, and shared
+`use_extension` / `use_repo` blocks in [MODULE.bazel](/MODULE.bazel) with
 [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/MODULE.bazel) to
-keep our dependency pins consistent with Envoy. Modules that are only used by
-Nighthawk should be left unchanged.
+keep our dependency and toolchain configurations consistent with Envoy. Modules
+and extensions that are only used by Nighthawk should be left unchanged.
 
 Step 4 only updates `ENVOY_COMMIT`, and nothing else updates our `bazel_dep`
-versions automatically. If they fall behind Envoy's, the build will fail either
-because the pinned version is no longer available in the registry (e.g.
-`module librdkafka@2.6.0.envoy not found in registries`), or because Envoy
+versions, root-only `single_version_override` declarations, or shared toolchain
+extensions automatically. If they fall behind Envoy's, the build will fail
+either because the pinned version is no longer available in the registry (e.g.
+`module librdkafka@2.6.0.envoy not found in registries`), because Envoy
 requires a newer version (e.g. `the root module requires module version
-rules_python@2.2.0, but got rules_python@2.3.3`).
+rules_python@2.2.0, but got rules_python@2.3.3`), or because Envoy updated its
+compiler/sysroot extension setup.
 
 #### Example commands
 
 ```bash
-grep -oP '^bazel_dep\(name = "\K[^"]+' MODULE.bazel | while read -r dep; do
-  nighthawk_version=$(grep -oP "^bazel_dep\(name = \"$dep\", version = \"\K[^\"]+" MODULE.bazel)
-  envoy_version=$(grep -oP "^bazel_dep\(name = \"$dep\", version = \"\K[^\"]+" "$envoy_dir/MODULE.bazel")
-  if [[ -n "$envoy_version" && "$nighthawk_version" != "$envoy_version" ]]; then
-    echo "$dep: $nighthawk_version -> $envoy_version"
-    sed -i "s|^bazel_dep(name = \"$dep\", version = \"[^\"]*\"|bazel_dep(name = \"$dep\", version = \"$envoy_version\"|" MODULE.bazel
-  fi
-done
+get_envoy_module_version() {
+  sed -n '/^module(/,/^)/ s/.*version = "\([^"]*\)".*/\1/p' "$1"
+}
+
+get_bazel_dep_version() {
+  local dep=$1 file=$2
+  sed -n "s/^bazel_dep(name = \"$dep\", version = \"\([^\"]*\)\".*/\1/p" "$file"
+}
+
+get_override_version() {
+  local mod=$1 file=$2
+  sed -n "/module_name = \"$mod\"/,/^)/ s/.*version = \"\([^\"]*\)\".*/\1/p" "$file"
+}
+
+get_extension_repos() {
+  local ext=$1 file=$2
+  sed -n "/^${ext} = use_extension(/,/^$/ { /^use_repo(/,/^$/p }" "$file"
+}
+
+sync_bazel_deps() {
+  local deps
+  deps=$(sed -n 's/^bazel_dep(name = "\([^"]*\)".*/\1/p' MODULE.bazel)
+  for dep in $deps; do
+    local nh_ver envoy_ver
+    nh_ver=$(get_bazel_dep_version "$dep" MODULE.bazel)
+    if [[ "$dep" == "envoy" ]]; then
+      envoy_ver=$(get_envoy_module_version "$envoy_dir/MODULE.bazel")
+    else
+      envoy_ver=$(get_bazel_dep_version "$dep" "$envoy_dir/MODULE.bazel")
+    fi
+    if [[ -n "$envoy_ver" && "$nh_ver" != "$envoy_ver" ]]; then
+      echo "bazel_dep $dep: $nh_ver -> $envoy_ver"
+      sed -i "s/^bazel_dep(name = \"$dep\", version = \"[^\"]*\"/bazel_dep(name = \"$dep\", version = \"$envoy_ver\"/" MODULE.bazel
+    fi
+  done
+}
+
+sync_single_version_overrides() {
+  local mods
+  mods=$(sed -n '/^single_version_override(/,/^)/ s/.*module_name = "\([^"]*\)".*/\1/p' MODULE.bazel)
+  for mod in $mods; do
+    local nh_ver envoy_ver
+    nh_ver=$(get_override_version "$mod" MODULE.bazel)
+    envoy_ver=$(get_override_version "$mod" "$envoy_dir/MODULE.bazel")
+    if [[ -n "$envoy_ver" && "$nh_ver" != "$envoy_ver" ]]; then
+      echo "override $mod: $nh_ver -> $envoy_ver"
+      sed -i "/module_name = \"$mod\"/,/^)/ s/version = \"[^\"]*\"/version = \"$envoy_ver\"/" MODULE.bazel
+    fi
+  done
+}
+
+check_shared_extensions() {
+  for ext in python llvm_toolchain_alias_ext sysroot_ext gcc; do
+    diff -u \
+      <(get_extension_repos "$ext" "$envoy_dir/MODULE.bazel") \
+      <(get_extension_repos "$ext" MODULE.bazel) || true
+  done
+}
+
+sync_bazel_deps
+sync_single_version_overrides
+check_shared_extensions
 git diff MODULE.bazel
 ```
 
@@ -450,8 +507,8 @@ to be updated to.
 Following the
 [update process](/MAINTAINERS.md#updates-to-the-envoy-dependency) to update Nighthawk to a
 specific Envoy commit for each Envoy commit being tested in the bisect. Generally, you can
-do this by only changing the `ENVOY_COMMIT` and leaving `ENVOY_SHA` blank in the
-`repositories.bzl` file.
+do this by updating `ENVOY_COMMIT` in `MODULE.bazel` and refreshing the lockfile
+(`bazel mod deps --lockfile_mode=refresh`).
 
 - Usually the local `do_ci.sh` test is enough and the most efficient.
 - If you do need to test in github CI (e.g. the local `do_ci.sh` passes while the
@@ -462,7 +519,7 @@ do this by only changing the `ENVOY_COMMIT` and leaving `ENVOY_SHA` blank in the
 
 - You can just test the failed tests by commenting out the others. For testing
   locally, modifying `ci/do_ci.sh`. For testing in the github CI, modifying
-  `.azure-pipelines/pipelines.yml` (See this [example](https://github.com/envoyproxy/nighthawk/pull/874/files)).
+  `.github/workflows/nighthawk.yml` (See this [example](https://github.com/envoyproxy/nighthawk/pull/874/files)).
 
 - If it is the unit test or integration test that fails, you can modify the
   test code to only run the failure tests. See `test/python_test.cc` in this
