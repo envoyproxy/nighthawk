@@ -54,7 +54,7 @@ jobs:
         echo "build --config=bes" >> user.bazelrc
         echo "build --experimental_reuse_sandbox_directories=true" >> user.bazelrc
     - name: Bind mount spare disk for build artifacts
-      uses: envoyproxy/toolshed/actions/bind-mounts@actions-v0.4.29
+      uses: envoyproxy/toolshed/actions/bind-mounts@actions-v0.4.32
       with:
         mounts: |
           - src: /mnt/envoy-docker-build
