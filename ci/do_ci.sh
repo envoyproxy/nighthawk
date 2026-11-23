@@ -218,12 +218,18 @@ function do_sanitizer() {
     echo "Building and testing Nighthawk tests..."
     cd "${SRCDIR}"
 
+    if [[ -n "${GH_BRANCH:-}" ]]; then
+        BUILD_TYPE_FLAG="--define build_type=github_ci"
+    else
+        BUILD_TYPE_FLAG=""
+    fi
+
     # We build this in steps to avoid running out of memory in CI
     # The Envoy build system now uses hermetic SAN libraries that come with
     # Bazel. Those are built with libc++ instead of the GCC libstdc++.
     # Explicitly setting --config=libc++ to avoid duplicate symbols.
-    run_on_build_parts "run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=$CONFIG --config=libc++ --"
-    run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config="$CONFIG" --config=libc++ -- //test/...
+    run_on_build_parts "run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=$CONFIG --config=libc++ $BUILD_TYPE_FLAG --"
+    run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config="$CONFIG" --config=libc++ $BUILD_TYPE_FLAG -- //test/...
 }
 
 function cleanup_benchmark_artifacts {
