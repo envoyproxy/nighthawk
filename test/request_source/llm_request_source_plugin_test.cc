@@ -63,6 +63,7 @@ TEST(LlmRequestSourcePluginTest, TestLlmRequestSourcePlugin) {
   std::vector<absl::string_view> tokens = absl::StrSplit(content, ' ');
   EXPECT_EQ(tokens.size(), 100);
   EXPECT_EQ(request->header()->get(Envoy::Http::LowerCaseString("test_header")).size(), 1);
+  EXPECT_EQ(request->header()->getPathValue(), "/v1/chat/completions");
 }
 
 TEST(LlmRequestSourcePluginTest, TestLlmRequestSourcePluginFactory) {

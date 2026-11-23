@@ -91,7 +91,7 @@ Nighthawk::RequestGenerator LlmRequestSourcePlugin::get() {
     headers->setContentLength(body.size());
 
     auto path_key = Envoy::Http::LowerCaseString(":path");
-    headers->setCopy(path_key, "/v1/completions");
+    headers->setCopy(path_key, "/v1/chat/completions");
 
     return std::make_unique<Nighthawk::RequestImpl>(std::move(headers), body);
   };
