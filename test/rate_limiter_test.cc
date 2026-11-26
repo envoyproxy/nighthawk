@@ -1,4 +1,7 @@
+#include <algorithm>
 #include <chrono>
+#include <cmath>
+#include <functional>
 #include <vector>
 
 #include "nighthawk/common/exception.h"
@@ -525,31 +528,85 @@ TEST_F(GraduallyOpeningRateLimiterFilterTest, TimingVerificationTest) {
                                   770, 790, 810, 830, 850, 870, 890, 910, 930, 950, 970, 990}));
 }
 
-class ZipfRateLimiterImplTest : public Test {};
+class ZipfRateLimiterImplTest : public Test {
+protected:
+  static std::vector<int64_t> collectLinearTimings(double q, double v,
+                                                   ZipfRateLimiterImpl::ZipfBehavior behavior,
+                                                   std::chrono::seconds duration = 15s) {
+    Envoy::Event::SimulatedTimeSystem time_system;
+    auto rate_limiter = std::make_unique<ZipfRateLimiterImpl>(
+        std::make_unique<LinearRateLimiter>(time_system, 10_Hz), q, v, behavior);
+    std::vector<int64_t> timings;
+    auto total_ms_elapsed = 0ms;
+    constexpr auto clock_tick = 1ms;
+    do {
+      if (rate_limiter->tryAcquireOne()) {
+        timings.push_back(total_ms_elapsed.count());
+      }
+      time_system.advanceTimeWait(clock_tick);
+      total_ms_elapsed += clock_tick;
+    } while (total_ms_elapsed <= duration);
+    return timings;
+  }
+
+  static double measurePassRate(double q, double v, ZipfRateLimiterImpl::ZipfBehavior behavior,
+                                int trials = 10000) {
+    auto mock_limiter = std::make_unique<NiceMock<MockRateLimiter>>();
+    EXPECT_CALL(*mock_limiter, tryAcquireOne).Times(trials).WillRepeatedly(Return(true));
+    ZipfRateLimiterImpl rate_limiter(std::move(mock_limiter), q, v, behavior);
+    int acquired = 0;
+    for (int i = 0; i < trials; ++i) {
+      if (rate_limiter.tryAcquireOne()) {
+        ++acquired;
+      }
+    }
+    return static_cast<double>(acquired) / trials;
+  }
+
+  static double expectedPassRate(double q, double v) {
+    return 1.0 / (1.0 + std::pow(1.0 + 1.0 / v, q));
+  }
+
+  static double tolerance(double p, int trials = 10000) {
+    return 7.0 * std::sqrt(p * (1.0 - p) / trials);
+  }
+};
+
+MATCHER(IsStrictlyIncreasing, "") {
+  return std::adjacent_find(arg.begin(), arg.end(), std::greater_equal<>()) == arg.end();
+}
 
 TEST_F(ZipfRateLimiterImplTest, TimingVerificationTest) {
-  Envoy::Event::SimulatedTimeSystem time_system;
-  const double q = 2.0;
-  const double v = 1.0;
-  auto rate_limiter = std::make_unique<ZipfRateLimiterImpl>(
-      std::make_unique<LinearRateLimiter>(time_system, 10_Hz), q, v,
-      ZipfRateLimiterImpl::ZipfBehavior::ZIPF_PSEUDO_RANDOM);
-  const std::chrono::seconds duration = 15s;
-  std::vector<int64_t> acquisition_timings;
-  auto total_ms_elapsed = 0ms;
-  auto clock_tick = 1ms;
+  constexpr double q = 2.0;
+  constexpr double v = 1.0;
+  const auto timings_a =
+      collectLinearTimings(q, v, ZipfRateLimiterImpl::ZipfBehavior::ZIPF_PSEUDO_RANDOM);
+  const auto timings_b =
+      collectLinearTimings(q, v, ZipfRateLimiterImpl::ZipfBehavior::ZIPF_PSEUDO_RANDOM);
+  // ZIPF_PSEUDO_RANDOM must be reproducible across identical instances.
+  EXPECT_THAT(timings_a, Eq(timings_b));
+  // Filtering suppresses a subset of the 150 ticks emitted by 10 Hz over 15s.
+  EXPECT_THAT(timings_a, SizeIs(AllOf(Gt(0), Lt(150))));
+  EXPECT_THAT(timings_a, IsStrictlyIncreasing());
+  // Every acquired timestamp must align with LinearRateLimiter(10_Hz) ticks
+  // (phase-shifted by half an interval: 50ms, 150ms, ..., 14950ms).
+  EXPECT_THAT(timings_a,
+              Each(AllOf(Ge(50), Le(14950), ResultOf([](int64_t t) { return t % 100; }, Eq(50)))));
+}
 
-  do {
-    if (rate_limiter->tryAcquireOne()) {
-      acquisition_timings.push_back(total_ms_elapsed.count());
-    }
-    time_system.advanceTimeWait(clock_tick);
-    total_ms_elapsed += clock_tick;
-  } while (total_ms_elapsed <= duration);
-  EXPECT_EQ(acquisition_timings,
-            std::vector<int64_t>({450,   750,   1250,  2350,  2850,  3850,  4150,  4350,  4450,
-                                  5750,  5950,  6350,  7850,  8350,  8550,  9850,  10150, 10450,
-                                  10550, 11950, 12250, 12550, 13250, 13550, 13650, 13750, 13850}));
+TEST_F(ZipfRateLimiterImplTest, PassRateMatchesZipfParameters) {
+  using Behavior = ZipfRateLimiterImpl::ZipfBehavior;
+  const double p_default = expectedPassRate(2.0, 1.0);
+  EXPECT_THAT(measurePassRate(2.0, 1.0, Behavior::ZIPF_PSEUDO_RANDOM),
+              DoubleNear(p_default, tolerance(p_default)));
+  EXPECT_THAT(measurePassRate(2.0, 1.0, Behavior::ZIPF_RANDOM),
+              DoubleNear(p_default, tolerance(p_default)));
+  const double p_shifted = expectedPassRate(1.5, 2.0);
+  EXPECT_THAT(measurePassRate(1.5, 2.0, Behavior::ZIPF_PSEUDO_RANDOM),
+              DoubleNear(p_shifted, tolerance(p_shifted)));
+  const double p_steep = expectedPassRate(4.0, 1.0);
+  EXPECT_THAT(measurePassRate(4.0, 1.0, Behavior::ZIPF_PSEUDO_RANDOM),
+              DoubleNear(p_steep, tolerance(p_steep)));
 }
 
 TEST_F(ZipfRateLimiterImplTest, BadArgumentsTest) {
